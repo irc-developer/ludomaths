@@ -133,3 +133,68 @@ export function chosenSaveThreshold(
 
   return Math.min(armorThreshold, invulnerableSave);
 }
+
+/**
+ * Policies for re-rolling a single D6:
+ * - 'none':     no re-roll.
+ * - 'ones':     re-roll the die only if it shows a 1 on the first roll.
+ * - 'failures': re-roll the die if the first roll failed the threshold.
+ */
+export type DieRerollPolicy = 'none' | 'ones' | 'failures';
+
+/**
+ * Computes P(D6 ≥ effectiveThreshold) for a single die, accounting for
+ * an optional modifier (clamped to ±1 per WH40K rules) and a re-roll policy.
+ *
+ * The modifier is applied before the re-roll policy is evaluated: a failed
+ * roll is judged against the modified threshold, not the base threshold.
+ *
+ *   effectiveThreshold = max(2, clamp(baseThreshold − modifier, 2, ∞))
+ *   p = effectiveThreshold > 6 ? 0 : (7 − effectiveThreshold) / 6
+ *
+ *   reroll 'none':     P = p
+ *   reroll 'ones':     P = p + (1/6) · p     — only the 1 is re-rolled
+ *   reroll 'failures': P = p + (1 − p) · p = p · (2 − p)
+ *
+ * Values of baseThreshold > 6 (e.g. a save negated by AP) are accepted and
+ * return 0 unless a positive modifier brings the effective threshold to ≤ 6.
+ *
+ * @param baseThreshold - Minimum D6 result to succeed before applying modifier.
+ * @param modifier      - Roll modifier. Clamped to [−1, +1]. Defaults to 0.
+ * @param reroll        - Re-roll policy. Defaults to 'none'.
+ * @returns Probability of success in [0, 1].
+ *
+ * @example
+ * dieSuccessProbability(4, 0, 'none')     // → 0.5      (4+, no reroll)
+ * dieSuccessProbability(4, 1, 'none')     // → 0.667    (3+ after +1 modifier)
+ * dieSuccessProbability(4, 0, 'failures') // → 0.75     (4+ with reroll failures)
+ * dieSuccessProbability(4, 0, 'ones')     // → 0.583    (4+ with reroll 1s)
+ */
+export function dieSuccessProbability(
+  baseThreshold: number,
+  modifier: number = 0,
+  reroll: DieRerollPolicy = 'none',
+): number {
+  // Clamp modifier to ±1 (WH40K rule: no modifier can exceed ±1 total).
+  const clampedModifier = Math.max(-1, Math.min(1, modifier));
+
+  // Apply modifier: positive modifier lowers the threshold (easier roll).
+  // Floor at 2 because a 1 always fails regardless of modifiers.
+  const effectiveThreshold = Math.max(2, baseThreshold - clampedModifier);
+
+  // P(D6 ≥ T) = (7 - T) / 6 for T in [2, 6]; 0 for T > 6.
+  const p = effectiveThreshold > 6 ? 0 : (7 - effectiveThreshold) / 6;
+
+  switch (reroll) {
+    case 'none':
+      return p;
+    case 'ones':
+      // Only the 1 is re-rolled. Since threshold ≥ 2, rolling 1 always fails.
+      // P = p + P(rolled 1) · p = p + (1/6) · p = p · (7/6)
+      return p * (7 / 6);
+    case 'failures':
+      // All failed dice are re-rolled once.
+      // P = p + (1 − p) · p = p · (2 − p)
+      return p * (2 - p);
+  }
+}

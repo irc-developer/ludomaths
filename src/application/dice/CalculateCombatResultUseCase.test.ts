@@ -226,4 +226,33 @@ describe('CalculateCombatResultUseCase', () => {
       expect(ev(withInvuln.totalDamageDist)).toBeCloseTo(ev(withoutInvuln.totalDamageDist));
     });
   });
+
+  // ── Feel No Pain ──────────────────────────────────────────────────────────
+  describe('fnpThreshold (Feel No Pain)', () => {
+    // AP-5 against baseSave 6 → effectiveSave 11 → save impossible (all wounds get through).
+    // This isolates FNP as the only defensive mechanic.
+    const fnpCommon = {
+      attacksDist: [{ value: 4, probability: 1 }],
+      hitThreshold: 3,
+      strengthDist: [{ value: 4, probability: 1 }],
+      damageDist: [{ value: 1, probability: 1 }],
+      toughness: 4,
+      baseSave: 6,
+      ap: 5,
+    };
+    const ev = (dist: Distribution) =>
+      dist.reduce((sum, e) => sum + e.value * e.probability, 0);
+
+    it('FNP 5+ reduces expected damage compared to no FNP', () => {
+      const eNoFNP = ev(useCase.execute(fnpCommon).totalDamageDist);
+      const eFNP5  = ev(useCase.execute({ ...fnpCommon, fnpThreshold: 5 }).totalDamageDist);
+      expect(eFNP5).toBeLessThan(eNoFNP);
+    });
+
+    it('absent fnpThreshold matches baseline without FNP field', () => {
+      const eNoField    = ev(useCase.execute(fnpCommon).totalDamageDist);
+      const eUndefined  = ev(useCase.execute({ ...fnpCommon, fnpThreshold: undefined }).totalDamageDist);
+      expect(eUndefined).toBeCloseTo(eNoField);
+    });
+  });
 });

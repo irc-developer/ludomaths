@@ -21,30 +21,19 @@
  * binomial thinning over convolution).
  */
 
-import { chosenSaveThreshold, woundThreshold } from '@domain/dice/combat';
+import { chosenSaveThreshold, dieSuccessProbability, woundThreshold } from '@domain/dice/combat';
+import { WeaponGroup, WeaponProfile } from '@domain/dice/weapon';
+import { SavePool } from '@domain/dice/savePool';
 import { Distribution } from '@domain/math/distribution';
-import { applyDamage, applyStage } from '@domain/math/pipeline';
 import { convolve, multiConvolve } from '@domain/math/convolution';
-import { WeaponProfile } from './CalculateCombatResultUseCase';
+import { applyDamage, applyStage } from '@domain/math/pipeline';
 
-/** A weapon group: one weapon profile shared by `modelCount` models. */
-export interface WeaponGroup extends WeaponProfile {
-  /** Number of models carrying this weapon. Must be a non-negative integer. */
-  modelCount: number;
-}
+// Re-exported so existing callers that import WeaponGroup / SavePool from
+// this module continue to work without changes.
+export type { WeaponGroup } from '@domain/dice/weapon';
+export type { SavePool } from '@domain/dice/savePool';
 
-/**
- * A pool of wounds directed at a subset of the defending unit.
- * `fraction` is the proportion of wounds that go to models with `baseSave`.
- * All fractions across the pool list must sum to 1.
- */
-export interface SavePool {
-  baseSave: number;
-  /** Fraction of wounds directed to this pool. Must be in (0, 1]. */
-  fraction: number;
-  /** Optional unmodifiable save. When provided, the best of armor and invulnerable is used. */
-  invulnerableSave?: number;
-}
+
 
 export interface UnitCombatInput {
   weaponGroups: WeaponGroup[];
@@ -94,42 +83,57 @@ export class CalculateUnitCombatUseCase {
     for (const group of weaponGroups) {
       if (group.modelCount === 0) continue;
 
-      const { attacksDist, hitThreshold, strengthDist, ap, damageDist, modelCount } = group;
+      const { attacksDist, hitThreshold, hitModifier, hitReroll, strengthDist, woundModifier, woundReroll, ap, damageDist, modelCount } = group;
 
       // Stage 1: Attacks → Hits
       // multiConvolve inflates the attack distribution so all models in the
       // group fire as one combined pool.
       const totalAttacksDist = multiConvolve(attacksDist, modelCount);
-      const hitProbability = hitThreshold > 6 ? 0 : (7 - hitThreshold) / 6;
+      const hitProbability = dieSuccessProbability(hitThreshold, hitModifier ?? 0, hitReroll ?? 'none');
       const hitDist = applyStage(totalAttacksDist, hitProbability);
 
       // Stage 2: Hits → Wounds
       // Strength may be variable. Each possible strength value contributes
       // its wound probability weighted by P(S = s):
       //
-      //   p_wound = Σ_s  P(S = s) · (7 − woundThreshold(s, T)) / 6
+      //   p_wound = Σ_s  P(S = s) · dieSuccessProbability(woundThreshold(s, T), modifier, reroll)
       const woundProbability = strengthDist.reduce(
-        (acc, { value: s, probability: pS }) => acc + pS * ((7 - woundThreshold(s, toughness)) / 6),
+        (acc, { value: s, probability: pS }) =>
+          acc + pS * dieSuccessProbability(woundThreshold(s, toughness), woundModifier ?? 0, woundReroll ?? 'none'),
         0,
       );
       const woundDist = applyStage(hitDist, woundProbability);
 
-      // Stage 3: Wounds → Unsaved Wounds (per save pool)
-      // Each wound independently goes to pool i with probability pool.fraction.
-      // applyStage(woundDist, fraction) models this as a binomial split.
-      // The unsaved distributions from all pools are then convolved together.
-      const unsavedDists: Distribution[] = savePools.map(pool => {
+      // Stage 3+4(+5): Wounds → per-pool unsaved → per-pool damage → optional FNP
+      //
+      // applyDamage is moved inside the pool loop so FNP can be applied per pool
+      // before the distributions are convolved. This is mathematically equivalent
+      // to the previous approach (single applyDamage after convolve) because:
+      //   applyDamage(convolve(A, B), d) = convolve(applyDamage(A, d), applyDamage(B, d))
+      // (sum of N=A+B independent draws equals the sum of A draws convolved with B draws).
+      const poolFinalDists: Distribution[] = savePools.map(pool => {
         const poolWoundDist = applyStage(woundDist, pool.fraction);
-        const effectiveSave = chosenSaveThreshold(pool.baseSave, ap, pool.invulnerableSave);
-        // P(fail save) = (threshold - 1) / 6  — see CalculateCombatResultUseCase for rationale
-        const failSaveProbability = effectiveSave > 6 ? 1 : (effectiveSave - 1) / 6;
-        return applyStage(poolWoundDist, failSaveProbability);
+        const saveThreshold = chosenSaveThreshold(pool.baseSave, ap, pool.invulnerableSave);
+        // 1 − P(save success): dieSuccessProbability handles threshold > 6 (returns 0)
+        // so failSaveProbability = 1 when the save is impossible, naturally.
+        const failSaveProbability = 1 - dieSuccessProbability(saveThreshold, pool.saveModifier ?? 0, pool.saveReroll ?? 'none');
+        const poolUnsavedDist = applyStage(poolWoundDist, failSaveProbability);
+
+        // Stage 4: unsaved wounds → damage for this pool
+        const poolDamageDist = applyDamage(poolUnsavedDist, damageDist);
+
+        // Stage 5 (optional): Feel No Pain
+        // Each damage point is independently negated on a roll ≥ fnpThreshold.
+        // P(damage survives FNP) = 1 − dieSuccessProbability(fnpThreshold)
+        if (pool.fnpThreshold !== undefined) {
+          const pFailFNP = 1 - dieSuccessProbability(pool.fnpThreshold);
+          return applyStage(poolDamageDist, pFailFNP);
+        }
+
+        return poolDamageDist;
       });
 
-      const totalUnsavedDist = unsavedDists.reduce((acc, dist) => convolve(acc, dist));
-
-      // Stage 4: Unsaved Wounds → Damage
-      const groupDamageDist = applyDamage(totalUnsavedDist, damageDist);
+      const groupDamageDist = poolFinalDists.reduce((acc, dist) => convolve(acc, dist));
       groupDamageDists.push(groupDamageDist);
     }
 

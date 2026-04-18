@@ -358,4 +358,271 @@ describe('CalculateUnitCombatUseCase', () => {
       expect(eMixed).toBeLessThan(eNoInvuln);
     });
   });
+
+  // ── Hit modifier ──────────────────────────────────────────────────────
+
+  describe('hitModifier', () => {
+    it('+1 hit modifier increases expected damage', () => {
+      const eBase = expectedValue(
+        useCase.execute({
+          weaponGroups: [BASELINE_WEAPON_GROUP],
+          toughness: 4,
+          savePools: BASELINE_SAVE_POOL,
+        }).totalDamageDist,
+      );
+      const eBoosted = expectedValue(
+        useCase.execute({
+          weaponGroups: [{ ...BASELINE_WEAPON_GROUP, hitModifier: 1 }],
+          toughness: 4,
+          savePools: BASELINE_SAVE_POOL,
+        }).totalDamageDist,
+      );
+      expect(eBoosted).toBeGreaterThan(eBase);
+    });
+
+    it('-1 hit modifier decreases expected damage', () => {
+      const eBase = expectedValue(
+        useCase.execute({
+          weaponGroups: [BASELINE_WEAPON_GROUP],
+          toughness: 4,
+          savePools: BASELINE_SAVE_POOL,
+        }).totalDamageDist,
+      );
+      const eNerfed = expectedValue(
+        useCase.execute({
+          weaponGroups: [{ ...BASELINE_WEAPON_GROUP, hitModifier: -1 }],
+          toughness: 4,
+          savePools: BASELINE_SAVE_POOL,
+        }).totalDamageDist,
+      );
+      expect(eNerfed).toBeLessThan(eBase);
+    });
+  });
+
+  // ── Hit reroll ────────────────────────────────────────────────────────
+
+  describe('hitReroll', () => {
+    it("reroll 'ones' on hit increases expected damage", () => {
+      const eBase = expectedValue(
+        useCase.execute({
+          weaponGroups: [BASELINE_WEAPON_GROUP],
+          toughness: 4,
+          savePools: BASELINE_SAVE_POOL,
+        }).totalDamageDist,
+      );
+      const eReroll = expectedValue(
+        useCase.execute({
+          weaponGroups: [{ ...BASELINE_WEAPON_GROUP, hitReroll: 'ones' }],
+          toughness: 4,
+          savePools: BASELINE_SAVE_POOL,
+        }).totalDamageDist,
+      );
+      expect(eReroll).toBeGreaterThan(eBase);
+    });
+
+    it("reroll 'failures' on hit is better than reroll 'ones'", () => {
+      const eOnes = expectedValue(
+        useCase.execute({
+          weaponGroups: [{ ...BASELINE_WEAPON_GROUP, hitReroll: 'ones' }],
+          toughness: 4,
+          savePools: BASELINE_SAVE_POOL,
+        }).totalDamageDist,
+      );
+      const eFailures = expectedValue(
+        useCase.execute({
+          weaponGroups: [{ ...BASELINE_WEAPON_GROUP, hitReroll: 'failures' }],
+          toughness: 4,
+          savePools: BASELINE_SAVE_POOL,
+        }).totalDamageDist,
+      );
+      expect(eFailures).toBeGreaterThan(eOnes);
+    });
+  });
+
+  // ── Wound modifier ────────────────────────────────────────────────────
+
+  describe('woundModifier', () => {
+    it('+1 wound modifier increases expected damage', () => {
+      const eBase = expectedValue(
+        useCase.execute({
+          weaponGroups: [BASELINE_WEAPON_GROUP],
+          toughness: 4,
+          savePools: BASELINE_SAVE_POOL,
+        }).totalDamageDist,
+      );
+      const eBoosted = expectedValue(
+        useCase.execute({
+          weaponGroups: [{ ...BASELINE_WEAPON_GROUP, woundModifier: 1 }],
+          toughness: 4,
+          savePools: BASELINE_SAVE_POOL,
+        }).totalDamageDist,
+      );
+      expect(eBoosted).toBeGreaterThan(eBase);
+    });
+  });
+
+  // ── Save modifier and save reroll ─────────────────────────────────────
+
+  describe('save modifier and save reroll', () => {
+    it('+1 save modifier reduces expected damage (easier save for defender)', () => {
+      const eBase = expectedValue(
+        useCase.execute({
+          weaponGroups: [BASELINE_WEAPON_GROUP],
+          toughness: 4,
+          savePools: BASELINE_SAVE_POOL,
+        }).totalDamageDist,
+      );
+      const eBoostedSave = expectedValue(
+        useCase.execute({
+          weaponGroups: [BASELINE_WEAPON_GROUP],
+          toughness: 4,
+          savePools: [{ baseSave: 4, fraction: 1, saveModifier: 1 }],
+        }).totalDamageDist,
+      );
+      expect(eBoostedSave).toBeLessThan(eBase);
+    });
+
+    it("reroll 'failures' on save reduces expected damage", () => {
+      const eBase = expectedValue(
+        useCase.execute({
+          weaponGroups: [BASELINE_WEAPON_GROUP],
+          toughness: 4,
+          savePools: BASELINE_SAVE_POOL,
+        }).totalDamageDist,
+      );
+      const eRerollSave = expectedValue(
+        useCase.execute({
+          weaponGroups: [BASELINE_WEAPON_GROUP],
+          toughness: 4,
+          savePools: [{ baseSave: 4, fraction: 1, saveReroll: 'failures' }],
+        }).totalDamageDist,
+      );
+      expect(eRerollSave).toBeLessThan(eBase);
+    });
+  });
+
+  // ── Feel No Pain ───────────────────────────────────────────────────────
+
+  describe('fnpThreshold (Feel No Pain)', () => {
+    /**
+     * FNP fixture: save is impossible (baseSave 5 + ap 2 = effective 7)
+     * so the save stage passes all wounds through. FNP effect is isolated.
+     *
+     * E[damage without FNP] = 6 × (4/6) × (3/6) × 1 = 2
+     *   (6 attacks, hit 3+, S4 vs T4 → wound 4+, dmg 1)
+     */
+    const FNP_WEAPON: WeaponGroup = {
+      attacksDist: fixed(6),
+      hitThreshold: 3,
+      strengthDist: fixed(4),
+      ap: 2,
+      damageDist: fixed(1),
+      modelCount: 1,
+    };
+    const FNP_POOL_NO_FNP: SavePool = { baseSave: 5, fraction: 1 };
+
+    it('absent fnpThreshold produces the same result as the no-FNP baseline', () => {
+      const eNoField = expectedValue(
+        useCase.execute({
+          weaponGroups: [FNP_WEAPON],
+          toughness: 4,
+          savePools: [FNP_POOL_NO_FNP],
+        }).totalDamageDist,
+      );
+      const eExplicitUndefined = expectedValue(
+        useCase.execute({
+          weaponGroups: [FNP_WEAPON],
+          toughness: 4,
+          savePools: [{ ...FNP_POOL_NO_FNP, fnpThreshold: undefined }],
+        }).totalDamageDist,
+      );
+      expect(eExplicitUndefined).toBeCloseTo(eNoField);
+    });
+
+    it('FNP 5+ reduces expected damage by factor P(FNP fail) = 2/3', () => {
+      // P(FNP success on 5+) = (7-5)/6 = 1/3 → P(FNP fail) = 2/3
+      // E[baseline] = 2 → E[with FNP 5+] = 2 × (2/3) = 4/3
+      const eFNP5 = expectedValue(
+        useCase.execute({
+          weaponGroups: [FNP_WEAPON],
+          toughness: 4,
+          savePools: [{ ...FNP_POOL_NO_FNP, fnpThreshold: 5 }],
+        }).totalDamageDist,
+      );
+      expect(eFNP5).toBeCloseTo(4 / 3);
+    });
+
+    it('FNP 2+ (strongest) reduces expected damage to 1/6 of baseline', () => {
+      // P(FNP success on 2+) = 5/6 → P(FNP fail) = 1/6
+      // E[with FNP 2+] = 2 × (1/6) = 1/3
+      const eFNP2 = expectedValue(
+        useCase.execute({
+          weaponGroups: [FNP_WEAPON],
+          toughness: 4,
+          savePools: [{ ...FNP_POOL_NO_FNP, fnpThreshold: 2 }],
+        }).totalDamageDist,
+      );
+      expect(eFNP2).toBeCloseTo(1 / 3);
+    });
+
+    it('lower FNP threshold (better FNP) reduces damage more than a higher one', () => {
+      const eFNP6 = expectedValue(
+        useCase.execute({
+          weaponGroups: [FNP_WEAPON],
+          toughness: 4,
+          savePools: [{ ...FNP_POOL_NO_FNP, fnpThreshold: 6 }],
+        }).totalDamageDist,
+      );
+      const eFNP4 = expectedValue(
+        useCase.execute({
+          weaponGroups: [FNP_WEAPON],
+          toughness: 4,
+          savePools: [{ ...FNP_POOL_NO_FNP, fnpThreshold: 4 }],
+        }).totalDamageDist,
+      );
+      expect(eFNP4).toBeLessThan(eFNP6);
+    });
+
+    it('probabilities still sum to 1 with FNP active', () => {
+      const { totalDamageDist } = useCase.execute({
+        weaponGroups: [FNP_WEAPON],
+        toughness: 4,
+        savePools: [{ ...FNP_POOL_NO_FNP, fnpThreshold: 5 }],
+      });
+      expect(sumProbabilities(totalDamageDist)).toBeCloseTo(1);
+    });
+
+    it('FNP on one pool only: expected damage between FNP-everywhere and no-FNP', () => {
+      // Two equal half-pools; only one of them has FNP 5+.
+      const eNoFNP = expectedValue(
+        useCase.execute({
+          weaponGroups: [FNP_WEAPON],
+          toughness: 4,
+          savePools: [{ baseSave: 5, fraction: 1 }],
+        }).totalDamageDist,
+      );
+      const eFNPEverywhere = expectedValue(
+        useCase.execute({
+          weaponGroups: [FNP_WEAPON],
+          toughness: 4,
+          savePools: [
+            { baseSave: 5, fraction: 0.5, fnpThreshold: 5 },
+            { baseSave: 5, fraction: 0.5, fnpThreshold: 5 },
+          ],
+        }).totalDamageDist,
+      );
+      const eMixed = expectedValue(
+        useCase.execute({
+          weaponGroups: [FNP_WEAPON],
+          toughness: 4,
+          savePools: [
+            { baseSave: 5, fraction: 0.5, fnpThreshold: 5 },
+            { baseSave: 5, fraction: 0.5 },
+          ],
+        }).totalDamageDist,
+      );
+      expect(eMixed).toBeGreaterThan(eFNPEverywhere);
+      expect(eMixed).toBeLessThan(eNoFNP);
+    });
+  });
 });

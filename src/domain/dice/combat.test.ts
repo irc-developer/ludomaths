@@ -1,4 +1,4 @@
-import { chosenSaveThreshold, effectiveSaveThreshold, woundThreshold } from './combat';
+import { chosenSaveThreshold, dieSuccessProbability, effectiveSaveThreshold, woundThreshold } from './combat';
 
 describe('woundThreshold', () => {
   // Las cinco reglas de la tabla de heridas de Warhammer 40K.
@@ -148,5 +148,103 @@ describe('chosenSaveThreshold', () => {
 
   it('throws when invulnerableSave is not an integer', () => {
     expect(() => chosenSaveThreshold(4, 0, 3.5)).toThrow(RangeError);
+  });
+});
+
+describe('dieSuccessProbability', () => {
+  // dieSuccessProbability computes P(D6 ≥ effectiveThreshold) where:
+  //   effectiveThreshold = clamp(baseThreshold - modifier, 2, ∞)
+  //   modifier is clamped to [-1, +1] (WH40K rule)
+  //   reroll policy adjusts the probability after the first roll
+
+  // ── Base probability: no modifier, no reroll ─────────────────────────────
+  it('returns (7-T)/6 with no modifier or reroll', () => {
+    expect(dieSuccessProbability(2, 0, 'none')).toBeCloseTo(5 / 6);
+    expect(dieSuccessProbability(4, 0, 'none')).toBeCloseTo(3 / 6);
+    expect(dieSuccessProbability(6, 0, 'none')).toBeCloseTo(1 / 6);
+  });
+
+  it('supports default parameters (modifier=0, reroll=none)', () => {
+    expect(dieSuccessProbability(4)).toBeCloseTo(3 / 6);
+    expect(dieSuccessProbability(4, 0)).toBeCloseTo(3 / 6);
+  });
+
+  // ── Modifier ─────────────────────────────────────────────────────────────
+  it('+1 modifier reduces the threshold by 1 (easier roll)', () => {
+    // 4+ with +1 → effective 3+ → p = 4/6
+    expect(dieSuccessProbability(4, 1, 'none')).toBeCloseTo(4 / 6);
+  });
+
+  it('-1 modifier increases the threshold by 1 (harder roll)', () => {
+    // 4+ with -1 → effective 5+ → p = 2/6
+    expect(dieSuccessProbability(4, -1, 'none')).toBeCloseTo(2 / 6);
+  });
+
+  it('modifier is clamped to +1 (WH40K: maximum +1)', () => {
+    expect(dieSuccessProbability(4, 3, 'none')).toBeCloseTo(dieSuccessProbability(4, 1, 'none'));
+  });
+
+  it('modifier is clamped to -1 (WH40K: maximum -1)', () => {
+    expect(dieSuccessProbability(4, -3, 'none')).toBeCloseTo(dieSuccessProbability(4, -1, 'none'));
+  });
+
+  it('effective threshold is floored at 2 (roll of 1 always fails)', () => {
+    // 2+ with +1 modifier → effective 1+, clamped to 2+
+    expect(dieSuccessProbability(2, 1, 'none')).toBeCloseTo(5 / 6);
+  });
+
+  it('effective threshold > 6 gives probability 0 (impossible)', () => {
+    // 6+ with -1 modifier → effective 7+
+    expect(dieSuccessProbability(6, -1, 'none')).toBeCloseTo(0);
+  });
+
+  it('+1 modifier rescues a negated save (threshold 7 → effective 6)', () => {
+    // AP negated a 5+ save to 7+; a +1 modifier brings it back to 6+
+    expect(dieSuccessProbability(7, 1, 'none')).toBeCloseTo(1 / 6);
+  });
+
+  // ── Reroll policies ──────────────────────────────────────────────────────
+
+  // reroll 'ones':
+  //   Only dice showing 1 on the first roll are rerolled.
+  //   Since the effective threshold is always ≥ 2, rolling 1 always fails.
+  //   P = p + P(rolled 1) · p = p + (1/6) · p = p · (7/6)
+  it("reroll 'ones': P = p * (7/6)", () => {
+    const p = 3 / 6; // 4+
+    expect(dieSuccessProbability(4, 0, 'ones')).toBeCloseTo(p * (7 / 6));
+  });
+
+  // reroll 'failures':
+  //   All failed dice are rerolled once.
+  //   P = p + (1−p) · p = p · (2−p)
+  it("reroll 'failures': P = p * (2 - p)", () => {
+    const p = 3 / 6; // 4+
+    expect(dieSuccessProbability(4, 0, 'failures')).toBeCloseTo(p * (2 - p));
+  });
+
+  it("reroll 'failures' is strictly better than reroll 'ones' when p < 5/6", () => {
+    // At t=2, p=5/6: p*(2-p) = p*(7/6) — they are equal because (2-5/6)=(7/6).
+    // For all other thresholds (t≥3, p≤4/6) failures strictly dominates ones.
+    for (let t = 3; t <= 5; t++) {
+      expect(dieSuccessProbability(t, 0, 'failures')).toBeGreaterThan(
+        dieSuccessProbability(t, 0, 'ones'),
+      );
+    }
+  });
+
+  it('modifier is applied before judging the reroll (modified threshold determines failures)', () => {
+    // 4+ with +1 modifier → effective 3+ → p = 4/6
+    // reroll 'failures': p*(2-p) = (4/6)*(8/6)
+    const p = 4 / 6;
+    expect(dieSuccessProbability(4, 1, 'failures')).toBeCloseTo(p * (2 - p));
+  });
+
+  it("reroll 'ones' with impossible roll (p=0) stays 0", () => {
+    // 6+ with -1 → effective 7+ → p = 0 → reroll still gives 0
+    expect(dieSuccessProbability(6, -1, 'ones')).toBeCloseTo(0);
+  });
+
+  it("reroll 'failures' with impossible roll (p=0) stays 0", () => {
+    expect(dieSuccessProbability(6, -1, 'failures')).toBeCloseTo(0);
   });
 });
