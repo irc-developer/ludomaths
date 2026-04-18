@@ -43,3 +43,43 @@ export interface UnitProfile {
    */
   savePools: SavePool[];
 }
+
+/**
+ * Validates the invariants of a UnitProfile and throws a RangeError if any
+ * rule is violated.
+ *
+ * Invariants:
+ * - name must be a non-empty string after trimming whitespace.
+ * - wounds must be a positive integer (≥ 1).
+ * - toughness must be a positive integer (≥ 1).
+ * - savePools must be non-empty.
+ * - savePool fractions must sum to 1 (within floating-point tolerance).
+ *
+ * weaponGroups may be empty — a unit used only as a combat target has no weapons.
+ *
+ * @throws {RangeError} on the first invariant violation found.
+ */
+export function validateUnitProfile(profile: UnitProfile): void {
+  if (!profile.name.trim()) {
+    throw new RangeError('UnitProfile: name must not be empty');
+  }
+  if (!Number.isInteger(profile.wounds) || profile.wounds < 1) {
+    throw new RangeError(
+      `UnitProfile: wounds must be a positive integer, got ${profile.wounds}`,
+    );
+  }
+  if (!Number.isInteger(profile.toughness) || profile.toughness < 1) {
+    throw new RangeError(
+      `UnitProfile: toughness must be a positive integer, got ${profile.toughness}`,
+    );
+  }
+  if (profile.savePools.length === 0) {
+    throw new RangeError('UnitProfile: savePools must not be empty');
+  }
+  const fractionSum = profile.savePools.reduce((acc, p) => acc + p.fraction, 0);
+  if (Math.abs(fractionSum - 1) > 1e-9) {
+    throw new RangeError(
+      `UnitProfile: savePool fractions must sum to 1, got ${fractionSum}`,
+    );
+  }
+}

@@ -1,50 +1,76 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
-
----
-
 # LudoMaths
 
-> 🇬🇧 [English](#english) · 🇪🇸 [Español](#español)
+**LudoMaths** is a mobile application built with React Native (bare) and TypeScript that calculates combat probabilities and statistics for board games — currently focused on **Warhammer 40,000 (10th edition)**.
+
+It models the full combat pipeline step by step (attacks → hits → wounds → saves → damage) and supports special weapon abilities (Sustained Hits, Lethal Hits, Devastating Wounds, Mortal Wounds), feel-no-pain rolls, reroll policies, and multi-unit profiles. The goal is to give players accurate expected-damage numbers and full probability distributions so they can make better tactical decisions at the table.
 
 ---
 
-## English
+## Features
 
-**LudoMaths** is a mobile application built with React Native (bare) and TypeScript that calculates probabilities and statistics for board games. It helps players make better decisions by computing dice roll distributions, card draw probabilities, and any combinatorial calculation useful during a game.
-
-### Features
-
-- **Dice calculator** — probability of getting exactly / at least / at most *k* successes in *N* dice rolls looking for a target value.
-- **Card calculator** — hypergeometric distribution to calculate the probability of drawing specific cards from a deck (exact, cumulative, and combo probabilities).
-- **Roll history** — log your real rolls to track mean, variance, and standard deviation over time.
-- **Full distribution view** — tables and charts showing the complete probability distribution for any scenario.
+- **WH40K combat calculator** — full pipeline with weapon abilities, save pools, feel-no-pain.
+- **Unit profiles** — save attacker and defender profiles (name, toughness, armor save, weapon groups) for quick reuse.
+- **Rounds-to-kill** — calculates cumulative kill probability per round for any attacker/defender pair.
+- **Combat history** — save and review past combat calculations.
+- **Card calculator** *(hypergeometric)* — probability of drawing specific cards from a deck (exact, cumulative, and combo).
+- **Full distribution view** — complete P(X = k) table for any scenario, not just the expected value.
 - **Multilingual** — English and Spanish, auto-detected from device locale.
 
-### Tech stack
+---
+
+## Tech stack
 
 | Layer | Technology |
 |---|---|
-| Mobile framework | React Native 0.85 (bare) |
+| Mobile framework | React Native 0.85 (bare, no Expo) |
 | Language | TypeScript (strict) |
-| Architecture | Clean Architecture |
+| Architecture | Clean Architecture (domain → application → infrastructure → presentation) |
 | State management | Zustand |
-| Navigation | React Navigation |
+| Navigation | React Navigation (bottom tabs + stack) |
+| Persistence | AsyncStorage |
 | Testing | Jest + @testing-library/react-native |
 | i18n | i18next + react-i18next + react-native-localize |
 
-### Architecture
+---
+
+## Architecture
 
 ```
 src/
-├── domain/          # Pure TypeScript entities, value objects, use case interfaces
-├── application/     # Use case implementations, orchestration
-├── infrastructure/  # AsyncStorage adapters, i18n setup, external APIs
-└── presentation/    # React Native screens, components, UI hooks
+├── domain/          # Pure TypeScript entities, value objects, game rules.
+│   ├── math/        #   Generic probability primitives (binomial, hypergeometric, convolution, pipeline)
+│   └── dice/        #   WH40K-specific rules (wound table, save table, weapon/save-pool types)
+├── application/     # Use case implementations. Orchestrates domain; no React, no AsyncStorage.
+├── infrastructure/  # AsyncStorage repositories, i18n setup.
+└── presentation/    # React Native screens, components, UI hooks (Zustand, navigation).
 ```
 
-**Dependency rule**: inner layers (`domain`) never import from outer layers. `domain` knows nothing about React or AsyncStorage.
+**Dependency rule**: inner layers never import from outer layers. `domain` knows nothing about React, AsyncStorage, or use cases.
 
-### Getting started
+The mathematical core (`domain/math/`) is framework-agnostic pure TypeScript. Every function there can be extracted and used in any JavaScript/TypeScript environment.
+
+---
+
+## Mathematical core
+
+The probability engine is built from four composable primitives:
+
+| Module | What it models |
+|---|---|
+| `domain/math/combinatorics` | Binomial coefficient C(n, k) — foundation of all counting |
+| `domain/math/binomial` | P(X = k) for repeated independent trials with constant success probability |
+| `domain/math/hypergeometric` | P(X = k) for drawing from a finite deck without replacement |
+| `domain/math/convolution` | Distribution of the sum of two or more independent random variables |
+| `domain/math/pipeline` | Two-step combat primitives: binomial thinning (`applyStage`) and randomly stopped sum (`applyDamage`) |
+| `domain/math/distribution` | Types and utilities: `Distribution`, `expectedValue`, `cumulativeProbability` |
+
+The WH40K combat pipeline in `application/dice/CalculateUnitCombatUseCase` composes these primitives into the full attack sequence, including all special abilities.
+
+See [`docs/math/`](docs/math/) for detailed explanations of each module.
+
+---
+
+## Getting started
 
 ```bash
 # Install dependencies
@@ -53,11 +79,45 @@ npm install
 # Run on Android (requires Android SDK + emulator or device)
 npx react-native run-android
 
-# Run tests
+# Run on iOS (macOS only, requires Xcode + CocoaPods)
+npx react-native run-ios
+
+# Run all tests
 npx jest --watchAll
 
-# TypeScript check
+# TypeScript type check (no build output)
 npx tsc --noEmit
+```
+
+---
+
+## Project status
+
+| Area | Status |
+|---|---|
+| Math core (binomial, hypergeometric, convolution, pipeline) | ✅ Complete, 340 tests |
+| WH40K combat pipeline (all 4 weapon abilities + FNP) | ✅ Complete |
+| Unit profiles (save, edit, delete) | ✅ Complete |
+| Combat setup & result screen | ✅ Complete |
+| Combat history | ✅ Complete |
+| Card (hypergeometric) calculator UI | 🔲 Planned |
+| Dice roll history tracker | 🔲 Planned |
+
+---
+
+## Documentation
+
+- [`docs/math/`](docs/math/) — mathematical explanation of each probability module, written for readers with high-school level maths.
+- [`docs/math/weapon-abilities.md`](docs/math/weapon-abilities.md) — detailed breakdown of Sustained Hits, Lethal Hits, Devastating Wounds and Mortal Wounds models.
+- [`.github/skills/wh40k/SKILL.md`](.github/skills/wh40k/SKILL.md) — developer guide for adding new WH40K mechanics (for contributors / AI agents).
+- [`.github/skills/code-review/SKILL.md`](.github/skills/code-review/SKILL.md) — code review checklist (Clean Architecture, SOLID, DRY).
+
+---
+
+## License
+
+MIT
+
 ```
 
 ### Development workflow (TDD)

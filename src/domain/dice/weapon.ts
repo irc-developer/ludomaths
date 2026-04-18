@@ -39,6 +39,37 @@ export interface WeaponProfile {
   woundModifier?: number;
   /** Optional re-roll policy for wound rolls. Defaults to 'none'. */
   woundReroll?: DieRerollPolicy;
+
+  // ── Special weapon abilities ─────────────────────────────────────────────
+
+  /**
+   * [SUSTAINED HITS X]: each unmodified hit roll of 6 (critical hit) generates
+   * X additional hits that are resolved as normal hits (no further crits).
+   * Must be a positive integer when provided.
+   */
+  sustainedHits?: number;
+
+  /**
+   * [LETHAL HITS]: each unmodified hit roll of 6 (critical hit) automatically
+   * wounds the target — the wound roll is skipped for that hit. The auto-wound
+   * then goes through saves as normal.
+   */
+  lethalHits?: boolean;
+
+  /**
+   * [DEVASTATING WOUNDS]: each unmodified wound roll of 6 (critical wound) bypasses
+   * all saves (armor and invulnerable). The critical wound deals its damage as
+   * mortal wounds. Feel No Pain still applies (10th edition rule).
+   */
+  devastatingWounds?: boolean;
+
+  /**
+   * Mortal wounds per hit: each hit (including critical hits counted as hits)
+   * additionally inflicts this many mortal wounds that bypass saves.
+   * Feel No Pain applies normally.
+   * Must be a positive integer when provided.
+   */
+  mortalWoundsPerHit?: number;
 }
 
 /**

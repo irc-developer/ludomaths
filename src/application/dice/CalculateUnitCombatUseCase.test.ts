@@ -625,4 +625,296 @@ describe('CalculateUnitCombatUseCase', () => {
       expect(eMixed).toBeLessThan(eNoFNP);
     });
   });
+
+  // ── Weapon abilities ───────────────────────────────────────────────────────
+
+  describe('weapon abilities', () => {
+    /**
+     * Shared fixture for all ability tests.
+     *
+     * 6 attacks, hit on 3+ (pHit = 4/6, pCrit_hit = 1/6, pNormHit = 3/6)
+     * S4 vs T4 → wound on 4+ (pWound = 3/6, pCrit_wound = 1/6, pNormWound = 2/6)
+     * AP2.
+     *
+     * POOL_IMPOSSIBLE: baseSave=5, AP2 → effective 7 → failSave = 1
+     * POOL_SAVE: baseSave=3, AP2 → effective 5 → failSave = 4/6
+     *
+     * Baseline (POOL_IMPOSSIBLE): E[damage] = 6 × (4/6) × (3/6) = 2
+     * Baseline (POOL_SAVE):       E[damage] = 6 × (4/6) × (3/6) × (4/6) = 4/3
+     */
+    const BASE: WeaponGroup = {
+      attacksDist: fixed(6),
+      hitThreshold: 3,
+      strengthDist: fixed(4),
+      ap: 2,
+      damageDist: fixed(1),
+      modelCount: 1,
+    };
+    const POOL_IMPOSSIBLE: SavePool[] = [{ baseSave: 5, fraction: 1 }];
+    const POOL_SAVE: SavePool[]       = [{ baseSave: 3, fraction: 1 }];
+    const T4 = 4;
+
+    // ── [SUSTAINED HITS] ──────────────────────────────────────────────────
+
+    describe('[SUSTAINED HITS]', () => {
+      /**
+       * Each critical hit roll (6) generates X extra hits → wound roll.
+       *
+       * E[extra hits] = N × P(crit) × X = 6 × (1/6) × 1 = 1
+       * E[total hits] = 6 × (4/6) + 1 = 5
+       * E[damage]     = 5 × (3/6) = 2.5   (impossible save)
+       */
+      it('sustainedHits=1 raises E[damage] from 2 to 2.5 (impossible save)', () => {
+        const eSustained = expectedValue(
+          useCase.execute({
+            weaponGroups: [{ ...BASE, sustainedHits: 1 }],
+            toughness: T4,
+            savePools: POOL_IMPOSSIBLE,
+          }).totalDamageDist,
+        );
+        expect(eSustained).toBeCloseTo(2.5);
+      });
+
+      /**
+       * E[with X=2] = 6 × (4/6) × (3/6) + 6 × (1/6) × 2 × (3/6) = 2 + 1 = 3
+       */
+      it('sustainedHits=2 raises E[damage] to 3 (impossible save)', () => {
+        const e2 = expectedValue(
+          useCase.execute({
+            weaponGroups: [{ ...BASE, sustainedHits: 2 }],
+            toughness: T4,
+            savePools: POOL_IMPOSSIBLE,
+          }).totalDamageDist,
+        );
+        expect(e2).toBeCloseTo(3);
+      });
+
+      it('probabilities sum to 1 with sustainedHits active', () => {
+        const { totalDamageDist } = useCase.execute({
+          weaponGroups: [{ ...BASE, sustainedHits: 1 }],
+          toughness: T4,
+          savePools: POOL_IMPOSSIBLE,
+        });
+        expect(sumProbabilities(totalDamageDist)).toBeCloseTo(1);
+      });
+    });
+
+    // ── [LETHAL HITS] ─────────────────────────────────────────────────────
+
+    describe('[LETHAL HITS]', () => {
+      /**
+       * Critical hits (roll 6) auto-wound; non-crit hits (roll 3–5) still need
+       * a wound roll. Auto-wounds go through saves as normal.
+       *
+       * pCrit = 1/6, pNormHit = 3/6
+       * E[auto-wounds]      = 6 × (1/6)             = 1     (go to save stage)
+       * E[normal wounds]    = 6 × (3/6) × (3/6)     = 1.5
+       * E[damage, no save]  = 1 + 1.5                = 2.5
+       */
+      it('lethalHits raises E[damage] from 2 to 2.5 (impossible save)', () => {
+        const eLethal = expectedValue(
+          useCase.execute({
+            weaponGroups: [{ ...BASE, lethalHits: true }],
+            toughness: T4,
+            savePools: POOL_IMPOSSIBLE,
+          }).totalDamageDist,
+        );
+        expect(eLethal).toBeCloseTo(2.5);
+      });
+
+      /**
+       * Auto-wounds from Lethal Hits still go through the save roll.
+       *
+       * baseSave=3, AP2 → effective 5+ → failSave = 4/6
+       * E[auto-wound damage] = 6 × (1/6) × (4/6)              = 2/3
+       * E[normal-hit damage] = 6 × (3/6) × (3/6) × (4/6)      = 1
+       * E[total]             = 2/3 + 1                          = 5/3
+       */
+      it('auto-wounds from lethal hits go through saves', () => {
+        const eLethal = expectedValue(
+          useCase.execute({
+            weaponGroups: [{ ...BASE, lethalHits: true }],
+            toughness: T4,
+            savePools: POOL_SAVE,
+          }).totalDamageDist,
+        );
+        expect(eLethal).toBeCloseTo(5 / 3);
+      });
+
+      it('probabilities sum to 1 with lethalHits active', () => {
+        const { totalDamageDist } = useCase.execute({
+          weaponGroups: [{ ...BASE, lethalHits: true }],
+          toughness: T4,
+          savePools: POOL_IMPOSSIBLE,
+        });
+        expect(sumProbabilities(totalDamageDist)).toBeCloseTo(1);
+      });
+    });
+
+    // ── [LETHAL HITS] + [SUSTAINED HITS] combined ─────────────────────────
+
+    describe('[LETHAL HITS] + [SUSTAINED HITS] combined', () => {
+      /**
+       * Roll 6: 1 auto-wound (Lethal) + 1 extra normal hit (Sustained).
+       * Roll 3–5: 1 normal hit.
+       * Extra hits from Sustained are NOT critical hits — they go to wound roll.
+       *
+       * E[auto-wounds]                   = 6 × (1/6) = 1
+       * E[extra hits from Sustained]     = 6 × (1/6) × 1 = 1
+       * E[normal hits (rolls 3–5)]       = 6 × (3/6) = 3
+       * E[hits needing wound roll]       = 3 + 1 = 4
+       * E[wounds from hit roll]          = 4 × (3/6) = 2
+       * E[total damage, no save]         = 1 + 2 = 3
+       */
+      it('combined lethalHits + sustainedHits=1 gives E[damage]=3 (impossible save)', () => {
+        const eCombined = expectedValue(
+          useCase.execute({
+            weaponGroups: [{ ...BASE, lethalHits: true, sustainedHits: 1 }],
+            toughness: T4,
+            savePools: POOL_IMPOSSIBLE,
+          }).totalDamageDist,
+        );
+        expect(eCombined).toBeCloseTo(3);
+      });
+
+      it('combined result exceeds either ability alone', () => {
+        const eSustained = expectedValue(
+          useCase.execute({
+            weaponGroups: [{ ...BASE, sustainedHits: 1 }],
+            toughness: T4,
+            savePools: POOL_IMPOSSIBLE,
+          }).totalDamageDist,
+        );
+        const eLethal = expectedValue(
+          useCase.execute({
+            weaponGroups: [{ ...BASE, lethalHits: true }],
+            toughness: T4,
+            savePools: POOL_IMPOSSIBLE,
+          }).totalDamageDist,
+        );
+        const eCombined = expectedValue(
+          useCase.execute({
+            weaponGroups: [{ ...BASE, lethalHits: true, sustainedHits: 1 }],
+            toughness: T4,
+            savePools: POOL_IMPOSSIBLE,
+          }).totalDamageDist,
+        );
+        expect(eCombined).toBeGreaterThan(eSustained);
+        expect(eCombined).toBeGreaterThan(eLethal);
+      });
+    });
+
+    // ── [DEVASTATING WOUNDS] ──────────────────────────────────────────────
+
+    describe('[DEVASTATING WOUNDS]', () => {
+      /**
+       * Critical wounds (wound roll 6) bypass all saves.
+       *
+       * baseSave=3, AP2 → effective 5 → failSave = 4/6
+       * pCritWound  = 1/6;  pNormWound = max(0, 3/6 − 1/6) = 2/6
+       *
+       * E[hits]                   = 6 × (4/6) = 4
+       * E[crit wounds]            = 4 × (1/6)            → bypass save
+       * E[norm wounds]            = 4 × (2/6)            → failSave = 4/6
+       * E[unsaved from norm]      = 4 × (2/6) × (4/6)
+       * E[damage] = 4×(1/6) + 4×(2/6)×(4/6)
+       *           = 4/6 + 4×8/36
+       *           = 4/6 + 32/36 = 24/36 + 32/36 = 56/36 = 14/9
+       */
+      it('devastatingWounds raises E[damage] to 14/9 (from 4/3 baseline) against a save', () => {
+        const eDevastating = expectedValue(
+          useCase.execute({
+            weaponGroups: [{ ...BASE, devastatingWounds: true }],
+            toughness: T4,
+            savePools: POOL_SAVE,
+          }).totalDamageDist,
+        );
+        expect(eDevastating).toBeCloseTo(14 / 9);
+      });
+
+      /**
+       * When the save is impossible, crit wounds and normal wounds both deal
+       * full damage — devastating wounds has no extra effect.
+       * E[damage] = 6 × (4/6) × (3/6) = 2 in both cases.
+       */
+      it('devastatingWounds has no effect when save is impossible', () => {
+        const eBase = expectedValue(
+          useCase.execute({
+            weaponGroups: [BASE],
+            toughness: T4,
+            savePools: POOL_IMPOSSIBLE,
+          }).totalDamageDist,
+        );
+        const eDevastating = expectedValue(
+          useCase.execute({
+            weaponGroups: [{ ...BASE, devastatingWounds: true }],
+            toughness: T4,
+            savePools: POOL_IMPOSSIBLE,
+          }).totalDamageDist,
+        );
+        expect(eDevastating).toBeCloseTo(eBase);
+      });
+
+      it('probabilities sum to 1 with devastatingWounds active', () => {
+        const { totalDamageDist } = useCase.execute({
+          weaponGroups: [{ ...BASE, devastatingWounds: true }],
+          toughness: T4,
+          savePools: POOL_SAVE,
+        });
+        expect(sumProbabilities(totalDamageDist)).toBeCloseTo(1);
+      });
+    });
+
+    // ── [MORTAL WOUNDS per hit] ───────────────────────────────────────────
+
+    describe('[MORTAL WOUNDS per hit]', () => {
+      /**
+       * Each hit generates `mortalWoundsPerHit` additional mortal wounds
+       * that bypass saves. FNP still applies.
+       *
+       * E[hits] = 6 × (4/6) = 4
+       * E[mortal damage]  = 4 × 1 = 4  (bypasses save)
+       * E[normal damage]  = 4 × (3/6) × (4/6) = 4/3
+       * E[total]          = 4 + 4/3 = 16/3
+       */
+      it('mortalWoundsPerHit=1 adds 4 expected mortal damage (bypass saves)', () => {
+        const eMW = expectedValue(
+          useCase.execute({
+            weaponGroups: [{ ...BASE, mortalWoundsPerHit: 1 }],
+            toughness: T4,
+            savePools: POOL_SAVE,
+          }).totalDamageDist,
+        );
+        expect(eMW).toBeCloseTo(16 / 3);
+      });
+
+      /**
+       * Mortal wounds bypass saves but FNP still applies.
+       *
+       * FNP 5+ → pFailFNP = 1 − P(5+) = 1 − 1/3 = 2/3
+       * E[mortal after FNP]  = 4 × (2/3) = 8/3
+       * E[normal after FNP]  = (4/3) × (2/3) = 8/9
+       * E[total]             = 8/3 + 8/9 = 24/9 + 8/9 = 32/9
+       */
+      it('FNP applies to mortal wounds', () => {
+        const eMWwithFNP = expectedValue(
+          useCase.execute({
+            weaponGroups: [{ ...BASE, mortalWoundsPerHit: 1 }],
+            toughness: T4,
+            savePools: [{ baseSave: 3, fraction: 1, fnpThreshold: 5 }],
+          }).totalDamageDist,
+        );
+        expect(eMWwithFNP).toBeCloseTo(32 / 9);
+      });
+
+      it('probabilities sum to 1 with mortalWoundsPerHit active', () => {
+        const { totalDamageDist } = useCase.execute({
+          weaponGroups: [{ ...BASE, mortalWoundsPerHit: 1 }],
+          toughness: T4,
+          savePools: POOL_SAVE,
+        });
+        expect(sumProbabilities(totalDamageDist)).toBeCloseTo(1);
+      });
+    });
+  });
 });
