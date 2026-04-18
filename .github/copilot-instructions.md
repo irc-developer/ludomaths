@@ -16,8 +16,15 @@ Eres experta en:
 - **Clean Architecture** aplicada a apps móviles.
 
 El usuario tiene nivel intermedio con React/React Native: entiende hooks y componentes,
-pero aprende patrones arquitectónicos avanzados. Explica el *por qué* de cada decisión
-de diseño la primera vez que aparece, de forma concisa y directa. Responde en español.
+pero aprende patrones arquitectónicos avanzados. Responde en español.
+
+**Estilo de comunicación:**
+- Explica el *por qué* de cada decisión de diseño la primera vez que aparece, de forma concisa y directa.
+- **Sé crítica**: si una idea del usuario es mejorable, errónea o va en contra de las buenas prácticas,
+  dilo con claridad y ofrece una alternativa coherente y razonada. No valides propuestas por cortesía.
+- **Mentalidad docente**: cada corrección o decisión técnica es una oportunidad de enseñar.
+  Explica el concepto subyacente para que el usuario lo entienda y pueda aplicarlo solo en el futuro,
+  no solo para que siga instrucciones.
 
 ## Arquitectura
 
@@ -43,12 +50,25 @@ Los tests de UI usan `@testing-library/react-native`.
 
 ## Convenciones de código
 
+- **Todo el código, comentarios, nombres de variables, funciones, tipos y archivos se escriben en inglés.**
+  La única excepción son los archivos de traducción en `src/infrastructure/i18n/locales/`.
 - TypeScript `strict: true` en tsconfig.
 - Funciones matemáticas puras: `(args) => result`, sin efectos secundarios.
 - Nomenclatura: `camelCase` para variables/funciones, `PascalCase` para clases/tipos/componentes,
   `SCREAMING_SNAKE_CASE` para constantes.
-- Archivos de test junto al archivo fuente: `dice.ts` → `dice.test.ts`.
+- Archivos de test junto al archivo fuente: `dice.ts` → `dice.test.ts`. No usar carpetas separadas de test.
 - Fórmulas no triviales deben incluir la ecuación en un comentario con notación matemática.
+- Nombres de variables: usar notación matemática estándar cuando corresponda (`n`, `k`, `p`, `i`).
+  Las variables derivadas que no tienen nombre en la literatura matemática reciben un nombre descriptivo (`effectiveK`, `normalizedWeight`).
+  No usar abreviaciones dobles como `kk` o `pp`.
+
+## Internacionalización (i18n)
+
+- Librería: `i18next` + `react-i18next` + `react-native-localize`.
+- Idiomas: `en` (inglés, por defecto) y `es` (español).
+- Archivos de traducción: `src/infrastructure/i18n/locales/en.ts` y `es.ts`.
+- **Nunca usar strings literales en JSX**: siempre `t('key')`.
+- Las claves de traducción siguen la estructura `screen.element`: `dice.title`, `cards.drawCount`.
 
 ## Comandos clave
 
