@@ -94,16 +94,17 @@ export class CalculateUnitCombatUseCase {
         strengthDist, woundModifier, woundReroll,
         ap, damageDist, modelCount,
         sustainedHits, lethalHits, devastatingWounds, mortalWoundsPerHit,
+        torrent,
       } = group;
 
       // ── Stage 1: Attacks → Hits ──────────────────────────────────────────
       //
-      // When [LETHAL HITS] or [SUSTAINED HITS] are active, critical hit rolls
-      // (unmodified 6, possibly after rerolls) are tracked separately.
-      // Otherwise, all hits enter the wound roll together.
+      // [TORRENT]: weapon auto-hits. No hit roll is made — all attacks become
+      // hits directly. Sustained Hits and Lethal Hits cannot trigger (they
+      // require a hit roll). allHitsDist = totalAttacksDist.
       //
-      // allHitsDist tracks every successful hit including crits, used later
-      // by [MORTAL WOUNDS per hit].
+      // Otherwise, when [LETHAL HITS] or [SUSTAINED HITS] are active, critical
+      // hit rolls (unmodified 6, possibly after rerolls) are tracked separately.
       const totalAttacksDist = multiConvolve(attacksDist, modelCount);
       const pAllHits = dieSuccessProbability(hitThreshold, hitModifier ?? 0, hitReroll ?? 'none');
 
@@ -111,42 +112,49 @@ export class CalculateUnitCombatUseCase {
       let autoWoundsDist: Distribution;  // bypass wound roll ([LETHAL HITS])
       let allHitsDist: Distribution;     // every hit (for [MORTAL WOUNDS per hit])
 
-      const hasCritHitAbility = lethalHits === true || (sustainedHits ?? 0) > 0;
-
-      if (hasCritHitAbility) {
-        // P(unmodified 6 on attack die after rerolls).
-        // Critical hit threshold is always 6 regardless of hitModifier.
-        const pCritHit  = dieSuccessProbability(6, 0, hitReroll ?? 'none');
-        const pNormHit  = Math.max(0, pAllHits - pCritHit);
-        const critHitsDist = applyStage(totalAttacksDist, pCritHit);
-        const normHitsDist = applyStage(totalAttacksDist, pNormHit);
-
-        // [LETHAL HITS]: critical hits bypass the wound roll (auto-wound).
-        autoWoundsDist = lethalHits === true ? critHitsDist : DEGENERATE_ZERO;
-
-        // [SUSTAINED HITS X]: critical hits generate X additional normal hits.
-        //   applyDamage models "k crits each producing X extra" as a scaled sum:
-        //   P(extra = j) = P(Bin(N, pCrit) = j / X).
-        const X = sustainedHits ?? 0;
-        const extraHitsDist = X > 0
-          ? applyDamage(critHitsDist, [{ value: X, probability: 1 }])
-          : DEGENERATE_ZERO;
-
-        if (lethalHits === true) {
-          // Crits auto-wound: only normal hits + Sustained extras go to wound roll.
-          hitsDist    = X > 0 ? convolve(normHitsDist, extraHitsDist) : normHitsDist;
-          // All hits (including auto-wounding crits) count for mortal wounds.
-          allHitsDist = convolve(critHitsDist, hitsDist);
-        } else {
-          // No Lethal Hits: crits participate in wound roll as normal hits.
-          const allRegularHits = applyStage(totalAttacksDist, pAllHits);
-          hitsDist    = X > 0 ? convolve(allRegularHits, extraHitsDist) : allRegularHits;
-          allHitsDist = hitsDist;
-        }
-      } else {
-        hitsDist      = applyStage(totalAttacksDist, pAllHits);
+      if (torrent === true) {
+        // All attacks auto-hit; no hit roll, no crits.
+        hitsDist      = totalAttacksDist;
         autoWoundsDist = DEGENERATE_ZERO;
-        allHitsDist   = hitsDist;
+        allHitsDist   = totalAttacksDist;
+      } else {
+        const hasCritHitAbility = lethalHits === true || (sustainedHits ?? 0) > 0;
+
+        if (hasCritHitAbility) {
+          // P(unmodified 6 on attack die after rerolls).
+          // Critical hit threshold is always 6 regardless of hitModifier.
+          const pCritHit  = dieSuccessProbability(6, 0, hitReroll ?? 'none');
+          const pNormHit  = Math.max(0, pAllHits - pCritHit);
+          const critHitsDist = applyStage(totalAttacksDist, pCritHit);
+          const normHitsDist = applyStage(totalAttacksDist, pNormHit);
+
+          // [LETHAL HITS]: critical hits bypass the wound roll (auto-wound).
+          autoWoundsDist = lethalHits === true ? critHitsDist : DEGENERATE_ZERO;
+
+          // [SUSTAINED HITS X]: critical hits generate X additional normal hits.
+          //   applyDamage models "k crits each producing X extra" as a scaled sum:
+          //   P(extra = j) = P(Bin(N, pCrit) = j / X).
+          const X = sustainedHits ?? 0;
+          const extraHitsDist = X > 0
+            ? applyDamage(critHitsDist, [{ value: X, probability: 1 }])
+            : DEGENERATE_ZERO;
+
+          if (lethalHits === true) {
+            // Crits auto-wound: only normal hits + Sustained extras go to wound roll.
+            hitsDist    = X > 0 ? convolve(normHitsDist, extraHitsDist) : normHitsDist;
+            // All hits (including auto-wounding crits) count for mortal wounds.
+            allHitsDist = convolve(critHitsDist, hitsDist);
+          } else {
+            // No Lethal Hits: crits participate in wound roll as normal hits.
+            const allRegularHits = applyStage(totalAttacksDist, pAllHits);
+            hitsDist    = X > 0 ? convolve(allRegularHits, extraHitsDist) : allRegularHits;
+            allHitsDist = hitsDist;
+          }
+        } else {
+          hitsDist      = applyStage(totalAttacksDist, pAllHits);
+          autoWoundsDist = DEGENERATE_ZERO;
+          allHitsDist   = hitsDist;
+        }
       }
 
       // ── Stage 2: Hits → Wounds ───────────────────────────────────────────

@@ -14,7 +14,24 @@ import { useCombatStore } from '@infrastructure/store/useCombatStore';
 import { useCombatResult } from '@presentation/hooks/useCombatResult';
 import type { RoundEntry } from '@application/dice/CalculateRoundsToKillUseCase';
 import type { CombatResultScreenProps } from '@presentation/navigation/navigationTypes';
-import { expectedValue } from '@domain/math/distribution';
+import { expectedValue, type Distribution } from '@domain/math/distribution';
+
+function modeFromDist(dist: Distribution): number {
+  let best = dist[0];
+  for (const entry of dist) {
+    if (best == null || entry.probability > best.probability) best = entry;
+  }
+  return best?.value ?? 0;
+}
+
+function medianFromDist(dist: Distribution): number {
+  let cumulative = 0;
+  for (const entry of dist) {
+    cumulative += entry.probability;
+    if (cumulative >= 0.5) return entry.value;
+  }
+  return dist[dist.length - 1]?.value ?? 0;
+}
 
 export function CombatResultScreen({ navigation }: CombatResultScreenProps): React.JSX.Element {
   const { t } = useTranslation();
@@ -42,21 +59,36 @@ export function CombatResultScreen({ navigation }: CombatResultScreenProps): Rea
     );
   }
 
-  const expectedDmg = expectedValue(result.damagePerRoundDist);
+  const expectedDmg  = expectedValue(result.damagePerRoundDist);
+  const mostLikelyDmg = modeFromDist(result.damagePerRoundDist);
+  const medianDmg    = medianFromDist(result.damagePerRoundDist);
 
   return (
     <View style={styles.flex}>
       {/* Header summary */}
       <View style={styles.summaryCard}>
+        {/* Row 1: resultados más interpretables */}
         <View style={styles.summaryRow}>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>{t('wh40k.expectedDamage')}</Text>
-            <Text style={styles.summaryValue}>{expectedDmg.toFixed(2)}</Text>
+            <Text style={styles.summaryLabel}>{t('wh40k.mostLikelyDamage')}</Text>
+            <Text style={styles.summaryValue}>{mostLikelyDmg}</Text>
           </View>
           <View style={styles.summaryDivider} />
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>{t('wh40k.expectedRounds')}</Text>
-            <Text style={styles.summaryValue}>{result.expectedRounds.toFixed(2)}</Text>
+            <Text style={styles.summaryLabel}>{t('wh40k.medianDamage')}</Text>
+            <Text style={styles.summaryValue}>{medianDmg}</Text>
+          </View>
+        </View>
+        {/* Row 2: métricas de largo plazo */}
+        <View style={[styles.summaryRow, styles.summaryRowSecondary]}>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabelSecondary}>{t('wh40k.expectedDamage')}</Text>
+            <Text style={styles.summaryValueSecondary}>{expectedDmg.toFixed(2)}</Text>
+          </View>
+          <View style={styles.summaryDivider} />
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabelSecondary}>{t('wh40k.expectedRounds')}</Text>
+            <Text style={styles.summaryValueSecondary}>{result.expectedRounds.toFixed(2)}</Text>
           </View>
         </View>
       </View>
@@ -137,9 +169,12 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   summaryRow: { flexDirection: 'row', alignItems: 'center' },
+  summaryRowSecondary: { marginTop: 12, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#eee' },
   summaryItem: { flex: 1, alignItems: 'center' },
   summaryLabel: { fontSize: 11, color: '#888', textTransform: 'uppercase', marginBottom: 4 },
   summaryValue: { fontSize: 26, fontWeight: '700', color: '#1a1a1a' },
+  summaryLabelSecondary: { fontSize: 10, color: '#aaa', textTransform: 'uppercase', marginBottom: 2 },
+  summaryValueSecondary: { fontSize: 16, fontWeight: '500', color: '#666' },
   summaryDivider: { width: StyleSheet.hairlineWidth, height: 40, backgroundColor: '#ddd' },
   tableHeader: { fontSize: 12, color: '#888', paddingHorizontal: 16, paddingBottom: 6, textTransform: 'uppercase' },
   table: { flex: 1,paddingHorizontal: 12 },

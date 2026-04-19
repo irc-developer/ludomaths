@@ -63,8 +63,10 @@ export function hypergeometricProbability(
     );
   }
   // k > K or k > n means the outcome is impossible but the question is valid.
-  // C(K, k) = 0 when k > K, so the formula naturally yields 0.
-  if (k > K || k > n) {
+  // n - k > N - K means more non-target cards are needed than exist: also impossible.
+  // C(K, k) = 0 when k > K, C(N-K, n-k) = 0 when n-k > N-K — return 0 directly
+  // to avoid calling binomialCoefficient with k > n (which would throw).
+  if (k > K || k > n || n - k > N - K) {
     return 0;
   }
 

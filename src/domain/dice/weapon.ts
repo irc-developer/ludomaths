@@ -70,6 +70,15 @@ export interface WeaponProfile {
    * Must be a positive integer when provided.
    */
   mortalWoundsPerHit?: number;
+
+  /**
+   * [TORRENT]: the weapon auto-hits — no hit roll is made.
+   * All attacks automatically become hits, so Stage 1 of the pipeline is skipped.
+   * Abilities that require a hit roll (Sustained Hits, Lethal Hits) cannot trigger.
+   * Wound rolls, saves and FNP proceed as normal.
+   * Typical weapons: flamers, torrent weapons (10th edition rule).
+   */
+  torrent?: boolean;
 }
 
 /**
