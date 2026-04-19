@@ -113,7 +113,7 @@ Si el objetivo tiene salvación invulnerable $S_\text{inv}$ (no afectada por AP)
 
 $$S_\text{ef} = \min(S_\text{armadura},\ S_\text{inv})$$
 
-Si $S_\text{ef} > 6$, la salvación es imposible: $p_{\text{fallo\_save}} = 1$.
+Si $S_\text{ef} > 6$, la salvación es imposible: $p_{\text{fallo-save}} = 1$.
 
 ---
 
@@ -200,18 +200,18 @@ $$\text{HeridasNorm} = \text{HeridasDist} \ast \text{HeridasAuto}$$
 
 #### [DEVASTATING WOUNDS] — heridas críticas saltan la salvación
 
-$$p_{\text{crit\_wound}} = \texttt{dieSuccessProbability}(6,\ 0,\ \text{reroll}_\text{wound})$$
-$$p_{\text{norm\_wound}} = \max(0,\ p_\text{wound} - p_{\text{crit\_wound}})$$
+$$p_{\text{crit-wound}} = \texttt{dieSuccessProbability}(6,\ 0,\ \text{reroll}_\text{wound})$$
+$$p_{\text{norm-wound}} = \max(0,\ p_\text{wound} - p_{\text{crit-wound}})$$
 
-$$\text{HeridasCrit} = \text{applyStage}(\text{ImpactosDist},\ p_{\text{crit\_wound}})$$
-$$\text{HeridasNorm} = \text{applyStage}(\text{ImpactosDist},\ p_{\text{norm\_wound}}) \ast \text{HeridasAuto}$$
+$$\text{HeridasCrit} = \text{applyStage}(\text{ImpactosDist},\ p_{\text{crit-wound}})$$
+$$\text{HeridasNorm} = \text{applyStage}(\text{ImpactosDist},\ p_{\text{norm-wound}}) \ast \text{HeridasAuto}$$
 
 Las heridas críticas (devastadoras) no pasan por la salvación y tratan su daño
 como heridas mortales. FNP sí aplica.
 
 El daño esperado total con Devastating Wounds:
 
-$$E[\text{daño}] = E[\text{impactos}] \cdot \bigl[p_{\text{crit\_wound}} + (p_\text{wound} - p_{\text{crit\_wound}}) \cdot p_{\text{fallo\_save}}\bigr]$$
+$$E[\text{daño}] = E[\text{impactos}] \cdot \bigl[p_{\text{crit-wound}} + (p_\text{wound} - p_{\text{crit-wound}}) \cdot p_{\text{fallo-save}}\bigr]$$
 
 ---
 
@@ -234,7 +234,7 @@ Para cada pool $k$:
 
 $$S_k = \texttt{chosenSaveThreshold}(S_\text{base}, \text{AP}, S_\text{inv})$$
 
-$$p_{\text{fallo\_save,k}} = 1 - \texttt{dieSuccessProbability}(S_k,\ m_\text{save,k},\ \text{reroll}_\text{save,k})$$
+$$p_{\text{fallo-save},k} = 1 - \texttt{dieSuccessProbability}(S_k,\ m_\text{save,k},\ \text{reroll}_\text{save,k})$$
 
 #### [GUARANTEED SAVES] — salvaciones garantizadas
 
@@ -244,7 +244,7 @@ Formalmente, la distribución de heridas se desplaza:
 
 $$P(\text{HeridasEf} = \max(0, v - g)) = \sum_{v'=v+g}^{\infty} P(\text{HeridasPool} = v')$$
 
-$$\text{HeridasSinSalvar}_k = \text{applyStage}(\text{HeridasEf},\ p_{\text{fallo\_save,k}})$$
+$$\text{HeridasSinSalvar}_k = \text{applyStage}(\text{HeridasEf},\ p_{\text{fallo-save},k})$$
 
 Las heridas críticas (devastadoras) no pasan por este filtro:
 
@@ -263,9 +263,9 @@ individualmente con probabilidad $p_\text{fnp}$:
 
 $$p_\text{fnp} = \texttt{dieSuccessProbability}(T_\text{fnp})$$
 
-$$p_{\text{fallo\_fnp}} = 1 - p_\text{fnp}$$
+$$p_{\text{fallo-fnp}} = 1 - p_\text{fnp}$$
 
-$$\text{DañoFinal}_k = \text{applyStage}(\text{DañoPool}_k,\ p_{\text{fallo\_fnp}})$$
+$$\text{DañoFinal}_k = \text{applyStage}(\text{DañoPool}_k,\ p_{\text{fallo-fnp}})$$
 
 FNP aplica a **todo** el daño, incluido el de las heridas críticas devastadoras.
 
@@ -293,7 +293,7 @@ $$\text{HeridasMortalesDist} = \text{applyDamage}(\text{TodosImpactosDist},\ \de
 
 Si el primer pool tiene FNP:
 
-$$\text{HeridasMortalesFinal} = \text{applyStage}(\text{HeridasMortalesDist},\ p_{\text{fallo\_fnp,1}})$$
+$$\text{HeridasMortalesFinal} = \text{applyStage}(\text{HeridasMortalesDist},\ p_{\text{fallo-fnp},1})$$
 
 El daño mortal se convolve con el daño del pipeline normal:
 
@@ -348,7 +348,7 @@ $P(\text{en} \leq n) \geq 1 - 10^{-9}$.
 
 **Configuración:** 1 modelo, 6 ataques fijos, impacta en 3+ ($p_\text{hit} = \tfrac{4}{6}$),
 $S = T = 4$ (hiere en 4+, $p_\text{wound} = \tfrac{3}{6}$), AP 2 contra
-salvación 3+ → efectiva 5+ ($p_{\text{fallo\_save}} = \tfrac{4}{6}$), daño 1 fijo.
+salvación 3+ → efectiva 5+ ($p_{\text{fallo-save}} = \tfrac{4}{6}$), daño 1 fijo.
 Sin abilities. Sin FNP.
 
 $$E[\text{impactos}] = 6 \cdot \frac{4}{6} = 4$$
