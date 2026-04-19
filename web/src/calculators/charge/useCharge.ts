@@ -4,6 +4,8 @@ import { CalculateChargeProbabilityUseCase } from '@application/dice/CalculateCh
 export interface ChargeParams {
   distance: number;
   reroll: 'none' | 'failures';
+  /** When true, one die is already showing a 6. The effective roll is D6+6 instead of 2D6. */
+  lockedSix?: boolean;
 }
 
 export interface ChargeTableEntry {
@@ -27,17 +29,17 @@ const chargeUseCase = new CalculateChargeProbabilityUseCase();
  * Devuelve la probabilidad de la distancia actual y la tabla completa 2"–13"
  * para que el componente pueda mostrar comparaciones sin calcular nada.
  */
-export function useCharge({ distance, reroll }: ChargeParams): ChargeViewModel {
+export function useCharge({ distance, reroll, lockedSix }: ChargeParams): ChargeViewModel {
   return useMemo(() => {
-    // La tabla sólo depende del reroll, no de la distancia concreta.
+    // La tabla sólo depende del reroll y del lockedSix, no de la distancia concreta.
     const referenceTable: ChargeTableEntry[] = Array.from({ length: 12 }, (_, i) => i + 2).map(d => ({
       distance: d,
-      probability: chargeUseCase.execute({ distance: d, reroll }).probability,
+      probability: chargeUseCase.execute({ distance: d, reroll, lockedSix }).probability,
     }));
 
     try {
       return {
-        currentProbability: chargeUseCase.execute({ distance, reroll }).probability,
+        currentProbability: chargeUseCase.execute({ distance, reroll, lockedSix }).probability,
         referenceTable,
       };
     } catch (e) {
@@ -47,5 +49,5 @@ export function useCharge({ distance, reroll }: ChargeParams): ChargeViewModel {
         error: e instanceof Error ? e.message : 'Error desconocido',
       };
     }
-  }, [distance, reroll]);
+  }, [distance, reroll, lockedSix]);
 }

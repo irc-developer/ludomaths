@@ -73,4 +73,22 @@ describe('useCharge', () => {
       expect(result.current.error).toBeDefined();
     });
   });
+
+  describe('lockedSix (dado fijo en 6 → tirada efectiva D6+6)', () => {
+    it('d=7 lockedSix=true → probabilidad = 1 (6+1=7, siempre garantizado)', () => {
+      const { result } = renderHook(() => useCharge({ distance: 7, reroll: 'none', lockedSix: true }));
+      expect(result.current.currentProbability).toBeCloseTo(1, 8);
+    });
+
+    it('lockedSix=true aumenta la probabilidad respecto al 2D6 normal para d=9', () => {
+      const { result: r1 } = renderHook(() => useCharge({ distance: 9, reroll: 'none' }));
+      const { result: r2 } = renderHook(() => useCharge({ distance: 9, reroll: 'none', lockedSix: true }));
+      expect(r2.current.currentProbability).toBeGreaterThan(r1.current.currentProbability);
+    });
+
+    it('lockedSix=true, d=13 → probabilidad = 0 (D6+6 max es 12)', () => {
+      const { result } = renderHook(() => useCharge({ distance: 13, reroll: 'none', lockedSix: true }));
+      expect(result.current.currentProbability).toBeCloseTo(0, 10);
+    });
+  });
 });

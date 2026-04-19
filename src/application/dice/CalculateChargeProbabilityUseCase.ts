@@ -28,6 +28,14 @@ export interface ChargeInput {
    * Defaults to 'none'.
    */
   reroll?: 'none' | 'failures';
+  /**
+   * When true, one die is already showing a 6 (locked). Only one additional
+   * D6 is rolled and added to 6, so the effective roll is D6+6 (values 7–12).
+   * This models situations where a unit ability, terrain or a previous partial
+   * roll has already secured a 6 on one die.
+   * Defaults to false.
+   */
+  lockedSix?: boolean;
 }
 
 export interface ChargeResult {
@@ -50,9 +58,13 @@ const D6: Distribution = discreteProbability([
 // 2D6 distribution — 11 entries, values 2–12.
 const TWO_D6: Distribution = multiConvolve(D6, 2);
 
+// D6+6 distribution — 6 entries, values 7–12.
+// Models a charge roll when one die is already locked at 6.
+const D6_PLUS_6: Distribution = D6.map(e => ({ value: e.value + 6, probability: e.probability }));
+
 export class CalculateChargeProbabilityUseCase {
   execute(input: ChargeInput): ChargeResult {
-    const { distance, reroll = 'none' } = input;
+    const { distance, reroll = 'none', lockedSix = false } = input;
 
     if (!Number.isInteger(distance) || distance < 2) {
       throw new RangeError(
@@ -60,14 +72,18 @@ export class CalculateChargeProbabilityUseCase {
       );
     }
 
-    // P(2D6 ≥ d) = 1 − P(2D6 ≤ d − 1) = 1 − F_{2D6}(d − 1)
-    // Clamp to [0, 1] to absorb floating-point rounding (e.g. 1 - 1.0 = -2e-16).
-    const p = Math.max(0, Math.min(1, 1 - cumulativeProbability(TWO_D6, distance - 1)));
+    // Choose the appropriate roll distribution depending on whether one die is locked.
+    // lockedSix=true → D6+6 (values 7–12); lockedSix=false → normal 2D6 (values 2–12).
+    const rollDist = lockedSix ? D6_PLUS_6 : TWO_D6;
 
-    // reroll 'failures': the whole 2D6 is re-rolled if the first attempt fails.
+    // P(roll ≥ d) = 1 − F_roll(d − 1)
+    // Clamp to [0, 1] to absorb floating-point rounding.
+    const p = Math.max(0, Math.min(1, 1 - cumulativeProbability(rollDist, distance - 1)));
+
+    // reroll 'failures': the roll is re-done if the first attempt fails.
     //   P(success) = p + (1−p)·p = p·(2−p)
     const probability = reroll === 'failures' ? p * (2 - p) : p;
 
-    return { probability, rollDist: TWO_D6 };
+    return { probability, rollDist };
   }
 }

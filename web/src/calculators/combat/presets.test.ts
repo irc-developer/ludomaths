@@ -17,8 +17,8 @@ import { WH40K_PRESETS } from './presets';
 import { useCombat } from './useCombat';
 
 describe('WH40K_PRESETS', () => {
-  it('contiene exactamente 5 presets', () => {
-    expect(WH40K_PRESETS).toHaveLength(5);
+  it('contiene exactamente 6 presets', () => {
+    expect(WH40K_PRESETS).toHaveLength(6);
   });
 
   it('no hay IDs duplicados', () => {

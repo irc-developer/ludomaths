@@ -36,6 +36,11 @@ export interface CombatParams {
   baseSave:     number;
   invulnerableSave?: number;
   fnpThreshold?:     number;
+  /**
+   * If true, one save die is already showing a natural 6 (auto-save).
+   * That die removes one wound from the pool before any normal save rolls.
+   */
+  guaranteedSaveSix?: boolean;
   sustainedHits?:    number;
   lethalHits?:       boolean;
   devastatingWounds?: boolean;

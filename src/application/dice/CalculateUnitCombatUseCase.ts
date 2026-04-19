@@ -55,6 +55,24 @@ export interface UnitCombatResult {
 
 const DEGENERATE_ZERO: Distribution = [{ value: 0, probability: 1 }];
 
+/**
+ * Shifts all values in a distribution down by `by`, capping at 0.
+ * P(shifted = max(0, v − by)) = sum of P(original = v) for each v.
+ *
+ * Used to model pre-saved wounds: `by` wounds are automatically saved before
+ * the normal save rolls, reducing the pool of wounds that need rolling.
+ */
+function shiftDown(dist: Distribution, by: number): Distribution {
+  const result = new Map<number, number>();
+  for (const { value, probability } of dist) {
+    const shifted = Math.max(0, value - by);
+    result.set(shifted, (result.get(shifted) ?? 0) + probability);
+  }
+  return Array.from(result.entries())
+    .map(([value, probability]) => ({ value, probability }))
+    .sort((a, b) => a.value - b.value);
+}
+
 export class CalculateUnitCombatUseCase {
   execute(input: UnitCombatInput): UnitCombatResult {
     const { weaponGroups, toughness, savePools } = input;
@@ -197,7 +215,17 @@ export class CalculateUnitCombatUseCase {
         // Critical wounds bypass saves, split by pool fraction.
         const poolCritWoundDist = applyStage(critWoundsDist, pool.fraction);
         // Normal wounds go through saves, split by pool fraction.
-        const poolNormWoundDist = applyStage(normalWoundsDist, pool.fraction);
+        const rawPoolNormWoundDist = applyStage(normalWoundsDist, pool.fraction);
+
+        // [GUARANTEED SAVES]: pre-rolled natural 6 dice auto-save wounds before
+        // the normal save rolls. Each guaranteed save removes one wound from the
+        // pool (cap at 0). This is exact: shifting the wound count distribution
+        // left by `guaranteedSaves` is equivalent to reducing the Binomial trials.
+        const g = pool.guaranteedSaves ?? 0;
+        const poolNormWoundDist = g > 0
+          ? shiftDown(rawPoolNormWoundDist, g)
+          : rawPoolNormWoundDist;
+
         const saveThreshold     = chosenSaveThreshold(pool.baseSave, ap, pool.invulnerableSave);
         const failSaveProbability =
           1 - dieSuccessProbability(saveThreshold, pool.saveModifier ?? 0, pool.saveReroll ?? 'none');

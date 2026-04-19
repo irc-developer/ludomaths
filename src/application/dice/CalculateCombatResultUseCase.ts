@@ -27,8 +27,12 @@ export interface TargetProfile {
    * Optional Feel No Pain threshold. Each point of damage is independently
    * negated on a D6 roll ≥ fnpThreshold.
    */
-  fnpThreshold?: number;
-}
+  fnpThreshold?: number;  /**
+   * Number of save dice pre-rolled as a natural 6 (auto-save regardless of AP).
+   * Each guaranteed save removes one wound before the normal save rolls.
+   * Defaults to 0.
+   */
+  guaranteedSaves?: number;}
 
 export interface CombatResult {
   /** Full probability distribution of total damage dealt in this attack sequence. */
@@ -67,6 +71,7 @@ export class CalculateCombatResultUseCase {
       saveModifier,
       saveReroll,
       fnpThreshold,
+      guaranteedSaves,
     } = input;
 
     return this.unitCase.execute({
@@ -77,7 +82,7 @@ export class CalculateCombatResultUseCase {
         sustainedHits, lethalHits, devastatingWounds, mortalWoundsPerHit, torrent,
       }],
       toughness,
-      savePools: [{ baseSave, fraction: 1, invulnerableSave, saveModifier, saveReroll, fnpThreshold }],
+      savePools: [{ baseSave, fraction: 1, invulnerableSave, saveModifier, saveReroll, fnpThreshold, guaranteedSaves }],
     });
   }
 }

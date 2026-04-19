@@ -16,8 +16,9 @@ function pct(v: number, d = 1): string { return (v * 100).toFixed(d) + '%'; }
 export function ChargeCalculator() {
   const [distance, setDistance] = useState(9);
   const [reroll, setReroll] = useState<'none' | 'failures'>('none');
+  const [lockedSix, setLockedSix] = useState(false);
 
-  const vm = useCharge({ distance, reroll });
+  const vm = useCharge({ distance, reroll, lockedSix });
 
   return (
     <SectionCard
@@ -32,7 +33,8 @@ export function ChargeCalculator() {
         'En WH40K, una carga tiene éxito si el resultado de 2D6 es ≥ la distancia al objetivo. ' +
         'Una carga de 7" tiene un 58% de éxito, pero con 9" baja al 28% — un riesgo real. ' +
         'Si la unidad puede repetir dados de fallos (p. ej. por un Señor de la Guerra), ' +
-        'la probabilidad sube considerablemente, sobre todo a distancias largas.'
+        'la probabilidad sube considerablemente, sobre todo a distancias largas. ' +
+        'Con un dado fijo en 6, la tirada efectiva es D6+6: distancias ≤7" son garantizadas, pero 8"–12" aún dependen del otro dado.'
       }
     >
       <div
@@ -68,6 +70,17 @@ export function ChargeCalculator() {
             <option value="failures">Repetir fallos</option>
           </select>
         </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+        <input
+          type="checkbox"
+          id="lockedSix"
+          checked={lockedSix}
+          onChange={e => setLockedSix(e.target.checked)}
+        />
+        <label htmlFor="lockedSix" style={{ fontSize: '0.75rem', color: colors.muted }}>
+          Ya tengo un 6 en uno de los dados (tirada efectiva: D6+6)
+        </label>
       </div>
 
       {vm.error ? (

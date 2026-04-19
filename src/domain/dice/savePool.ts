@@ -40,4 +40,13 @@ export interface SavePool {
    * Stage 5 in the combat pipeline.
    */
   fnpThreshold?: number;
+  /**
+   * Number of save dice that are pre-rolled as a natural 6.
+   * A natural 6 saves regardless of the effective save threshold (AP, invulnerable).
+   * Each pre-saved die removes one wound from the pool before the normal save rolls.
+   * This models in-game situations where one die is already showing 6 when making
+   * a batch of save rolls.
+   * Must be a non-negative integer when provided. Defaults to 0.
+   */
+  guaranteedSaves?: number;
 }

@@ -288,6 +288,18 @@ export function CombatCalculator() {
                 />
               )}
             </div>
+            {/* Guaranteed save die */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input
+                type="checkbox"
+                id="guaranteedSaveSix"
+                checked={!!params.guaranteedSaveSix}
+                onChange={e => setField('guaranteedSaveSix', e.target.checked)}
+              />
+              <label htmlFor="guaranteedSaveSix" style={{ fontSize: '0.72rem', color: colors.muted }}>
+                Dado de salvación fijo en 6 (1 herida auto-salvada)
+              </label>
+            </div>
           </div>
 
           <div

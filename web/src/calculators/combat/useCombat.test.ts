@@ -236,4 +236,27 @@ describe('useCombat', () => {
       expect(result.current.expectedDamage).toBeCloseTo(3.5 * 0.5, 4);
     });
   });
+
+  // ── guaranteedSaveSix ─────────────────────────────────────────────────────
+  // guaranteedSaveSix=true quita 1 herida del pool antes de tirar salvaciones.
+  // BASE: save imposible (baseSave=10 → P(fail)=1), 1 ataque, H=1.
+  // Con save posible (baseSave=3, ap=0 → pFail=1/3), garantizar 1 salvación
+  // reduce E[D]. Si solo hay 1 herida (1 ataque que impacta y hiere),
+  // la herida garantizada la anula completamente → E[D] debería caer a 0.
+  describe('guaranteedSaveSix (dado de salvación fijo en 6)', () => {
+    it('guaranteedSaveSix=true reduce E[D] cuando hay salvación posible', () => {
+      // 4 ataques, BH3+, F4 vs R4, save 3+, AP0 → E[heridas] = 4×(5/6)×(3/6) ≈ 1
+      // Con 1 herida pre-salvada, E[D] debe bajar
+      const withSave: CombatParams = { ...BASE, attacks: 4, baseSave: 3, ap: 0 };
+      const { result: r1 } = renderHook(() => useCombat(withSave));
+      const { result: r2 } = renderHook(() => useCombat({ ...withSave, guaranteedSaveSix: true }));
+      expect(r2.current.expectedDamage).toBeLessThan(r1.current.expectedDamage);
+    });
+
+    it('guaranteedSaveSix=false produce el mismo resultado que omitirlo', () => {
+      const { result: r1 } = renderHook(() => useCombat(BASE));
+      const { result: r2 } = renderHook(() => useCombat({ ...BASE, guaranteedSaveSix: false }));
+      expect(r2.current.expectedDamage).toBeCloseTo(r1.current.expectedDamage, 8);
+    });
+  });
 });

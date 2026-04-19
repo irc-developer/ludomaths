@@ -97,4 +97,52 @@ describe('CalculateChargeProbabilityUseCase', () => {
       }
     });
   });
+
+  // ── lockedSix ────────────────────────────────────────────────────────────
+
+  describe('lockedSix (one die is pre-rolled as 6, effective roll is D6+6)', () => {
+    it('guarantees charge for any distance ≤ 7 (D6 min is 1, so 6+1=7)', () => {
+      for (let d = 2; d <= 7; d++) {
+        const { probability } = useCase.execute({ distance: d, lockedSix: true });
+        expect(probability).toBeCloseTo(1);
+      }
+    });
+
+    it('returns ~0.667 for distance 9 (need D6 ≥ 3 → 4 out of 6)', () => {
+      const { probability } = useCase.execute({ distance: 9, lockedSix: true });
+      expect(probability).toBeCloseTo(4 / 6);
+    });
+
+    it('returns ~0.167 for distance 12 (need D6 ≥ 6 → 1 out of 6)', () => {
+      const { probability } = useCase.execute({ distance: 12, lockedSix: true });
+      expect(probability).toBeCloseTo(1 / 6);
+    });
+
+    it('returns 0 for distance 13 (D6+6 max is 12)', () => {
+      const { probability } = useCase.execute({ distance: 13, lockedSix: true });
+      expect(probability).toBeCloseTo(0, 10);
+    });
+
+    it('increases probability vs standard 2D6 for d=9', () => {
+      const { probability: pStandard } = useCase.execute({ distance: 9 });
+      const { probability: pLocked }   = useCase.execute({ distance: 9, lockedSix: true });
+      expect(pLocked).toBeGreaterThan(pStandard);
+    });
+
+    it('returns the D6+6 distribution (6 entries, values 7–12)', () => {
+      const { rollDist } = useCase.execute({ distance: 9, lockedSix: true });
+      expect(rollDist).toHaveLength(6);
+      expect(rollDist[0].value).toBe(7);
+      expect(rollDist[rollDist.length - 1].value).toBe(12);
+      const total = rollDist.reduce((sum, e) => sum + e.probability, 0);
+      expect(total).toBeCloseTo(1);
+    });
+
+    it('combines with reroll failures: p*(2-p) on the D6+6 probability', () => {
+      // P(D6+6 ≥ 9) = P(D6 ≥ 3) = 4/6
+      const p = 4 / 6;
+      const { probability } = useCase.execute({ distance: 9, lockedSix: true, reroll: 'failures' });
+      expect(probability).toBeCloseTo(p * (2 - p));
+    });
+  });
 });
