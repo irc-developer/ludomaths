@@ -64,6 +64,27 @@ $$P(\text{DañoTotal} = d) = \sum_{k=0}^{\infty} P(K = k) \cdot P(D^{\ast k} = d
 
 donde $D^{\ast 0} = \delta_0$ (daño cero si no hay heridas).
 
+La parte importante aquí es el `i.i.d.`: cada herida no salvada genera su
+propia tirada de daño, independiente de las demás. Si entran 3 heridas con daño
+D6, el modelo calcula la distribución de $D_1 + D_2 + D_3$ con $D_1, D_2, D_3$
+independientes. No reutiliza un único resultado para todas las heridas.
+
+Eso responde a una duda habitual: si una herida hace 1 de daño en su D6, eso no
+obliga a que las otras heridas hagan también 1. Cada una tira su propio dado.
+
+### Un dado de daño fijo en 6 natural
+
+La calculadora también permite fijar un dado de daño en 6 natural. Si al menos
+una herida llega a la etapa de daño, una de esas heridas aporta daño fijo y las
+demás siguen usando tiradas independientes normales:
+
+$$\text{DañoTotal} = 6 + \sum_{i=2}^{K} D_i \quad \text{si } K \geq 1$$
+
+$$\text{DañoTotal} = 0 \quad \text{si } K = 0$$
+
+Si además el perfil es, por ejemplo, D6+2, el dado fijo en 6 natural aporta 8,
+porque el modificador constante se sigue aplicando a esa tirada.
+
 ---
 
 ## Probabilidad de éxito en un dado — `dieSuccessProbability`
@@ -85,6 +106,47 @@ $$p = \begin{cases} 0 & T_\text{ef} > 6 \\ \dfrac{7 - T_\text{ef}}{6} & T_\text{
 
 Derivación de `failures`: la primera tirada falla con $1 - p$; la repetición
 tiene éxito con $p$. El total es $p + (1-p) \cdot p = p(2-p)$.
+
+### Cómo se usa ahora en la calculadora de combate
+
+La calculadora web expone dos controles independientes:
+
+- Repetir todos los fallos para impactar.
+- Repetir todos los fallos para herir.
+
+Y tres controles de dado ya resuelto a 6 natural:
+
+- 1 dado de impactar fijo en 6 natural.
+- 1 dado de herir fijo en 6 natural.
+- 1 dado de daño fijo en 6 natural.
+
+Ambos controles no introducen una mecánica nueva en el dominio; lo que hacen es
+fijar la política de repetición de la etapa correspondiente a `failures`.
+Eso importa porque el reroll completo no solo aumenta la probabilidad total de
+éxito, sino también la probabilidad de crítico, ya que un 6 obtenido en la
+repetición sigue siendo un 6 no modificado válido para las habilidades de
+crítico.
+
+En concreto:
+
+$$p_\text{hit} = \texttt{dieSuccessProbability}(T_\text{hit},\ m_\text{hit},\ \texttt{'failures'})$$
+
+$$p_\text{wound} = \texttt{dieSuccessProbability}(T_\text{wound},\ m_\text{wound},\ \texttt{'failures'})$$
+
+Y para cualquier habilidad que dependa de un 6 natural:
+
+$$p_\text{crit} = \texttt{dieSuccessProbability}(6,\ 0,\ \texttt{'failures'}) = \frac{11}{36}$$
+
+Ese $\frac{11}{36}$ sustituye al $\frac{1}{6}$ base cuando están activados los
+checks de reroll completo en la etapa correspondiente. Por eso el efecto no se
+limita a "hacer más impactos" o "hacer más heridas": también incrementa la
+frecuencia de *Sustained Hits*, *Lethal Hits* y *Devastating Wounds* cuando la
+tirada afectada es la que dispara la habilidad.
+
+Los checks de 6 natural fijo no cambian una probabilidad: reservan una tirada ya
+resuelta en esa etapa. En impacto y herida, ese dado fijo cuenta como crítico
+real, no como simple éxito. Por eso activa *Lethal Hits*, *Sustained Hits* o
+*Devastating Wounds* exactamente igual que un 6 natural obtenido al tirar.
 
 ---
 

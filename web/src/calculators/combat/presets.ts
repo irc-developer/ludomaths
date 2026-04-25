@@ -17,12 +17,22 @@ export interface CombatParams {
   /** Si true, el número de ataques es D6 en lugar del valor fijo. */
   attacksD6?:   boolean;
   hitThreshold: number;
+  /** If true, failed hit rolls are rerolled once. */
+  hitRerollAll?: boolean;
+  /** If true, one hit die is already showing a natural 6. */
+  guaranteedHitSix?: boolean;
   strength:     number;
+  /** If true, failed wound rolls are rerolled once. */
+  woundRerollAll?: boolean;
+  /** If true, one wound die is already showing a natural 6. */
+  guaranteedWoundSix?: boolean;
   ap:           number;
   /** Valor fijo de daño. Ignorado si damageD6=true. */
   damage:       number;
   /** Si true, el daño es D6 en lugar del valor fijo. */
   damageD6?:    boolean;
+  /** If true, one damage die is already showing a natural 6. */
+  guaranteedDamageSix?: boolean;
   /**
    * Bonificador constante que se añade a cada tirada de daño.
    * Permite expresar perfiles como D6+2 o H2+1.

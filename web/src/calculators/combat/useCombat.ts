@@ -83,7 +83,9 @@ export interface CombatViewModel {
  */
 export function useCombat(params: CombatParams): CombatViewModel {
   const {
-    attacks, attacksD6, hitThreshold, strength, ap, damage, damageD6, damageBonus,
+    attacks, attacksD6, hitThreshold, hitRerollAll, guaranteedHitSix,
+    strength, woundRerollAll, guaranteedWoundSix,
+    ap, damage, damageD6, guaranteedDamageSix, damageBonus,
     toughness, targetWounds, baseSave, invulnerableSave, fnpThreshold, guaranteedSaveSix,
     sustainedHits, lethalHits, devastatingWounds, mortalWoundsPerHit, torrent,
   } = params;
@@ -101,9 +103,14 @@ export function useCombat(params: CombatParams): CombatViewModel {
       const result = combatUseCase.execute({
         attacksDist:  baseAttacksDist,
         hitThreshold,
+        hitReroll: hitRerollAll ? 'failures' : undefined,
+        guaranteedHitSixes: guaranteedHitSix ? 1 : undefined,
         strengthDist: fixed(strength),
+        woundReroll: woundRerollAll ? 'failures' : undefined,
+        guaranteedWoundSixes: guaranteedWoundSix ? 1 : undefined,
         ap,
         damageDist,
+        guaranteedDamageValue: damageD6 && guaranteedDamageSix ? 6 + (damageBonus ?? 0) : undefined,
         toughness,
         baseSave,
         invulnerableSave,
@@ -139,7 +146,9 @@ export function useCombat(params: CombatParams): CombatViewModel {
       };
     }
   }, [
-    attacks, attacksD6, hitThreshold, strength, ap, damage, damageD6, damageBonus,
+    attacks, attacksD6, hitThreshold, hitRerollAll, guaranteedHitSix,
+    strength, woundRerollAll, guaranteedWoundSix,
+    ap, damage, damageD6, guaranteedDamageSix, damageBonus,
     toughness, targetWounds, baseSave, invulnerableSave, fnpThreshold, guaranteedSaveSix,
     sustainedHits, lethalHits, devastatingWounds, mortalWoundsPerHit, torrent,
   ]);

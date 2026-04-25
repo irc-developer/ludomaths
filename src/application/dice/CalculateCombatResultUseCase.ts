@@ -55,11 +55,14 @@ export class CalculateCombatResultUseCase {
       hitThreshold,
       hitModifier,
       hitReroll,
+      guaranteedHitSixes,
       strengthDist,
       woundModifier,
       woundReroll,
+      guaranteedWoundSixes,
       ap,
       damageDist,
+      guaranteedDamageValue,
       sustainedHits,
       lethalHits,
       devastatingWounds,
@@ -76,9 +79,9 @@ export class CalculateCombatResultUseCase {
 
     return this.unitCase.execute({
       weaponGroups: [{
-        attacksDist, hitThreshold, hitModifier, hitReroll,
-        strengthDist, woundModifier, woundReroll,
-        ap, damageDist, modelCount: 1,
+        attacksDist, hitThreshold, hitModifier, hitReroll, guaranteedHitSixes,
+        strengthDist, woundModifier, woundReroll, guaranteedWoundSixes,
+        ap, damageDist, guaranteedDamageValue, modelCount: 1,
         sustainedHits, lethalHits, devastatingWounds, mortalWoundsPerHit, torrent,
       }],
       toughness,

@@ -100,6 +100,79 @@ describe('useCombat', () => {
   });
 
   describe('habilidades especiales', () => {
+    it('hitRerollAll=true aplica reroll de fallos al impactar', () => {
+      // BASE: P(hit)=5/6. Con reroll completo de fallos:
+      //   P(hit) = p * (2 - p) = (5/6) * (7/6) = 35/36
+      //   E[D]   = (35/36) * (3/6) * 1 * 1 = 35/72
+      const { result } = renderHook(() => useCombat({ ...BASE, hitRerollAll: true }));
+      expect(result.current.expectedDamage).toBeCloseTo(35 / 72, 5);
+    });
+
+    it('woundRerollAll=true aplica reroll de fallos al herir', () => {
+      // BASE: P(wound)=3/6. Con reroll completo de fallos:
+      //   P(wound) = p * (2 - p) = (3/6) * (9/6) = 3/4
+      //   E[D]     = (5/6) * (3/4) * 1 * 1 = 5/8
+      const { result } = renderHook(() => useCombat({ ...BASE, woundRerollAll: true }));
+      expect(result.current.expectedDamage).toBeCloseTo(5 / 8, 5);
+    });
+
+    it('guaranteedHitSix=true cuenta como 6 natural al impactar', () => {
+      const params: CombatParams = {
+        attacks: 1,
+        hitThreshold: 6,
+        strength: 1,
+        ap: 2,
+        damage: 1,
+        toughness: 10,
+        targetWounds: 1,
+        baseSave: 5,
+        lethalHits: true,
+        guaranteedHitSix: true,
+      };
+
+      const { result } = renderHook(() => useCombat(params));
+      expect(result.current.expectedDamage).toBeCloseTo(1, 8);
+    });
+
+    it('guaranteedWoundSix=true cuenta como 6 natural al herir', () => {
+      const params: CombatParams = {
+        attacks: 1,
+        hitThreshold: 2,
+        strength: 1,
+        ap: 0,
+        damage: 1,
+        toughness: 10,
+        targetWounds: 1,
+        baseSave: 2,
+        torrent: true,
+        devastatingWounds: true,
+        guaranteedWoundSix: true,
+      };
+
+      const { result } = renderHook(() => useCombat(params));
+      expect(result.current.expectedDamage).toBeCloseTo(1, 8);
+    });
+
+    it('guaranteedDamageSix=true fija solo un dado de daño y el resto siguen independientes', () => {
+      const params: CombatParams = {
+        attacks: 2,
+        hitThreshold: 6,
+        strength: 1,
+        ap: 2,
+        damage: 1,
+        damageD6: true,
+        toughness: 10,
+        targetWounds: 7,
+        baseSave: 5,
+        lethalHits: true,
+        guaranteedHitSix: true,
+        guaranteedDamageSix: true,
+      };
+
+      const { result } = renderHook(() => useCombat(params));
+      expect(result.current.expectedDamage).toBeCloseTo(79 / 12, 8);
+    });
+
     it('devastatingWounds aumenta E[D] cuando la salvación es buena (SA 2+)', () => {
       // Sin DW: E[D] = 15/216; con DW: E[D] = 40/216 (crit wound bypasea SA)
       const { result: r1 } = renderHook(() => useCombat(GOOD_SAVE));

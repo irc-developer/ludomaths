@@ -73,6 +73,50 @@ function shiftDown(dist: Distribution, by: number): Distribution {
     .sort((a, b) => a.value - b.value);
 }
 
+/**
+ * Keeps at most `by` dice from each outcome count.
+ * P(kept = min(v, by)) = sum of P(original = v) for each v.
+ */
+function takeUpTo(dist: Distribution, by: number): Distribution {
+  const result = new Map<number, number>();
+  for (const { value, probability } of dist) {
+    const kept = Math.min(value, by);
+    result.set(kept, (result.get(kept) ?? 0) + probability);
+  }
+  return Array.from(result.entries())
+    .map(([value, probability]) => ({ value, probability }))
+    .sort((a, b) => a.value - b.value);
+}
+
+/**
+ * Applies damage when one damage die is already fixed to `guaranteedValue`.
+ * If k wounds reach damage, one of them deals `guaranteedValue` and the other
+ * k-1 wounds roll their damage independently from `damageDist`.
+ */
+function applyDamageWithGuaranteedValue(
+  woundDist: Distribution,
+  damageDist: Distribution,
+  guaranteedValue: number,
+): Distribution {
+  const guaranteedDist: Distribution = [{ value: guaranteedValue, probability: 1 }];
+  const accumulated = new Map<number, number>();
+
+  for (const { value: wounds, probability: pWounds } of woundDist) {
+    const totalDamageDist = wounds === 0
+      ? DEGENERATE_ZERO
+      : convolve(guaranteedDist, multiConvolve(damageDist, wounds - 1));
+
+    for (const { value, probability } of totalDamageDist) {
+      accumulated.set(value, (accumulated.get(value) ?? 0) + pWounds * probability);
+    }
+  }
+
+  return Array.from(accumulated.entries())
+    .filter(([, probability]) => probability > 0)
+    .map(([value, probability]) => ({ value, probability }))
+    .sort((a, b) => a.value - b.value);
+}
+
 export class CalculateUnitCombatUseCase {
   execute(input: UnitCombatInput): UnitCombatResult {
     const { weaponGroups, toughness, savePools } = input;
@@ -108,9 +152,9 @@ export class CalculateUnitCombatUseCase {
       if (group.modelCount === 0) continue;
 
       const {
-        attacksDist, hitThreshold, hitModifier, hitReroll,
-        strengthDist, woundModifier, woundReroll,
-        ap, damageDist, modelCount,
+        attacksDist, hitThreshold, hitModifier, hitReroll, guaranteedHitSixes,
+        strengthDist, woundModifier, woundReroll, guaranteedWoundSixes,
+        ap, damageDist, guaranteedDamageValue, modelCount,
         sustainedHits, lethalHits, devastatingWounds, mortalWoundsPerHit,
         torrent,
       } = group;
@@ -124,6 +168,12 @@ export class CalculateUnitCombatUseCase {
       // Otherwise, when [LETHAL HITS] or [SUSTAINED HITS] are active, critical
       // hit rolls (unmodified 6, possibly after rerolls) are tracked separately.
       const totalAttacksDist = multiConvolve(attacksDist, modelCount);
+      const guaranteedCritHitDist = (guaranteedHitSixes ?? 0) > 0
+        ? takeUpTo(totalAttacksDist, guaranteedHitSixes ?? 0)
+        : DEGENERATE_ZERO;
+      const rolledAttacksDist = (guaranteedHitSixes ?? 0) > 0
+        ? shiftDown(totalAttacksDist, guaranteedHitSixes ?? 0)
+        : totalAttacksDist;
       const pAllHits = dieSuccessProbability(hitThreshold, hitModifier ?? 0, hitReroll ?? 'none');
 
       let hitsDist: Distribution;        // proceed to wound roll
@@ -143,8 +193,8 @@ export class CalculateUnitCombatUseCase {
           // Critical hit threshold is always 6 regardless of hitModifier.
           const pCritHit  = dieSuccessProbability(6, 0, hitReroll ?? 'none');
           const pNormHit  = Math.max(0, pAllHits - pCritHit);
-          const critHitsDist = applyStage(totalAttacksDist, pCritHit);
-          const normHitsDist = applyStage(totalAttacksDist, pNormHit);
+          const critHitsDist = convolve(guaranteedCritHitDist, applyStage(rolledAttacksDist, pCritHit));
+          const normHitsDist = applyStage(rolledAttacksDist, pNormHit);
 
           // [LETHAL HITS]: critical hits bypass the wound roll (auto-wound).
           autoWoundsDist = lethalHits === true ? critHitsDist : DEGENERATE_ZERO;
@@ -164,12 +214,12 @@ export class CalculateUnitCombatUseCase {
             allHitsDist = convolve(critHitsDist, hitsDist);
           } else {
             // No Lethal Hits: crits participate in wound roll as normal hits.
-            const allRegularHits = applyStage(totalAttacksDist, pAllHits);
+            const allRegularHits = convolve(guaranteedCritHitDist, applyStage(rolledAttacksDist, pAllHits));
             hitsDist    = X > 0 ? convolve(allRegularHits, extraHitsDist) : allRegularHits;
             allHitsDist = hitsDist;
           }
         } else {
-          hitsDist      = applyStage(totalAttacksDist, pAllHits);
+          hitsDist      = convolve(guaranteedCritHitDist, applyStage(rolledAttacksDist, pAllHits));
           autoWoundsDist = DEGENERATE_ZERO;
           allHitsDist   = hitsDist;
         }
@@ -186,6 +236,12 @@ export class CalculateUnitCombatUseCase {
           acc + pS * dieSuccessProbability(woundThreshold(s, toughness), woundModifier ?? 0, woundReroll ?? 'none'),
         0,
       );
+      const guaranteedCritWoundDist = (guaranteedWoundSixes ?? 0) > 0
+        ? takeUpTo(hitsDist, guaranteedWoundSixes ?? 0)
+        : DEGENERATE_ZERO;
+      const rolledHitsDist = (guaranteedWoundSixes ?? 0) > 0
+        ? shiftDown(hitsDist, guaranteedWoundSixes ?? 0)
+        : hitsDist;
 
       // [DEVASTATING WOUNDS]: critical wounds (unmodified 6, possibly after rerolls)
       // bypass all saves. The remaining wound probability goes through save rolls.
@@ -196,13 +252,13 @@ export class CalculateUnitCombatUseCase {
         // P(unmodified 6 on wound die after rerolls).
         const pCritWound   = dieSuccessProbability(6, 0, woundReroll ?? 'none');
         const pNormWound   = Math.max(0, woundProbability - pCritWound);
-        critWoundsDist     = applyStage(hitsDist, pCritWound);
-        const normFromHits = applyStage(hitsDist, pNormWound);
+        critWoundsDist     = convolve(guaranteedCritWoundDist, applyStage(rolledHitsDist, pCritWound));
+        const normFromHits = applyStage(rolledHitsDist, pNormWound);
         // [LETHAL HITS] auto-wounds go through saves (they are not devastating).
         normalWoundsDist   = convolve(normFromHits, autoWoundsDist);
       } else {
         critWoundsDist   = DEGENERATE_ZERO;
-        const woundsFromHits = applyStage(hitsDist, woundProbability);
+        const woundsFromHits = convolve(guaranteedCritWoundDist, applyStage(rolledHitsDist, woundProbability));
         normalWoundsDist     = convolve(woundsFromHits, autoWoundsDist);
       }
 
@@ -233,7 +289,9 @@ export class CalculateUnitCombatUseCase {
 
         // Critical wounds (devastating) + unsaved normal wounds deal damage.
         const poolAllWoundsDist = convolve(poolCritWoundDist, poolUnsavedDist);
-        let poolDamageDist = applyDamage(poolAllWoundsDist, damageDist);
+        let poolDamageDist = guaranteedDamageValue !== undefined && savePools.length === 1
+          ? applyDamageWithGuaranteedValue(poolAllWoundsDist, damageDist, guaranteedDamageValue)
+          : applyDamage(poolAllWoundsDist, damageDist);
 
         // Stage 5 (optional): Feel No Pain
         // Each damage point is independently negated on a roll ≥ fnpThreshold.

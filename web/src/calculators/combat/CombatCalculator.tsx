@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { SectionCard } from '../../components/SectionCard';
 import { InputField } from '../../components/InputField';
 import { ResultBox } from '../../components/ResultBox';
@@ -6,6 +6,8 @@ import { DistributionBar } from '../../components/DistributionBar';
 import { WH40K_PRESETS } from './presets';
 import type { CombatParams } from './presets';
 import { useCombat } from './useCombat';
+import { buildCombatShareContent, formatCombatShareText } from './share';
+import { buildCombatShareSvg, copyCombatShareImage, isCombatShareImageSupported } from './shareImage';
 import { colors, sp } from '../../styles/tokens';
 
 function pct(v: number): string { return (v * 100).toFixed(1) + '%'; }
@@ -23,9 +25,25 @@ function fmt(v: number): string { return v.toFixed(2); }
 export function CombatCalculator() {
   const [params, setParams] = useState<CombatParams>(WH40K_PRESETS[0].params);
   const [activePresetId, setActivePresetId] = useState(WH40K_PRESETS[0].id);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'text' | 'image' | 'fallback' | 'manual'>('idle');
+  const shareTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const vm = useCombat(params);
   const activePreset = WH40K_PRESETS.find(p => p.id === activePresetId);
+  const sharePayload = {
+    params,
+    vm,
+    presetName: activePresetId === 'custom' ? undefined : activePreset?.name,
+  };
+  const shareText = vm.error ? '' : formatCombatShareText(sharePayload);
+  const shareContent = vm.error ? null : buildCombatShareContent(sharePayload);
+  const shareContextSections = shareContent?.sections.filter(
+    section => section.title === 'PERFIL' || section.title === 'OBJETIVO' || section.title === 'REGLAS',
+  ) ?? [];
+  const shareImageUrl = vm.error
+    ? ''
+    : `data:image/svg+xml;charset=utf-8,${encodeURIComponent(buildCombatShareSvg(sharePayload))}`;
+  const canCopyImage = isCombatShareImageSupported();
 
   function loadPreset(id: string): void {
     const preset = WH40K_PRESETS.find(p => p.id === id);
@@ -37,6 +55,35 @@ export function CombatCalculator() {
   function setField<K extends keyof CombatParams>(key: K, value: CombatParams[K]): void {
     setParams(prev => ({ ...prev, [key]: value }));
     setActivePresetId('custom');
+    setCopyStatus('idle');
+  }
+
+  async function copyShareText(nextStatus: 'text' | 'fallback' = 'text'): Promise<void> {
+    if (!shareText) return;
+
+    try {
+      await navigator.clipboard.writeText(shareText);
+      setCopyStatus(nextStatus);
+      return;
+    } catch {
+      setCopyStatus('manual');
+      requestAnimationFrame(() => {
+        shareTextareaRef.current?.focus();
+        shareTextareaRef.current?.select();
+      });
+    }
+  }
+
+  async function copyShareCard(): Promise<void> {
+    if (!shareText) return;
+
+    const result = await copyCombatShareImage(sharePayload);
+    if (result === 'copied') {
+      setCopyStatus('image');
+      return;
+    }
+
+    await copyShareText('fallback');
   }
 
   return (
@@ -150,6 +197,28 @@ export function CombatCalculator() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <input
                 type="checkbox"
+                id="hitRerollAll"
+                checked={!!params.hitRerollAll}
+                onChange={e => setField('hitRerollAll', e.target.checked)}
+              />
+              <label htmlFor="hitRerollAll" style={{ fontSize: '0.75rem', color: colors.muted }}>
+                Repetir todos los fallos para impactar
+              </label>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input
+                type="checkbox"
+                id="guaranteedHitSix"
+                checked={!!params.guaranteedHitSix}
+                onChange={e => setField('guaranteedHitSix', e.target.checked)}
+              />
+              <label htmlFor="guaranteedHitSix" style={{ fontSize: '0.75rem', color: colors.muted }}>
+                1 dado de impactar fijo en 6 natural
+              </label>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input
+                type="checkbox"
                 id="torrent"
                 checked={!!params.torrent}
                 onChange={e => setField('torrent', e.target.checked)}
@@ -164,6 +233,28 @@ export function CombatCalculator() {
               onChange={v => setField('strength', Math.max(1, Math.round(v)))}
               min={1}
             />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input
+                type="checkbox"
+                id="woundRerollAll"
+                checked={!!params.woundRerollAll}
+                onChange={e => setField('woundRerollAll', e.target.checked)}
+              />
+              <label htmlFor="woundRerollAll" style={{ fontSize: '0.75rem', color: colors.muted }}>
+                Repetir todos los fallos para herir
+              </label>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input
+                type="checkbox"
+                id="guaranteedWoundSix"
+                checked={!!params.guaranteedWoundSix}
+                onChange={e => setField('guaranteedWoundSix', e.target.checked)}
+              />
+              <label htmlFor="guaranteedWoundSix" style={{ fontSize: '0.75rem', color: colors.muted }}>
+                1 dado de herir fijo en 6 natural
+              </label>
+            </div>
             <InputField
               label="Penetración de armadura (FP)"
               value={params.ap}
@@ -185,6 +276,18 @@ export function CombatCalculator() {
               />
               <label htmlFor="damageD6" style={{ fontSize: '0.75rem', color: colors.muted }}>
                 Daño variable D6
+              </label>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: params.damageD6 ? 1 : 0.55 }}>
+              <input
+                type="checkbox"
+                id="guaranteedDamageSix"
+                checked={!!params.guaranteedDamageSix && !!params.damageD6}
+                onChange={e => setField('guaranteedDamageSix', e.target.checked)}
+                disabled={!params.damageD6}
+              />
+              <label htmlFor="guaranteedDamageSix" style={{ fontSize: '0.75rem', color: colors.muted }}>
+                1 dado de daño fijo en 6 natural
               </label>
             </div>
             <InputField
@@ -392,6 +495,163 @@ export function CombatCalculator() {
             entries={vm.distribution}
             title="Distribución completa de daño total entero"
           />
+          <div
+            style={{
+              marginTop: sp.lg,
+              padding: sp.md,
+              border: `1px solid ${colors.border}`,
+              borderRadius: 10,
+              background: colors.surfaceAlt,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: sp.md,
+                flexWrap: 'wrap',
+                marginBottom: sp.sm,
+              }}
+            >
+              <div>
+                <div style={{ fontSize: '0.82rem', color: colors.primaryLight, fontWeight: 600 }}>
+                  Resumen para compartir
+                </div>
+                <div style={{ fontSize: '0.74rem', color: colors.muted, lineHeight: 1.5 }}>
+                  La tarjeta replica el bloque de resultados y debajo deja solo el contexto útil para no repetir datos.
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: sp.sm, flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => { void copyShareCard(); }}
+                  style={{
+                    padding: '0.45rem 0.8rem',
+                    borderRadius: 8,
+                    border: `1px solid ${colors.primary}`,
+                    background: colors.primary,
+                    color: colors.bg,
+                    cursor: 'pointer',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  Copiar imagen
+                </button>
+                <button
+                  onClick={() => { void copyShareText(); }}
+                  style={{
+                    padding: '0.45rem 0.8rem',
+                    borderRadius: 8,
+                    border: `1px solid ${colors.border}`,
+                    background: colors.surface,
+                    color: colors.text,
+                    cursor: 'pointer',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  Copiar texto
+                </button>
+              </div>
+            </div>
+            {!canCopyImage && (
+              <div style={{ marginBottom: sp.sm, fontSize: '0.74rem', color: colors.muted }}>
+                Tu navegador no expone copiado de PNG al portapapeles; el botón de imagen hará fallback a texto.
+              </div>
+            )}
+            <div
+              style={{
+                width: '100%',
+                overflow: 'hidden',
+                borderRadius: 12,
+                border: `1px solid ${colors.border}`,
+                background: colors.surface,
+                boxSizing: 'border-box',
+              }}
+            >
+              <img
+                src={shareImageUrl}
+                alt="Vista previa de la tarjeta para compartir"
+                style={{ display: 'block', width: '100%', height: 'auto', background: colors.bg }}
+              />
+            </div>
+            <div
+              style={{
+                marginTop: sp.md,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: sp.sm,
+              }}
+            >
+              {shareContextSections.map(section => (
+                <div
+                  key={section.title}
+                  style={{
+                    padding: '0.75rem',
+                    borderRadius: 8,
+                    border: `1px solid ${colors.border}`,
+                    background: colors.surface,
+                  }}
+                >
+                  <div style={{ fontSize: '0.72rem', color: colors.primaryLight, fontWeight: 700, marginBottom: '0.35rem' }}>
+                    {section.title}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                    {section.lines.map(line => (
+                      <div key={line} style={{ fontSize: '0.74rem', color: colors.text, lineHeight: 1.45 }}>
+                        {section.style === 'list' ? `• ${line}` : line}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {copyStatus === 'manual' && (
+              <>
+                <div style={{ marginTop: sp.md, fontSize: '0.74rem', color: colors.muted }}>
+                  Texto de respaldo listo para copiar manualmente.
+                </div>
+                <textarea
+                  ref={shareTextareaRef}
+                  readOnly
+                  value={shareText}
+                  rows={10}
+                  style={{
+                    width: '100%',
+                    marginTop: sp.sm,
+                    resize: 'vertical',
+                    borderRadius: 8,
+                    border: `1px solid ${colors.border}`,
+                    background: colors.surface,
+                    color: colors.text,
+                    padding: '0.75rem',
+                    lineHeight: 1.45,
+                    fontSize: '0.78rem',
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </>
+            )}
+            <div
+              style={{
+                marginTop: sp.sm,
+                fontSize: '0.74rem',
+                color: copyStatus === 'idle' || copyStatus === 'manual' ? colors.muted : colors.success,
+              }}
+            >
+              {copyStatus === 'image'
+                ? 'Imagen PNG copiada al portapapeles.'
+                : copyStatus === 'text'
+                  ? 'Texto copiado al portapapeles.'
+                  : copyStatus === 'fallback'
+                    ? 'No se pudo copiar la imagen; se ha copiado el texto como respaldo.'
+                : copyStatus === 'manual'
+                  ? 'No se pudo copiar automáticamente. El texto queda seleccionado para copiar manualmente.'
+                  : 'Puedes compartir la imagen o copiar el texto tal cual.'}
+            </div>
+          </div>
         </>
       )}
     </SectionCard>

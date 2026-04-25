@@ -255,4 +255,72 @@ describe('CalculateCombatResultUseCase', () => {
       expect(eUndefined).toBeCloseTo(eNoField);
     });
   });
+
+  // ── Guaranteed natural 6s ───────────────────────────────────────────────
+  describe('guaranteed natural 6s', () => {
+    const ev = (dist: Distribution) =>
+      dist.reduce((sum, e) => sum + e.value * e.probability, 0);
+
+    it('guaranteedHitSixes=1 acts as a critical hit and triggers Lethal Hits', () => {
+      const result = useCase.execute({
+        attacksDist: [{ value: 1, probability: 1 }],
+        hitThreshold: 6,
+        strengthDist: [{ value: 1, probability: 1 }],
+        ap: 2,
+        damageDist: [{ value: 1, probability: 1 }],
+        lethalHits: true,
+        toughness: 10,
+        baseSave: 5,
+        guaranteedHitSixes: 1,
+      } as any);
+
+      expect(ev(result.totalDamageDist)).toBeCloseTo(1, 8);
+    });
+
+    it('guaranteedWoundSixes=1 acts as a critical wound and triggers Devastating Wounds', () => {
+      const result = useCase.execute({
+        attacksDist: [{ value: 1, probability: 1 }],
+        hitThreshold: 2,
+        strengthDist: [{ value: 1, probability: 1 }],
+        ap: 0,
+        damageDist: [{ value: 1, probability: 1 }],
+        torrent: true,
+        devastatingWounds: true,
+        toughness: 10,
+        baseSave: 2,
+        guaranteedWoundSixes: 1,
+      } as any);
+
+      expect(ev(result.totalDamageDist)).toBeCloseTo(1, 8);
+    });
+
+    it('guaranteedDamageValue applies to one damage roll only, the rest stay independent', () => {
+      const d6Damage = discreteProbability([
+        { value: 1, weight: 1 },
+        { value: 2, weight: 1 },
+        { value: 3, weight: 1 },
+        { value: 4, weight: 1 },
+        { value: 5, weight: 1 },
+        { value: 6, weight: 1 },
+      ]);
+
+      const result = useCase.execute({
+        attacksDist: [{ value: 2, probability: 1 }],
+        hitThreshold: 6,
+        strengthDist: [{ value: 1, probability: 1 }],
+        ap: 2,
+        damageDist: d6Damage,
+        lethalHits: true,
+        toughness: 10,
+        baseSave: 5,
+        guaranteedHitSixes: 1,
+        guaranteedDamageValue: 6,
+      } as any);
+
+      // Una herida está garantizada por el 6 natural fijo al impactar.
+      // La segunda solo existe con probabilidad 1/6 (otro crítico por Lethal Hits).
+      // Daño esperado = 6 + (1/6) * E[D6] = 6 + 7/12 = 79/12.
+      expect(ev(result.totalDamageDist)).toBeCloseTo(79 / 12, 8);
+    });
+  });
 });

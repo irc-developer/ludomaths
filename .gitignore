@@ -73,3 +73,17 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+web/src/calculators/swiss/resultados/matches-event-378553-round-1-roundid-719898.csv
+web/src/calculators/swiss/resultados/matches-event-378553-round-2-roundid-719899.csv
+web/src/calculators/swiss/resultados/matches-event-378553-round-3-roundid-719900.csv
+web/src/calculators/swiss/resultados/matches-event-378553-round-4-roundid-719901.csv
+web/src/calculators/swiss/resultados/standings-round-719898.csv
+web/src/calculators/swiss/resultados/standings-round-719899.csv
+web/src/calculators/swiss/resultados/standings-round-719900.csv
+web/src/calculators/swiss/resultados/standings-round-719901.csv
+web/src/calculators/swiss/resultados/torneo 1/matches-event-340455-round-1-roundid-468468.csv
+web/src/calculators/swiss/resultados/torneo 1/matches-event-340455-round-2-roundid-468469.csv
+web/src/calculators/swiss/resultados/torneo 1/matches-event-340455-round-3-roundid-468470.csv
+web/src/calculators/swiss/resultados/torneo 1/standings-round-468468.csv
+web/src/calculators/swiss/resultados/torneo 1/standings-round-468469.csv
+web/src/calculators/swiss/resultados/torneo 1/standings-round-468470.csv

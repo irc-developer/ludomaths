@@ -35,10 +35,19 @@ export interface WeaponProfile {
   hitModifier?: number;
   /** Optional re-roll policy for hit rolls. Defaults to 'none'. */
   hitReroll?: DieRerollPolicy;
+  /** Number of hit dice that are pre-rolled as a natural 6. Defaults to 0. */
+  guaranteedHitSixes?: number;
   /** Optional modifier applied to wound rolls. Clamped to [−1, +1]. Defaults to 0. */
   woundModifier?: number;
   /** Optional re-roll policy for wound rolls. Defaults to 'none'. */
   woundReroll?: DieRerollPolicy;
+  /** Number of wound dice that are pre-rolled as a natural 6. Defaults to 0. */
+  guaranteedWoundSixes?: number;
+  /**
+   * Fixed damage value already showing on one damage die.
+   * Applied once when at least one wound reaches the damage step.
+   */
+  guaranteedDamageValue?: number;
 
   // ── Special weapon abilities ─────────────────────────────────────────────
 
