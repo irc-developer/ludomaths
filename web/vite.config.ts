@@ -2,10 +2,16 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
+import webTsconfig from './tsconfig.json';
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  esbuild: {
+    // A string bypasses per-file tsconfig lookup for shared modules in ../src.
+    // Use the web compiler options instead of the mobile config and its dependencies.
+    tsconfigRaw: JSON.stringify({ compilerOptions: webTsconfig.compilerOptions }),
+  },
   resolve: {
     alias: {
       '@domain': resolve(__dirname, '../src/domain'),

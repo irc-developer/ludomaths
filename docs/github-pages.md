@@ -51,6 +51,23 @@ npm run preview -- --base=/ludomaths/
 Open <http://localhost:4173/ludomaths/>. Build output belongs in the workflow
 artifact; committing `web/dist` is unnecessary.
 
+## Troubleshooting
+
+If the site shows the README with a Jekyll theme, it is serving a deployment of
+the repository root rather than the Vite build. Confirm **Settings → Pages →
+Source** is **GitHub Actions**, then check the latest **Deploy web to GitHub
+Pages** run. A failed run leaves the previously published site visible.
+
+The web build and tests must work with only `web/` dependencies installed.
+Shared modules in `src/domain` and `src/application` are transformed using the
+web TypeScript options explicitly supplied in both `web/vite.config.ts` and
+`web/vitest.config.ts`. Supplying `tsconfigRaw` as a JSON string prevents Vite
+from looking up the mobile `tsconfig.json` for those files and requiring
+`@react-native/typescript-config` during the web deployment.
+
+When verifying this in a clean checkout, install dependencies in `web/` only.
+An existing root `node_modules` can hide this configuration error.
+
 ## Official documentation
 
 - [GitHub: using custom workflows with GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
