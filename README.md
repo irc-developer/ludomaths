@@ -107,6 +107,7 @@ npx tsc --noEmit
 
 ## Documentation
 
+- [`docs/github-pages.md`](docs/github-pages.md) — setup and deployment of the web app to GitHub Pages.
 - [`docs/math/`](docs/math/) — mathematical explanation of each probability module, written for readers with high-school level maths.
 - [`docs/math/weapon-abilities.md`](docs/math/weapon-abilities.md) — detailed breakdown of Sustained Hits, Lethal Hits, Devastating Wounds and Mortal Wounds models.
 - [`.github/skills/wh40k/SKILL.md`](.github/skills/wh40k/SKILL.md) — developer guide for adding new WH40K mechanics (for contributors / AI agents).

@@ -65,6 +65,18 @@ export function fixedDist(n: number): Distribution {
   return [{ value: n, probability: 1 }];
 }
 
+export function formatProfileReviewDefensiveLine(
+  toughness: string,
+  wounds: string,
+  baseSave: string,
+): string {
+  return `T${toughness}  W${wounds}  SA${baseSave}+`;
+}
+
+export function formatProfileReviewWeaponLine(weapon: WeaponFormRow): string {
+  return `${weapon.modelCount}× A${weapon.attacks} F${weapon.strength} AP-${weapon.ap} D${weapon.damage} (${weapon.hitThreshold}+)`;
+}
+
 export function profileToFields(p: StoredUnitProfile): ProfileFormFields {
   const pool = p.savePools[0];
   return {

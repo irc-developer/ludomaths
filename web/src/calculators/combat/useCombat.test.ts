@@ -49,6 +49,16 @@ const BASE: CombatParams = {
 const GOOD_SAVE: CombatParams = { ...BASE, baseSave: 2 };
 
 describe('useCombat', () => {
+  it('recalculates when each non-sixes policy changes and prioritizes it over failures', () => {
+    const { result, rerender } = renderHook((params: CombatParams) => useCombat(params), { initialProps: BASE });
+    rerender({ ...BASE, hitRerollNonSixes: true, hitRerollAll: true });
+    expect(result.current.expectedDamage).toBeCloseTo((31 / 36) * (1 / 2), 12);
+    rerender({ ...BASE, hitRerollNonSixes: true, woundRerollNonSixes: true });
+    expect(result.current.expectedDamage).toBeCloseTo((31 / 36) * (21 / 36), 12);
+    rerender({ ...BASE, torrent: true, hitRerollNonSixes: true, woundRerollNonSixes: true });
+    expect(result.current.expectedDamage).toBeCloseTo(21 / 36, 12);
+  });
+
   describe('perfil base — salvación imposible', () => {
     it('E[D] = 1 × (5/6) × (3/6) × 1 = 5/12', () => {
       const { result } = renderHook(() => useCombat(BASE));

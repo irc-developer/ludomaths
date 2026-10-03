@@ -1,5 +1,7 @@
 import type { CombatParams } from './presets';
 import type { CombatViewModel } from './useCombat';
+import { resolveRerollPolicy } from './rerollPolicy';
+import { t } from '../../i18n/combat';
 
 interface FormatCombatShareTextInput {
   params: CombatParams;
@@ -60,10 +62,12 @@ function formatTarget(params: CombatParams): string {
 function formatRules(params: CombatParams): string[] {
   const rules: string[] = [];
 
-  if (params.hitRerollAll) rules.push('Repetir fallos al impactar');
+  const hitReroll = resolveRerollPolicy(params.hitRerollAll, params.hitRerollNonSixes, params.torrent);
+  const woundReroll = resolveRerollPolicy(params.woundRerollAll, params.woundRerollNonSixes);
+  if (hitReroll !== 'none') rules.push(t(hitReroll === 'nonSixes' ? 'combat.hitRerollNonSixes' : 'combat.shareHitFailures'));
   if (params.guaranteedHitSix) rules.push('1 impacto fijo en 6 natural');
   if (params.torrent) rules.push('Torrent');
-  if (params.woundRerollAll) rules.push('Repetir fallos al herir');
+  if (woundReroll !== 'none') rules.push(t(woundReroll === 'nonSixes' ? 'combat.woundRerollNonSixes' : 'combat.shareWoundFailures'));
   if (params.guaranteedWoundSix) rules.push('1 herida fija en 6 natural');
   if (params.lethalHits) rules.push('Lethal Hits');
   if (params.devastatingWounds) rules.push('Devastating Wounds');

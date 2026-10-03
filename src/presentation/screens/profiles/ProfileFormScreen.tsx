@@ -12,6 +12,10 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useProfileForm } from '@presentation/hooks/useProfileForm';
+import {
+  formatProfileReviewDefensiveLine,
+  formatProfileReviewWeaponLine,
+} from '@presentation/hooks/profileFormConversion';
 import type { ProfileFormScreenProps } from '@presentation/navigation/navigationTypes';
 import type { WeaponFormRow } from '@presentation/hooks/useProfileForm';
 
@@ -203,7 +207,9 @@ export function ProfileFormScreen({ navigation, route }: ProfileFormScreenProps)
         {step === 2 && (
           <View style={styles.review}>
             <Text style={styles.reviewTitle}>{fields.name}</Text>
-            <Text style={styles.reviewLine}>{`T${fields.toughness}  W${fields.wounds}  ${fields.baseSave}+`}</Text>
+            <Text style={styles.reviewLine}>
+              {formatProfileReviewDefensiveLine(fields.toughness, fields.wounds, fields.baseSave)}
+            </Text>
             {fields.invulnSave !== '' && (
               <Text style={styles.reviewLine}>{`${fields.invulnSave}++ invuln`}</Text>
             )}
@@ -215,7 +221,7 @@ export function ProfileFormScreen({ navigation, route }: ProfileFormScreenProps)
                 <Text style={styles.reviewSubtitle}>{t('profiles.stepWeapons')}</Text>
                 {fields.weapons.map((w, i) => (
                   <Text key={i} style={styles.reviewLine}>
-                    {`${w.modelCount}× A${w.attacks} S${w.strength} AP-${w.ap} D${w.damage} (${w.hitThreshold}+)`}
+                      {formatProfileReviewWeaponLine(w)}
                   </Text>
                 ))}
               </>

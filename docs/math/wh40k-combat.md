@@ -103,16 +103,25 @@ $$p = \begin{cases} 0 & T_\text{ef} > 6 \\ \dfrac{7 - T_\text{ef}}{6} & T_\text{
 | `none` | $p$ |
 | `ones` (repetir 1s) | $p \cdot \dfrac{7}{6}$ |
 | `failures` (repetir fallos) | $p \cdot (2 - p)$ |
+| `nonSixes` (repetir resultados 1–5) | $\mathbb{1}(T_\text{ef}\leq 6)/6 + 5p/6$ |
 
 Derivación de `failures`: la primera tirada falla con $1 - p$; la repetición
 tiene éxito con $p$. El total es $p + (1-p) \cdot p = p(2-p)$.
 
 ### Cómo se usa ahora en la calculadora de combate
 
-La calculadora web expone dos controles independientes:
+La calculadora web y el comparador de buffs exponen dos políticas por etapa,
+mutuamente excluyentes dentro de cada etapa:
 
 - Repetir todos los fallos para impactar.
 - Repetir todos los fallos para herir.
+- Repetir todo lo que no sean seises para impactar.
+- Repetir todo lo que no sean seises para herir.
+
+`nonSixes` conserva los 6 naturales de la primera tirada y repite una sola vez
+los resultados 1–5, incluidos los éxitos. El resultado de la repetición se acepta
+sin volver a repetirlo. Torrent desactiva los controles de repetición de impacto;
+los seises garantizados quedan fuera de las tiradas aleatorias.
 
 Y tres controles de dado ya resuelto a 6 natural:
 
@@ -120,28 +129,43 @@ Y tres controles de dado ya resuelto a 6 natural:
 - 1 dado de herir fijo en 6 natural.
 - 1 dado de daño fijo en 6 natural.
 
-Ambos controles no introducen una mecánica nueva en el dominio; lo que hacen es
-fijar la política de repetición de la etapa correspondiente a `failures`.
-Eso importa porque el reroll completo no solo aumenta la probabilidad total de
-éxito, sino también la probabilidad de crítico, ya que un 6 obtenido en la
-repetición sigue siendo un 6 no modificado válido para las habilidades de
-crítico.
+El motor usa `combatRollProbabilities(umbral, modificador, política)` para obtener
+las probabilidades de éxito total, crítico y éxito normal con el mismo contexto
+de repetición. Un 1 natural siempre falla y un 6 natural siempre impacta/hiere
+con umbrales de combate 2+–6+, incluso con modificador −1. `dieSuccessProbability`
+conserva el comportamiento genérico de salvaciones: una salvación imposible no
+se vuelve posible por conservar el 6.
 
 En concreto:
 
-$$p_\text{hit} = \texttt{dieSuccessProbability}(T_\text{hit},\ m_\text{hit},\ \texttt{'failures'})$$
+$$p_\text{hit} = \texttt{combatRollProbabilities}(T_\text{hit},\ m_\text{hit},\ \texttt{'failures'}).\texttt{success}$$
 
-$$p_\text{wound} = \texttt{dieSuccessProbability}(T_\text{wound},\ m_\text{wound},\ \texttt{'failures'})$$
+$$p_\text{wound} = \texttt{combatRollProbabilities}(T_\text{wound},\ m_\text{wound},\ \texttt{'failures'}).\texttt{success}$$
 
-Y para cualquier habilidad que dependa de un 6 natural:
+Sea $p$ la probabilidad de éxito sin repetición de la tirada original. Para repetir
+fallos, la probabilidad de crítico depende de los fallos de esa misma tirada:
 
-$$p_\text{crit} = \texttt{dieSuccessProbability}(6,\ 0,\ \texttt{'failures'}) = \frac{11}{36}$$
+$$p_\text{crit,failures} = \frac{1}{6} + (1-p)\frac{1}{6}$$
 
-Ese $\frac{11}{36}$ sustituye al $\frac{1}{6}$ base cuando están activados los
-checks de reroll completo en la etapa correspondiente. Por eso el efecto no se
-limita a "hacer más impactos" o "hacer más heridas": también incrementa la
-frecuencia de *Sustained Hits*, *Lethal Hits* y *Devastating Wounds* cuando la
-tirada afectada es la que dispara la habilidad.
+Por ejemplo, al impactar en 3+ repitiendo fallos, solo se repiten 1–2: el crítico
+tiene probabilidad $8/36$, no $11/36$. Cambiar artificialmente el umbral a 6
+para calcular críticos cambiaría también las caras elegibles para repetición.
+
+Para buscar seises, la probabilidad de repetir es siempre $5/6$:
+
+$$p_\text{success,nonSixes}=\frac{1}{6}+\frac{5}{6}p,\qquad
+p_\text{crit,nonSixes}=\frac{11}{36}$$
+
+| Umbral | Repetir fallos: éxito / crítico | Repetir no seises: éxito / crítico |
+|---|---|---|
+| 2+ | 35/36 / 7/36 | 31/36 / 11/36 |
+| 3+ | 32/36 / 8/36 | 26/36 / 11/36 |
+| 4+ | 27/36 / 9/36 | 21/36 / 11/36 |
+| 5+ | 20/36 / 10/36 | 16/36 / 11/36 |
+| 6+ | 11/36 / 11/36 | 11/36 / 11/36 |
+
+Buscar seises puede reducir los éxitos totales respecto a repetir fallos, aunque
+aumente los críticos. Su efecto en el daño depende de las habilidades y el objetivo.
 
 Los checks de 6 natural fijo no cambian una probabilidad: reservan una tirada ya
 resuelta en esa etapa. En impacto y herida, ese dado fijo cuenta como crítico
@@ -195,7 +219,7 @@ $a$, entonces $\text{AtaquesDist} = \delta_{aM}$.
 
 ### Etapa 1: Ataques → Impactos
 
-$$p_\text{hit} = \texttt{dieSuccessProbability}(T_\text{hit},\ m_\text{hit},\ \text{reroll}_\text{hit})$$
+$$p_\text{hit} = \texttt{combatRollProbabilities}(T_\text{hit},\ m_\text{hit},\ \text{reroll}_\text{hit}).\texttt{success}$$
 
 $$\text{ImpactosDist} = \text{applyStage}(\text{AtaquesDist},\ p_\text{hit})$$
 
@@ -210,13 +234,16 @@ No puede activarse ninguna habilidad de impacto crítico.
 #### [SUSTAINED HITS X] — impactos críticos generan extras
 
 Un impacto crítico es un resultado no modificado de 6. Su probabilidad (con
-posible repetición, sin modificador):
+posible repetición, conservando el contexto de éxito original):
 
-$$p_\text{crit} = \texttt{dieSuccessProbability}(6,\ 0,\ \text{reroll}_\text{hit})$$
+$$p_\text{crit} = \texttt{combatRollProbabilities}(T_\text{hit},\ m_\text{hit},\ \text{reroll}_\text{hit}).\texttt{critical}$$
 
 $$p_\text{norm} = \max(0,\ p_\text{hit} - p_\text{crit})$$
 
-Los impactos se descomponen en dos corrientes independientes:
+El pipeline aproxima los impactos mediante dos corrientes independientes.
+Los conteos originales comparten dados y están correlacionados; esta aproximación
+mantiene sus medias, pero puede alterar la distribución final y la probabilidad
+de eliminación. La nueva política no corrige esa limitación previa.
 
 $$\text{ImpactosCrit} = \text{applyStage}(\text{AtaquesDist},\ p_\text{crit})$$
 $$\text{ImpactosNorm} = \text{applyStage}(\text{AtaquesDist},\ p_\text{norm})$$
@@ -252,7 +279,7 @@ $$\Delta E = E[\text{AtaquesDist}] \cdot p_\text{crit} \cdot (1 - p_\text{wound}
 
 La probabilidad de herir integra el caso de Fuerza variable:
 
-$$p_\text{wound} = \sum_s P(S = s) \cdot \texttt{dieSuccessProbability}(\texttt{woundThreshold}(s, T),\ m_\text{wound},\ \text{reroll}_\text{wound})$$
+$$p_\text{wound} = \sum_s P(S = s) \cdot \texttt{combatRollProbabilities}(\texttt{woundThreshold}(s, T),\ m_\text{wound},\ \text{reroll}_\text{wound}).\texttt{success}$$
 
 $$\text{HeridasDist} = \text{applyStage}(\text{AEtapa2},\ p_\text{wound})$$
 
@@ -262,7 +289,7 @@ $$\text{HeridasNorm} = \text{HeridasDist} \ast \text{HeridasAuto}$$
 
 #### [DEVASTATING WOUNDS] — heridas críticas saltan la salvación
 
-$$p_{\text{crit-wound}} = \texttt{dieSuccessProbability}(6,\ 0,\ \text{reroll}_\text{wound})$$
+$$p_{\text{crit-wound}} = \sum_s P(S=s)\cdot\texttt{combatRollProbabilities}(\texttt{woundThreshold}(s,T),\ m_\text{wound},\ \text{reroll}_\text{wound}).\texttt{critical}$$
 $$p_{\text{norm-wound}} = \max(0,\ p_\text{wound} - p_{\text{crit-wound}})$$
 
 $$\text{HeridasCrit} = \text{applyStage}(\text{ImpactosDist},\ p_{\text{crit-wound}})$$

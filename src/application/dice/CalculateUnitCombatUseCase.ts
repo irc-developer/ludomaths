@@ -27,7 +27,7 @@
  * convolved into a single result per weapon group.
  */
 
-import { chosenSaveThreshold, dieSuccessProbability, woundThreshold } from '@domain/dice/combat';
+import { chosenSaveThreshold, combatRollProbabilities, dieSuccessProbability, woundThreshold } from '@domain/dice/combat';
 import { WeaponGroup, WeaponProfile } from '@domain/dice/weapon';
 import { SavePool } from '@domain/dice/savePool';
 import { Distribution } from '@domain/math/distribution';
@@ -174,7 +174,8 @@ export class CalculateUnitCombatUseCase {
       const rolledAttacksDist = (guaranteedHitSixes ?? 0) > 0
         ? shiftDown(totalAttacksDist, guaranteedHitSixes ?? 0)
         : totalAttacksDist;
-      const pAllHits = dieSuccessProbability(hitThreshold, hitModifier ?? 0, hitReroll ?? 'none');
+      const hitProbabilities = combatRollProbabilities(hitThreshold, hitModifier ?? 0, hitReroll ?? 'none');
+      const pAllHits = hitProbabilities.success;
 
       let hitsDist: Distribution;        // proceed to wound roll
       let autoWoundsDist: Distribution;  // bypass wound roll ([LETHAL HITS])
@@ -191,8 +192,8 @@ export class CalculateUnitCombatUseCase {
         if (hasCritHitAbility) {
           // P(unmodified 6 on attack die after rerolls).
           // Critical hit threshold is always 6 regardless of hitModifier.
-          const pCritHit  = dieSuccessProbability(6, 0, hitReroll ?? 'none');
-          const pNormHit  = Math.max(0, pAllHits - pCritHit);
+          const pCritHit  = hitProbabilities.critical;
+          const pNormHit  = hitProbabilities.normal;
           const critHitsDist = convolve(guaranteedCritHitDist, applyStage(rolledAttacksDist, pCritHit));
           const normHitsDist = applyStage(rolledAttacksDist, pNormHit);
 
@@ -230,12 +231,17 @@ export class CalculateUnitCombatUseCase {
       // Strength may be variable. Each possible strength value contributes
       // its wound probability weighted by P(S = s):
       //
-      //   p_wound = Σ_s P(S=s) · dieSuccessProbability(woundThreshold(s,T), modifier, reroll)
-      const woundProbability = strengthDist.reduce(
-        (acc, { value: s, probability: pS }) =>
-          acc + pS * dieSuccessProbability(woundThreshold(s, toughness), woundModifier ?? 0, woundReroll ?? 'none'),
-        0,
-      );
+      // P(outcome) = Σ_s P(S=s) · P(outcome | threshold(s,T), modifier, reroll).
+      // Reroll failures must retain each strength's own success threshold for criticals.
+      const woundProbabilities = strengthDist.reduce((acc, { value: s, probability: pS }) => {
+        const probabilities = combatRollProbabilities(woundThreshold(s, toughness), woundModifier ?? 0, woundReroll ?? 'none');
+        return {
+          success: acc.success + pS * probabilities.success,
+          critical: acc.critical + pS * probabilities.critical,
+          normal: acc.normal + pS * probabilities.normal,
+        };
+      }, { success: 0, critical: 0, normal: 0 });
+      const woundProbability = woundProbabilities.success;
       const guaranteedCritWoundDist = (guaranteedWoundSixes ?? 0) > 0
         ? takeUpTo(hitsDist, guaranteedWoundSixes ?? 0)
         : DEGENERATE_ZERO;
@@ -250,8 +256,8 @@ export class CalculateUnitCombatUseCase {
 
       if (devastatingWounds === true) {
         // P(unmodified 6 on wound die after rerolls).
-        const pCritWound   = dieSuccessProbability(6, 0, woundReroll ?? 'none');
-        const pNormWound   = Math.max(0, woundProbability - pCritWound);
+        const pCritWound   = woundProbabilities.critical;
+        const pNormWound   = woundProbabilities.normal;
         critWoundsDist     = convolve(guaranteedCritWoundDist, applyStage(rolledHitsDist, pCritWound));
         const normFromHits = applyStage(rolledHitsDist, pNormWound);
         // [LETHAL HITS] auto-wounds go through saves (they are not devastating).

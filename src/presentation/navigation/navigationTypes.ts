@@ -3,9 +3,10 @@
  *
  * Central type definitions for React Navigation.
  *
- * Three bottom tabs:
+ * Four bottom tabs:
  *  - Profiles  → ProfileStack
  *  - Combat    → CombatStack
+ *  - Buffs     → BuffComparisonStack
  *  - History   → HistoryStack
  *
  * Each tab owns its own StackNavigator so screens can push children
@@ -33,6 +34,13 @@ export type CombatStackParamList = {
 };
 
 // ---------------------------------------------------------------------------
+// Buff comparison stack
+// ---------------------------------------------------------------------------
+export type BuffComparisonStackParamList = {
+  BuffComparison: undefined;
+};
+
+// ---------------------------------------------------------------------------
 // History (combat records) stack
 // ---------------------------------------------------------------------------
 export type HistoryStackParamList = {
@@ -46,6 +54,7 @@ export type HistoryStackParamList = {
 export type RootTabParamList = {
   ProfilesTab: NavigatorScreenParams<ProfileStackParamList>;
   CombatTab: NavigatorScreenParams<CombatStackParamList>;
+  BuffComparisonTab: NavigatorScreenParams<BuffComparisonStackParamList>;
   HistoryTab: NavigatorScreenParams<HistoryStackParamList>;
 };
 
@@ -69,6 +78,11 @@ export type CombatSetupScreenProps = CompositeScreenProps<
 
 export type CombatResultScreenProps = CompositeScreenProps<
   StackScreenProps<CombatStackParamList, 'CombatResult'>,
+  BottomTabScreenProps<RootTabParamList>
+>;
+
+export type BuffComparisonScreenProps = CompositeScreenProps<
+  StackScreenProps<BuffComparisonStackParamList, 'BuffComparison'>,
   BottomTabScreenProps<RootTabParamList>
 >;
 

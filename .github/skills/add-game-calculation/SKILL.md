@@ -1,28 +1,22 @@
 ---
 name: add-game-calculation
-description: "Add a new probability calculation or distribution to LudoMaths. Use when: adding a new mathematical operation (binomial, hypergeometric, Poisson, etc.), adding a new game module (dice variant, card game, custom roll), or extending an existing domain with new use cases. Follows TDD + Clean Architecture layer rules."
+description: "Implement a new probability feature in LudoMaths. Use when writing code for a new distribution, PMF, CDF, combinatorics helper, dice rule, card rule, calculator screen, or related use case. Not for design-only planning; use the math planner agent for that."
 argument-hint: "Describe the calculation to add, e.g. 'Poisson distribution for event frequency'"
 ---
 
 # Add a New Game Calculation
-
-## Architecture rule (non-negotiable)
-
-```
-domain/math/     ← pure math primitives, no game knowledge
-domain/<module>/ ← game rules that COMPOSE math primitives
-application/     ← use cases that orchestrate domain
-presentation/    ← React Native UI that calls use cases
-```
-
-Dependencies flow **inward only**: presentation → application → domain.
-`domain/math` must never import from `domain/dice`, `domain/cards`, or any outer layer.
 
 ## When to use this skill
 
 - Adding a new mathematical primitive (factorial, PMF, CDF…)
 - Adding a new game module (new dice variant, new card rule)
 - Adding a new use case (new calculation screen)
+- Extending an existing probability model without breaking architectural boundaries
+
+The shared layer rules, naming conventions, and TDD expectations live in the workspace
+instructions. This skill focuses on the workflow that is specific to new calculations.
+
+If the user only wants a design or roadmap, prefer the `LudoMaths Math Planner` agent.
 
 ## Step-by-step procedure
 

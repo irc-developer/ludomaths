@@ -19,11 +19,15 @@ export interface CombatParams {
   hitThreshold: number;
   /** If true, failed hit rolls are rerolled once. */
   hitRerollAll?: boolean;
+  /** Keep natural sixes and reroll all other hit results once, including successes. */
+  hitRerollNonSixes?: boolean;
   /** If true, one hit die is already showing a natural 6. */
   guaranteedHitSix?: boolean;
   strength:     number;
   /** If true, failed wound rolls are rerolled once. */
   woundRerollAll?: boolean;
+  /** Keep natural sixes and reroll all other wound results once, including successes. */
+  woundRerollNonSixes?: boolean;
   /** If true, one wound die is already showing a natural 6. */
   guaranteedWoundSix?: boolean;
   ap:           number;

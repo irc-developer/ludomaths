@@ -11,6 +11,7 @@ interface CombatShareImageInput {
 interface CombatShareImageSupportInput {
   clipboard?: {
     write?: (items: ClipboardItem[]) => Promise<void>;
+    writeText?: (text: string) => Promise<void>;
   };
   clipboardItem?: unknown;
 }

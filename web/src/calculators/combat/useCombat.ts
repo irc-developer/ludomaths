@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { expectedValue, type Distribution } from '@domain/math/distribution';
 import { CalculateCombatResultUseCase } from '@application/dice/CalculateCombatResultUseCase';
 import type { CombatParams } from './presets';
+import { resolveRerollPolicy } from './rerollPolicy';
 
 // Singleton stateless — creado una vez a nivel de módulo.
 const combatUseCase = new CalculateCombatResultUseCase();
@@ -83,8 +84,8 @@ export interface CombatViewModel {
  */
 export function useCombat(params: CombatParams): CombatViewModel {
   const {
-    attacks, attacksD6, hitThreshold, hitRerollAll, guaranteedHitSix,
-    strength, woundRerollAll, guaranteedWoundSix,
+    attacks, attacksD6, hitThreshold, hitRerollAll, hitRerollNonSixes, guaranteedHitSix,
+    strength, woundRerollAll, woundRerollNonSixes, guaranteedWoundSix,
     ap, damage, damageD6, guaranteedDamageSix, damageBonus,
     toughness, targetWounds, baseSave, invulnerableSave, fnpThreshold, guaranteedSaveSix,
     sustainedHits, lethalHits, devastatingWounds, mortalWoundsPerHit, torrent,
@@ -103,10 +104,10 @@ export function useCombat(params: CombatParams): CombatViewModel {
       const result = combatUseCase.execute({
         attacksDist:  baseAttacksDist,
         hitThreshold,
-        hitReroll: hitRerollAll ? 'failures' : undefined,
+        hitReroll: resolveRerollPolicy(hitRerollAll, hitRerollNonSixes, torrent),
         guaranteedHitSixes: guaranteedHitSix ? 1 : undefined,
         strengthDist: fixed(strength),
-        woundReroll: woundRerollAll ? 'failures' : undefined,
+        woundReroll: resolveRerollPolicy(woundRerollAll, woundRerollNonSixes),
         guaranteedWoundSixes: guaranteedWoundSix ? 1 : undefined,
         ap,
         damageDist,
@@ -146,8 +147,8 @@ export function useCombat(params: CombatParams): CombatViewModel {
       };
     }
   }, [
-    attacks, attacksD6, hitThreshold, hitRerollAll, guaranteedHitSix,
-    strength, woundRerollAll, guaranteedWoundSix,
+    attacks, attacksD6, hitThreshold, hitRerollAll, hitRerollNonSixes, guaranteedHitSix,
+    strength, woundRerollAll, woundRerollNonSixes, guaranteedWoundSix,
     ap, damage, damageD6, guaranteedDamageSix, damageBonus,
     toughness, targetWounds, baseSave, invulnerableSave, fnpThreshold, guaranteedSaveSix,
     sustainedHits, lethalHits, devastatingWounds, mortalWoundsPerHit, torrent,

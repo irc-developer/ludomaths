@@ -1,10 +1,13 @@
 ---
 name: wh40k
-description: "Add or modify a Warhammer 40K combat pipeline stage in LudoMaths. Use when: implementing weapon abilities (Sustained Hits, Lethal Hits, Devastating Wounds, Mortal Wounds, Feel No Pain), adjusting any pipeline stage, or extending WeaponProfile / SavePool with new modifiers or reroll policies."
+description: "Implement or correct a Warhammer 40K 10th edition combat rule in LudoMaths. Use when touching the combat pipeline, weapon abilities like Sustained Hits, Lethal Hits, Devastating Wounds, Anti-X+, Torrent, Mortal Wounds, Feel No Pain, save pools, or reroll policies."
 argument-hint: "Describe the WH40K mechanic to add, e.g. 'Anti-[keyword] X+ ability' or 'Torrent (auto-hit)'"
 ---
 
 # WH40K Combat Pipeline — Skill
+
+This skill assumes the shared domain, testing, and presentation rules already come from
+the workspace instructions. It only captures the WH40K-specific invariants and workflow.
 
 ## Pipeline overview (10th edition)
 
@@ -12,12 +15,12 @@ argument-hint: "Describe the WH40K mechanic to add, e.g. 'Anti-[keyword] X+ abil
 N × modelCount attacks
   │
   ├─ Stage 1: Attacks → Hits
-  │     pHit = dieSuccessProbability(hitThreshold, hitModifier, hitReroll)
+  │     pHit = combatRollProbabilities(hitThreshold, hitModifier, hitReroll).success
   │     [SUSTAINED HITS X] → critical hit (unmod. 6) generates X extra hits
   │     [LETHAL HITS]      → critical hit (unmod. 6) auto-wounds (skip Stage 2)
   │
   ├─ Stage 2: Hits → Wounds
-  │     pWound = Σ_s P(S=s) × dieSuccessProbability(woundThreshold(s,T), mod, reroll)
+  │     pWound = Σ_s P(S=s) × combatRollProbabilities(woundThreshold(s,T), mod, reroll).success
   │     [DEVASTATING WOUNDS] → critical wound (unmod. 6) bypasses Stage 3
   │
   ├─ Stage 3: Wounds split by save pool fraction
@@ -49,9 +52,18 @@ N × modelCount attacks
 
 ## Critical probability formula
 
-For any critical roll (threshold = 6) subject to rerolls but NOT to modifiers:
+Keep the original hit/wound threshold and modifier when deciding which faces
+are rerolled. Modifiers never change whether the final face is a natural six:
 
-$$P(\text{crit}) = \texttt{dieSuccessProbability}(6,\ 0,\ \textit{rerollPolicy})$$
+$$P(\text{crit}) = \texttt{combatRollProbabilities}(T,\ m,\ \textit{rerollPolicy}).\texttt{critical}$$
+
+With `failures`, $P(crit)=1/6+(1-p)/6$, where $p$ is the original success
+probability without rerolls. A 3+ roll gives 8/36 criticals, not 11/36.
+With `nonSixes`, keep natural sixes and reroll every first result 1–5 once:
+$P(success)=1/6+5p/6$ and $P(crit)=11/36$.
+For variable strength, average success and critical probabilities per strength.
+Natural sixes always succeed for valid hit/wound thresholds, even at 6+ with −1.
+Keep generic impossible-save behavior in `dieSuccessProbability` unchanged.
 
 For normal wounds/hits probability (subtract crit probability from total):
 
@@ -113,6 +125,7 @@ Re-use existing helpers:
 - `applyStage(dist, p)` — binomial thinning (hits/wounds/saves)
 - `applyDamage(woundDist, damageDist)` — randomly stopped sum (also used for scaling)
 - `dieSuccessProbability(threshold, modifier, rerollPolicy)` — P(D6 roll succeeds)
+- `combatRollProbabilities(threshold, modifier, rerollPolicy)` — contextual hit/wound success, normal and critical probabilities
 - `convolve(a, b)` — sum of two independent distributions
 - `DEGENERATE_ZERO` — identity element for convolution
 
@@ -139,7 +152,7 @@ Both must be green before continuing.
 
 | Mistake | Correct approach |
 |---|---|
-| Using `hitModifier` to reduce crit threshold | Crits always trigger on **unmodified** 6 — call `dieSuccessProbability(6, 0, reroll)` |
+| Changing the success threshold to 6 to calculate rerolled criticals | Use `combatRollProbabilities(originalThreshold, modifier, reroll).critical`; eligibility for `failures` depends on the original roll |
 | Forgetting to split crits only when an ability requires it | Only enable the crit-split path when `lethalHits` or `sustainedHits` are active (performance) |
 | Applying FNP twice to devastating wounds | FNP is applied in Stage 5 via the pool loop — devastating wounds enter the same pool damage path |
 | Convolving mortal wounds inside the pool loop | Mortal wounds bypass saves → compute outside the pool loop and convolve into `groupDamageDist` |
@@ -163,7 +176,7 @@ profile: {
 |---|---|
 | `src/domain/dice/weapon.ts` | `WeaponProfile` + `WeaponGroup` interfaces |
 | `src/domain/dice/savePool.ts` | `SavePool` interface |
-| `src/domain/dice/combat.ts` | `dieSuccessProbability`, `woundThreshold`, `chosenSaveThreshold` |
+| `src/domain/dice/combat.ts` | `combatRollProbabilities`, `dieSuccessProbability`, `woundThreshold`, `chosenSaveThreshold` |
 | `src/domain/math/pipeline.ts` | `applyStage`, `applyDamage` |
 | `src/domain/math/convolution.ts` | `convolve`, `multiConvolve` |
 | `src/application/dice/CalculateUnitCombatUseCase.ts` | Full pipeline orchestration |

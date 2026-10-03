@@ -139,15 +139,74 @@ export function chosenSaveThreshold(
  * - 'none':     no re-roll.
  * - 'ones':     re-roll the die only if it shows a 1 on the first roll.
  * - 'failures': re-roll the die if the first roll failed the threshold.
+ * - 'nonSixes': keep a natural 6; re-roll any other first result, including successes.
  */
-export type DieRerollPolicy = 'none' | 'ones' | 'failures';
+export type DieRerollPolicy = 'none' | 'ones' | 'failures' | 'nonSixes';
+
+export interface CombatRollProbabilities {
+  success: number;
+  critical: number;
+  normal: number;
+}
+
+/** Final D6 face probabilities after at most one reroll. */
+function finalDieFaceProbabilities(
+  reroll: DieRerollPolicy,
+  succeeds: (face: number) => boolean,
+): number[] {
+  const weights = [0, 0, 0, 0, 0, 0];
+  for (let face = 1; face <= 6; face++) {
+    let repeat: boolean;
+    switch (reroll) {
+      case 'none': repeat = false; break;
+      case 'ones': repeat = face === 1; break;
+      case 'failures': repeat = !succeeds(face); break;
+      case 'nonSixes': repeat = face !== 6; break;
+      default: throw new RangeError(`Unknown reroll policy: ${reroll}`);
+    }
+    // Each retained first roll weighs 6/36; each pair of first/second rolls weighs 1/36.
+    if (repeat) {
+      for (let second = 0; second < 6; second++) weights[second] += 1;
+    } else {
+      weights[face - 1] += 6;
+    }
+  }
+  return weights.map(weight => weight / 36);
+}
+
+/**
+ * Hit/wound probabilities using the original threshold for reroll eligibility.
+ * Natural 1 always fails and natural 6 always succeeds, regardless of modifiers.
+ * Critical rolls are natural sixes after any reroll; modifiers never change the face.
+ * Thresholds above 6 retain legacy impossible-roll semantics for disabled profiles.
+ */
+export function combatRollProbabilities(
+  baseThreshold: number,
+  modifier: number = 0,
+  reroll: DieRerollPolicy = 'none',
+): CombatRollProbabilities {
+  if (!Number.isInteger(baseThreshold) || baseThreshold < 2) {
+    throw new RangeError('Combat roll threshold must be an integer of at least 2');
+  }
+  if (!Number.isFinite(modifier)) {
+    throw new RangeError('Combat roll modifier must be finite');
+  }
+  const clampedModifier = Math.max(-1, Math.min(1, modifier));
+  const succeeds = (face: number) => (face === 6 && baseThreshold <= 6) || (face !== 1 && face + clampedModifier >= baseThreshold);
+  const faces = finalDieFaceProbabilities(reroll, succeeds);
+  const critical = succeeds(6) ? faces[5] : 0;
+  const normal = faces.reduce((sum, probability, index) =>
+    index < 5 && succeeds(index + 1) ? sum + probability : sum, 0);
+  return { success: normal + critical, critical, normal };
+}
 
 /**
  * Computes P(D6 ≥ effectiveThreshold) for a single die, accounting for
  * an optional modifier (clamped to ±1 per WH40K rules) and a re-roll policy.
  *
- * The modifier is applied before the re-roll policy is evaluated: a failed
- * roll is judged against the modified threshold, not the base threshold.
+ * Failure eligibility accounts for the modified success threshold. The actual
+ * reroll happens before modifiers are applied to its final result.
+ * Use combatRollProbabilities for hits/wounds, where natural sixes always succeed.
  *
  *   effectiveThreshold = max(2, clamp(baseThreshold − modifier, 2, ∞))
  *   p = effectiveThreshold > 6 ? 0 : (7 − effectiveThreshold) / 6
@@ -155,6 +214,7 @@ export type DieRerollPolicy = 'none' | 'ones' | 'failures';
  *   reroll 'none':     P = p
  *   reroll 'ones':     P = p + (1/6) · p     — only the 1 is re-rolled
  *   reroll 'failures': P = p + (1 − p) · p = p · (2 − p)
+ *   reroll 'nonSixes': P = P(kept six succeeds) + (5/6) · p
  *
  * Values of baseThreshold > 6 (e.g. a save negated by AP) are accepted and
  * return 0 unless a positive modifier brings the effective threshold to ≤ 6.
@@ -196,5 +256,8 @@ export function dieSuccessProbability(
       // All failed dice are re-rolled once.
       // P = p + (1 − p) · p = p · (2 − p)
       return p * (2 - p);
+    case 'nonSixes':
+      // An impossible save cannot succeed just because its six was retained.
+      return (effectiveThreshold <= 6 ? 1 / 6 : 0) + (5 / 6) * p;
   }
 }

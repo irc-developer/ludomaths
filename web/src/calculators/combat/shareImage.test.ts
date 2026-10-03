@@ -22,6 +22,24 @@ const BASE_VM: CombatViewModel = {
 };
 
 describe('buildCombatShareSvg', () => {
+  it('uses the effective non-sixes labels from the shared content without clipping long lines', () => {
+    const params: CombatParams = {
+      attacks: 1, hitThreshold: 3, strength: 4, ap: 0, damage: 1,
+      toughness: 4, targetWounds: 1, baseSave: 3,
+      hitRerollAll: true, hitRerollNonSixes: true, woundRerollNonSixes: true,
+    };
+    const document = new DOMParser().parseFromString(buildCombatShareSvg({ params, vm: BASE_VM }), 'image/svg+xml');
+    const text = Array.from(document.querySelectorAll('text')).map(element =>
+      element.children.length > 0
+        ? Array.from(element.children).map(line => line.textContent).join(' ')
+        : element.textContent,
+    ).join(' ').replace(/\s+/g, ' ');
+    expect(document.querySelector('parsererror')).toBeNull();
+    expect(text).toContain('Repetir todo lo que no sean seises para impactar');
+    expect(text).toContain('Repetir todo lo que no sean seises para herir');
+    expect(text).not.toContain('Repetir fallos');
+  });
+
   it('genera una tarjeta SVG con KPIs, distribucion y contexto no redundante', () => {
     const params: CombatParams = {
       attacks: 3,

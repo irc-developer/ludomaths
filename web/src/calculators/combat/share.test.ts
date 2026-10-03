@@ -24,6 +24,22 @@ const BASE_VM: CombatViewModel = {
 };
 
 describe('formatCombatShareText', () => {
+  it('shares only the effective reroll policy and omits hit rerolls with Torrent', () => {
+    const params: CombatParams = {
+      attacks: 1, hitThreshold: 3, strength: 4, ap: 0, damage: 1,
+      toughness: 4, targetWounds: 1, baseSave: 3,
+      hitRerollAll: true, hitRerollNonSixes: true,
+      woundRerollAll: true, woundRerollNonSixes: true,
+    };
+    const text = formatCombatShareText({ params, vm: BASE_VM });
+    expect(text).toContain('Repetir todo lo que no sean seises para impactar');
+    expect(text).toContain('Repetir todo lo que no sean seises para herir');
+    expect(text).not.toContain('Repetir fallos');
+    const torrent = formatCombatShareText({ params: { ...params, torrent: true }, vm: BASE_VM });
+    expect(torrent).not.toContain('seises para impactar');
+    expect(torrent).toContain('seises para herir');
+  });
+
   it('genera un resumen legible para WhatsApp con secciones cortas y resultados agrupados', () => {
     const params: CombatParams = {
       attacks: 3,

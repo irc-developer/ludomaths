@@ -18,7 +18,15 @@ El problema central es que cada *ability* depende de si un dado mostró exactame
 
 Sea $N$ el total de dados de ataque, $p_\text{crit} = P(D6 \geq 6) = \frac{1}{6}$ (ajustado por *reroll* si aplica), y $p_\text{hit}$ la probabilidad total de impacto.
 
-El número de impactos se descompone en dos corrientes independientes (cada dado decide de forma independiente su resultado):
+El ajuste se obtiene con `combatRollProbabilities(hitThreshold, hitModifier, hitReroll).critical`.
+Repetir fallos conserva el umbral original: en 3+ da $8/36$ críticos. Repetir
+resultados distintos de 6 (`nonSixes`) da $11/36$, conservando el 6 inicial y
+repitiendo una vez 1–5, incluidos los éxitos. La segunda tirada nunca se repite.
+
+La implementación aproxima el número de impactos mediante dos corrientes
+independientes. Los impactos regulares y los extras comparten tiradas; sus
+conteos están correlacionados. La convolución conserva las medias, pero puede
+alterar la distribución final. Esta limitación previa sigue pendiente.
 
 $$\text{HitsDist} = \underbrace{\text{Bin}(N,\ p_\text{hit})}_{\text{impactos regulares}} \;+\; \underbrace{X \cdot \text{Bin}(N,\ p_\text{crit})}_{\text{impactos extra}}$$
 
@@ -34,7 +42,8 @@ Donde $+$ denota la convolución de las dos distribuciones. Los impactos extra s
 
 **Modelo matemático:**
 
-Se divide la distribución de dados de ataque en dos grupos independientes:
+El pipeline aproxima la distribución mediante dos grupos independientes, aunque
+sus conteos proceden de las mismas tiradas:
 
 - **Impactos críticos:** $k_\text{crit} \sim \text{Bin}(N, p_\text{crit})$ → pasan directamente a la etapa de salvación como heridas automáticas.
 - **Impactos normales:** $k_\text{norm} \sim \text{Bin}(N, p_\text{hit} - p_\text{crit})$ → pasan por la tirada de herida normal.
@@ -63,7 +72,9 @@ $$\text{CritWoundsDist} = \text{applyStage}(\text{HitsDist},\ p_\text{crit\_woun
 
 $$\text{NormWoundsDist} = \text{applyStage}(\text{HitsDist},\ \max(0,\ p_\text{wound} - p_\text{crit\_wound}))$$
 
-donde $p_\text{crit\_wound} = \texttt{dieSuccessProbability}(6,\ 0,\ \text{woundReroll})$.
+donde $p_\text{crit\_wound}$ se obtiene de
+`combatRollProbabilities(woundThreshold(S,T), woundModifier, woundReroll).critical`.
+Si la fuerza es variable, se pondera esta probabilidad para cada valor de fuerza.
 
 Las heridas críticas se separan **antes** de la etapa de salvación y se incorporan directamente al cálculo de daño. Las heridas normales siguen el camino habitual.
 

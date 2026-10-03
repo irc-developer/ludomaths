@@ -6,6 +6,8 @@ import { DistributionBar } from '../../components/DistributionBar';
 import { WH40K_PRESETS } from './presets';
 import type { CombatParams } from './presets';
 import { useCombat } from './useCombat';
+import { RerollControls } from './RerollControls';
+import { updateRerollSelection, type RerollSelection, type RerollStage } from './rerollPolicy';
 import { buildCombatShareContent, formatCombatShareText } from './share';
 import { buildCombatShareSvg, copyCombatShareImage, isCombatShareImageSupported } from './shareImage';
 import { colors, sp } from '../../styles/tokens';
@@ -54,6 +56,12 @@ export function CombatCalculator() {
 
   function setField<K extends keyof CombatParams>(key: K, value: CombatParams[K]): void {
     setParams(prev => ({ ...prev, [key]: value }));
+    setActivePresetId('custom');
+    setCopyStatus('idle');
+  }
+
+  function setReroll(stage: RerollStage, selection: RerollSelection, checked: boolean): void {
+    setParams(prev => updateRerollSelection(prev, stage, selection, checked));
     setActivePresetId('custom');
     setCopyStatus('idle');
   }
@@ -194,17 +202,9 @@ export function CombatCalculator() {
               min={2}
               max={6}
             />
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <input
-                type="checkbox"
-                id="hitRerollAll"
-                checked={!!params.hitRerollAll}
-                onChange={e => setField('hitRerollAll', e.target.checked)}
-              />
-              <label htmlFor="hitRerollAll" style={{ fontSize: '0.75rem', color: colors.muted }}>
-                Repetir todos los fallos para impactar
-              </label>
-            </div>
+            <RerollControls idPrefix="combat" stage="hit" failures={params.hitRerollAll}
+              nonSixes={params.hitRerollNonSixes} disabled={!!params.torrent}
+              onChange={(selection, checked) => setReroll('hit', selection, checked)} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <input
                 type="checkbox"
@@ -233,17 +233,9 @@ export function CombatCalculator() {
               onChange={v => setField('strength', Math.max(1, Math.round(v)))}
               min={1}
             />
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <input
-                type="checkbox"
-                id="woundRerollAll"
-                checked={!!params.woundRerollAll}
-                onChange={e => setField('woundRerollAll', e.target.checked)}
-              />
-              <label htmlFor="woundRerollAll" style={{ fontSize: '0.75rem', color: colors.muted }}>
-                Repetir todos los fallos para herir
-              </label>
-            </div>
+            <RerollControls idPrefix="combat" stage="wound" failures={params.woundRerollAll}
+              nonSixes={params.woundRerollNonSixes}
+              onChange={(selection, checked) => setReroll('wound', selection, checked)} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <input
                 type="checkbox"

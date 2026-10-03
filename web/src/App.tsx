@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { HypergeometricCalculator } from './calculators/hypergeometric/HypergeometricCalculator';
 import { ChargeCalculator } from './calculators/charge/ChargeCalculator';
 import { CombatCalculator } from './calculators/combat/CombatCalculator';
+import { CombatBuffComparisonCalculator } from './calculators/buffs/CombatBuffComparisonCalculator';
 import { LorcanaCalculator } from './calculators/lorcana/LorcanaCalculator';
 import { SwissSimulator } from './calculators/swiss/SwissSimulator';
 import { colors, sp } from './styles/tokens';
 
-type TabId = 'hyper' | 'charge' | 'combat' | 'lorcana' | 'swiss';
+type TabId = 'hyper' | 'charge' | 'combat' | 'buffs' | 'lorcana' | 'swiss';
 
 interface Tab {
   id:    TabId;
@@ -22,6 +23,7 @@ const TABS: Tab[] = [
   { id: 'hyper',  label: 'Hipergeometrica' },
   { id: 'charge', label: 'Carga WH40K' },
   { id: 'combat', label: 'Combate WH40K' },
+  { id: 'buffs', label: 'Buffs WH40K' },
   { id: 'lorcana', label: 'Lorcana' },
   { id: 'swiss',   label: 'Swiss Melee' },
 ];
@@ -84,6 +86,7 @@ export default function App() {
         {activeTab === 'hyper'   && <HypergeometricCalculator />}
         {activeTab === 'charge'  && <ChargeCalculator />}
         {activeTab === 'combat'  && <CombatCalculator />}
+        {activeTab === 'buffs'   && <CombatBuffComparisonCalculator />}
         {activeTab === 'lorcana' && <LorcanaCalculator />}
         {activeTab === 'swiss'   && <SwissSimulator />}
       </main>

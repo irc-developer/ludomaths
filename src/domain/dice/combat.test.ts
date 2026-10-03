@@ -1,4 +1,5 @@
-import { chosenSaveThreshold, dieSuccessProbability, effectiveSaveThreshold, woundThreshold } from './combat';
+import { chosenSaveThreshold, combatRollProbabilities, dieSuccessProbability, effectiveSaveThreshold, woundThreshold } from './combat';
+import type { DieRerollPolicy } from './combat';
 
 describe('woundThreshold', () => {
   // Las cinco reglas de la tabla de heridas de Warhammer 40K.
@@ -246,5 +247,72 @@ describe('dieSuccessProbability', () => {
 
   it("reroll 'failures' with impossible roll (p=0) stays 0", () => {
     expect(dieSuccessProbability(6, -1, 'failures')).toBeCloseTo(0);
+  });
+});
+
+describe('combatRollProbabilities', () => {
+  // Numerators over 36: [threshold, failures success, failures crit, nonSixes success].
+  it.each([
+    [2, 35, 7, 31], [3, 32, 8, 26], [4, 27, 9, 21],
+    [5, 20, 10, 16], [6, 11, 11, 11],
+  ])('keeps the original reroll context at threshold %i', (threshold, success, critical, nonSixes) => {
+    const failures = combatRollProbabilities(threshold, 0, 'failures');
+    expect(failures.success).toBeCloseTo(success / 36, 12);
+    expect(failures.critical).toBeCloseTo(critical / 36, 12);
+    const fishing = combatRollProbabilities(threshold, 0, 'nonSixes');
+    expect(fishing.success).toBeCloseTo(nonSixes / 36, 12);
+    expect(fishing.critical).toBeCloseTo(11 / 36, 12);
+    expect(fishing.normal + fishing.critical).toBeCloseTo(fishing.success, 12);
+  });
+
+  it('counts a natural six as a success even at 6+ with a negative modifier', () => {
+    expect(combatRollProbabilities(6, -1).success).toBeCloseTo(1 / 6, 12);
+    expect(combatRollProbabilities(6, -1, 'nonSixes').success).toBeCloseTo(11 / 36, 12);
+    // Saves retain their existing impossible-threshold behavior.
+    expect(dieSuccessProbability(6, -1, 'nonSixes')).toBe(0);
+    expect(dieSuccessProbability(7, 0, 'nonSixes')).toBe(0);
+  });
+
+  it('uses modified success thresholds for failures without modifying the critical face', () => {
+    expect(combatRollProbabilities(4, 1, 'failures').critical).toBeCloseTo(8 / 36, 12);
+    expect(combatRollProbabilities(4, -1, 'failures').critical).toBeCloseTo(10 / 36, 12);
+    expect(combatRollProbabilities(4, 1, 'nonSixes').critical).toBeCloseTo(11 / 36, 12);
+    expect(combatRollProbabilities(4, -1, 'nonSixes').critical).toBeCloseTo(11 / 36, 12);
+    expect(combatRollProbabilities(4, 9)).toEqual(combatRollProbabilities(4, 1));
+    expect(combatRollProbabilities(4, -9)).toEqual(combatRollProbabilities(4, -1));
+  });
+
+  it.each(['none', 'ones', 'failures', 'nonSixes'] as DieRerollPolicy[])(
+    'returns valid success and critical probabilities for %s', policy => {
+      for (let threshold = 2; threshold <= 6; threshold++) {
+        for (const modifier of [-1, 0, 1]) {
+          const probabilities = combatRollProbabilities(threshold, modifier, policy);
+          expect(probabilities.normal).toBeGreaterThanOrEqual(0);
+          expect(probabilities.critical).toBeGreaterThanOrEqual(1 / 6);
+          expect(probabilities.success).toBeLessThanOrEqual(1);
+          expect(probabilities.normal + probabilities.critical).toBeCloseTo(probabilities.success, 12);
+        }
+      }
+    },
+  );
+
+  it('retains legacy none and ones probabilities', () => {
+    expect(combatRollProbabilities(4).success).toBeCloseTo(1 / 2, 12);
+    expect(combatRollProbabilities(4).critical).toBeCloseTo(1 / 6, 12);
+    expect(combatRollProbabilities(4, 0, 'ones').success).toBeCloseTo(21 / 36, 12);
+    expect(combatRollProbabilities(4, 0, 'ones').critical).toBeCloseTo(7 / 36, 12);
+    expect(dieSuccessProbability(4, 0, 'nonSixes')).toBeCloseTo(21 / 36, 12);
+  });
+
+  it('retains legacy impossible-profile thresholds above six', () => {
+    expect(combatRollProbabilities(7, 0, 'nonSixes')).toEqual({ success: 0, normal: 0, critical: 0 });
+  });
+
+  it.each([NaN, Infinity, 0, 1, 3.5])('rejects invalid combat thresholds: %s', threshold => {
+    expect(() => combatRollProbabilities(threshold)).toThrow(RangeError);
+  });
+
+  it.each([NaN, Infinity, -Infinity])('rejects non-finite modifiers: %s', modifier => {
+    expect(() => combatRollProbabilities(4, modifier)).toThrow(RangeError);
   });
 });
