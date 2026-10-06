@@ -16,12 +16,13 @@ export function resolveRerollPolicy(
 }
 
 /** Update both controls for one stage atomically without changing the other stage. */
-export function updateRerollSelection(
-  params: CombatParams,
+export function updateRerollSelection<T extends Pick<CombatParams,
+  'hitRerollAll' | 'hitRerollNonSixes' | 'woundRerollAll' | 'woundRerollNonSixes'>>(
+  params: T,
   stage: RerollStage,
   selection: RerollSelection,
   checked: boolean,
-): CombatParams {
+): T {
   const failuresKey = stage === 'hit' ? 'hitRerollAll' : 'woundRerollAll';
   const nonSixesKey = stage === 'hit' ? 'hitRerollNonSixes' : 'woundRerollNonSixes';
   const selectedKey = selection === 'failures' ? failuresKey : nonSixesKey;

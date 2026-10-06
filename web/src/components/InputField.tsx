@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { colors } from '../styles/tokens';
 
 export interface InputFieldProps {
@@ -10,10 +11,12 @@ export interface InputFieldProps {
 }
 
 export function InputField({ label, value, onChange, min = 0, max, step = 1 }: InputFieldProps) {
+  const id = useId();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-      <label style={{ fontSize: '0.75rem', color: colors.muted }}>{label}</label>
+      <label htmlFor={id} style={{ fontSize: '0.75rem', color: colors.muted }}>{label}</label>
       <input
+        id={id}
         type="number"
         style={{
           width: '100%',

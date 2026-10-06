@@ -11,6 +11,7 @@ It models the full combat pipeline step by step (attacks → hits → wounds →
 - **WH40K combat calculator** — full pipeline with weapon abilities, save pools, feel-no-pain.
 - **Unit profiles** — save attacker and defender profiles (name, toughness, armor save, weapon groups) for quick reuse.
 - **Rounds-to-kill** — calculates cumulative kill probability per round for any attacker/defender pair.
+- **Required attacks (web)** — enter a miniature's remaining wounds, toughness and saves, an attack profile, and a desired elimination probability. Finds the minimum number of attacks and shows the probability with one fewer attack. Supports fixed/D3/D6 damage, damage bonuses, rerolls, Torrent, Sustained/Lethal Hits, Devastating Wounds and Feel No Pain. Computes the distribution directly, for one miniature and up to 10,000 attacks; a finite 100% guarantee is only reported when every attack necessarily deals damage.
 - **Combat history** — save and review past combat calculations.
 - **Card calculator** *(hypergeometric)* — probability of drawing specific cards from a deck (exact, cumulative, and combo).
 - **Full distribution view** — complete P(X = k) table for any scenario, not just the expected value.
