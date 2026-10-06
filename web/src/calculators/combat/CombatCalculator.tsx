@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { SectionCard } from '../../components/SectionCard';
 import { InputField } from '../../components/InputField';
+import { NumberInput } from '../../components/NumberInput';
 import { ResultBox } from '../../components/ResultBox';
 import { DistributionBar } from '../../components/DistributionBar';
 import { WH40K_PRESETS } from './presets';
@@ -335,21 +336,13 @@ export function CombatCalculator() {
                 Salvación invulnerable (++)
               </label>
               {params.invulnerableSave !== undefined && (
-                <input
-                  type="number"
+                <NumberInput
+                  compact
+                  aria-label="Valor de salvación invulnerable"
                   min={2}
                   max={6}
                   value={params.invulnerableSave}
-                  onChange={e => setField('invulnerableSave', Math.min(6, Math.max(2, parseInt(e.target.value) || 4)))}
-                  style={{
-                    width: 48,
-                    background: colors.surfaceAlt,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: 4,
-                    color: colors.text,
-                    padding: '0.2rem 0.4rem',
-                    fontSize: '0.9rem',
-                  }}
+                  onChange={v => setField('invulnerableSave', Math.min(6, Math.max(2, Math.round(v))))}
                 />
               )}
             </div>
@@ -365,21 +358,13 @@ export function CombatCalculator() {
                 Feel No Pain (FNP)
               </label>
               {params.fnpThreshold !== undefined && (
-                <input
-                  type="number"
+                <NumberInput
+                  compact
+                  aria-label="Umbral de Feel No Pain"
                   min={3}
                   max={6}
                   value={params.fnpThreshold}
-                  onChange={e => setField('fnpThreshold', Math.min(6, Math.max(3, parseInt(e.target.value) || 5)))}
-                  style={{
-                    width: 48,
-                    background: colors.surfaceAlt,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: 4,
-                    color: colors.text,
-                    padding: '0.2rem 0.4rem',
-                    fontSize: '0.9rem',
-                  }}
+                  onChange={v => setField('fnpThreshold', Math.min(6, Math.max(3, Math.round(v))))}
                 />
               )}
             </div>
@@ -441,21 +426,13 @@ export function CombatCalculator() {
                 Sustained Hits
               </label>
               {!!params.sustainedHits && (
-                <input
-                  type="number"
+                <NumberInput
+                  compact
+                  aria-label="Valor de Sustained Hits"
                   min={1}
                   max={6}
                   value={params.sustainedHits}
-                  onChange={e => setField('sustainedHits', Math.max(1, parseInt(e.target.value) || 1))}
-                  style={{
-                    width: 48,
-                    background: colors.surfaceAlt,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: 4,
-                    color: colors.text,
-                    padding: '0.2rem 0.4rem',
-                    fontSize: '0.9rem',
-                  }}
+                  onChange={v => setField('sustainedHits', Math.max(1, Math.round(v)))}
                 />
               )}
             </div>
