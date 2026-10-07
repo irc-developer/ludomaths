@@ -51,6 +51,13 @@ npm run preview -- --base=/ludomaths/
 Open <http://localhost:4173/ludomaths/>. Build output belongs in the workflow
 artifact; committing `web/dist` is unnecessary.
 
+The three approved clean pilot catalogs live in `web/public/catalogs` and are
+copied into the deployment artifact by Vite. A fresh browser automatically
+loads `catalogs/pilot-combined.json` using the configured base path, validates
+its structure and trusted digest, and stores the validated catalog locally.
+Publishing these files does not require a machine-local environment file or
+the development-only catalog endpoint.
+
 ## Troubleshooting
 
 If the site shows the README with a Jekyll theme, it is serving a deployment of

@@ -48,7 +48,7 @@ Se excluyen ambientación, imágenes/URL, puntos, misiones, construcción de lis
 | --- | --- |
 | Archivo privado por selección de unidades | Recomendado. Paquetes pequeños, carga local, web estática ligera, sin backend |
 | Archivo privado por facción | Ampliación opcional tras medir tamaño/uso; no obliga a cargar todas las facciones |
-| Catálogo servido con la web | No forma parte de la entrega solicitada |
+| Catálogo servido con la web | Implementado después para los tres paquetes piloto limpios, con autorización expresa de Iván |
 | Servicio externo de consulta por unidad | Alternativa futura si se quiere seleccionar sin importar archivos; requiere un servicio adicional y el mismo contrato limpio |
 
 El despliegue actual publica archivos estáticos de `web/dist`. GitHub Pages sirve contenido estático ([documentación oficial](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages)). La lectura local del archivo no añade un servidor ni una conexión directa con el proceso de extracción.

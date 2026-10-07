@@ -27,7 +27,7 @@ The shared per-attack kernel is src/domain/dice/attackDamage.ts. Combat, require
 
 ## Catalog contract
 
-Use the closed clean v2 schema, own catalog identity/digest/review registry and complete raw-token normalization. Reject unknown nested keys without echoing keys, payloads, parser errors or paths. No original locators, versions, hashes, publications, URLs or provenance enter product data. Private packages stay outside the repository and bundle; tests use synthetic fixtures.
+Use the closed clean v2 schema, own catalog identity/digest/review registry and complete raw-token normalization. Reject unknown nested keys without echoing keys, payloads, parser errors or paths. No original locators, versions, hashes, publications, URLs or provenance enter product data. Raw exports and source provenance stay outside the repository and bundle. Iván authorized publishing the three clean pilot catalogs in web/public/catalogs; the combined pilot loads automatically in production. Tests use synthetic fixtures.
 
 The current pilot binds torrent, heavy, rapidFire and devastatingWounds only. reviewed is not synonymous with engine support. Relevant pending/unsupported effects require explicit partial acceptance or block calculation. Out-of-scope effects remain visible limitations. Keep a brief notice and expandable detail; never activate effects from rule names.
 

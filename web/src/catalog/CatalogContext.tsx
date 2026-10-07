@@ -5,6 +5,7 @@ import type { CombatScenarioInput } from '@application/dice/combatScenario';
 import { loadCatalog, loadCatalogFile } from './loadCatalog';
 import { readStoredCatalog, writeStoredCatalog } from './catalogStorage';
 import { readLocalCatalog } from './localCatalog';
+import { readPublishedCatalog } from './publishedCatalog';
 import { s } from '../i18n/scenario';
 import { catalogOmissions } from './catalogReview';
 import { isSquadScenario } from '@application/dice/squadScenario';
@@ -41,7 +42,9 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
           if (isCurrent()) setStorageNotice(s('catalogSessionOnly'));
         }
         if (!isCurrent() || stored?.text === null) return;
-        const text = stored?.text ?? await readLocalCatalog();
+        let text = stored?.text ?? await readLocalCatalog();
+        if (!isCurrent()) return;
+        if (text === undefined) text = await readPublishedCatalog();
         if (!isCurrent() || text === undefined) return;
         const next = await loadCatalog(text);
         if (!isCurrent()) return;

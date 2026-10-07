@@ -6,14 +6,17 @@ import { syntheticCatalog, syntheticTrust } from '@domain/profiles/catalogFixtur
 import * as loader from './loadCatalog';
 import * as storage from './catalogStorage';
 import * as local from './localCatalog';
+import * as published from './publishedCatalog';
 
 vi.mock('./catalogStorage', () => ({ readStoredCatalog: vi.fn(), writeStoredCatalog: vi.fn() }));
 vi.mock('./localCatalog', () => ({ readLocalCatalog: vi.fn() }));
+vi.mock('./publishedCatalog', () => ({ readPublishedCatalog: vi.fn() }));
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(storage.readStoredCatalog).mockResolvedValue(undefined);
   vi.mocked(storage.writeStoredCatalog).mockResolvedValue();
   vi.mocked(local.readLocalCatalog).mockResolvedValue(undefined);
+  vi.mocked(published.readPublishedCatalog).mockResolvedValue(undefined);
 });
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
@@ -33,6 +36,7 @@ describe('persistent private catalog', () => {
     await waitFor(() => expect(screen.getByText('test-1')).toBeTruthy());
     expect(validate).toHaveBeenCalledWith(text);
     expect(local.readLocalCatalog).not.toHaveBeenCalled();
+    expect(published.readPublishedCatalog).not.toHaveBeenCalled();
   });
   it('loads and saves the configured local catalog automatically on first opening', async () => {
     vi.mocked(local.readLocalCatalog).mockResolvedValue(text);
@@ -40,6 +44,23 @@ describe('persistent private catalog', () => {
     render(<CatalogProvider><Probe /></CatalogProvider>);
     await waitFor(() => expect(screen.getByText('test-1')).toBeTruthy());
     expect(storage.writeStoredCatalog).toHaveBeenCalledWith(text);
+    expect(published.readPublishedCatalog).not.toHaveBeenCalled();
+  });
+  it('loads and validates the published pilot for a fresh browser without local configuration', async () => {
+    vi.mocked(published.readPublishedCatalog).mockResolvedValue(text);
+    const validate = vi.spyOn(loader, 'loadCatalog').mockResolvedValue(catalog);
+    render(<CatalogProvider><Probe /></CatalogProvider>);
+    await waitFor(() => expect(screen.getByText('test-1')).toBeTruthy());
+    expect(validate).toHaveBeenCalledWith(text);
+    expect(storage.writeStoredCatalog).toHaveBeenCalledWith(text);
+  });
+  it('rejects an invalid published catalog before saving it', async () => {
+    vi.mocked(published.readPublishedCatalog).mockResolvedValue('invalid catalog');
+    vi.spyOn(loader, 'loadCatalog').mockRejectedValue(new Error('invalid catalog'));
+    render(<CatalogProvider><Probe /></CatalogProvider>);
+    await waitFor(() => expect(screen.getByText(/No se puede admitir/)).toBeTruthy());
+    expect(storage.writeStoredCatalog).not.toHaveBeenCalled();
+    expect(screen.getByText('empty')).toBeTruthy();
   });
   it('persists a validated import and restores it on reopening', async () => {
     vi.spyOn(loader, 'loadCatalogFile').mockResolvedValue(catalog);
