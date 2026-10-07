@@ -76,6 +76,8 @@ const en = {
     save: 'Save profile',
   },
   wh40k: {
+    legacyHistory: 'Record from an earlier engine. It is not recalculated automatically; enter the scenario again with the current revision.',
+    scopeLimit: 'Potential damage calculation. Exact 11th edition support is limited to one miniature; these unit profiles retain earlier allocation assumptions.',
     attackerLabel: 'Attacker',
     defenderLabel: 'Defender',
     selectUnit: 'Select unit…',
@@ -93,7 +95,7 @@ const en = {
     selectBoth: 'Select attacker and defender to compare buffs.',
     noWeapons: 'The selected attacker has no weapon profiles to buff.',
     recommendation: 'Recommended buff',
-    recommendationRule: 'Primary metric: expected damage per round. Tie-breaker: expected rounds to kill.',
+    recommendationRule: 'Primary metric: expected wounds lost per round. Tie-breaker: expected rounds to kill.',
     baseline: 'Baseline',
     plusBallisticSkill: '+1 BS',
     plusSave: '+1 Save',

@@ -46,7 +46,7 @@ describe.each([
     fireEvent.click(checkbox(/Torrent/));
     expect(hitFishing.disabled).toBe(false);
     expect(hitFishing.checked).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Bolter vs Marine' }));
+    fireEvent.change(screen.getByLabelText('Ejemplo de arma y objetivo'), { target: { value: 'bolter-vs-marine' } });
     expect(hitFishing.checked).toBe(false);
   });
 });

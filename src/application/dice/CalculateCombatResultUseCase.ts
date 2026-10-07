@@ -19,7 +19,7 @@ export interface TargetProfile {
   baseSave: number;
   /** Optional unmodifiable save. When provided, the best of armor and invulnerable is used. */
   invulnerableSave?: number;
-  /** Optional modifier applied to save rolls. Clamped to [−1, +1]. Defaults to 0. */
+  /** Optional modifier applied to save rolls. Defaults to 0. */
   saveModifier?: number;
   /** Optional re-roll policy for save rolls. Defaults to 'none'. */
   saveReroll?: DieRerollPolicy;
@@ -28,7 +28,7 @@ export interface TargetProfile {
    * negated on a D6 roll ≥ fnpThreshold.
    */
   fnpThreshold?: number;  /**
-   * Number of save dice pre-rolled as a natural 6 (auto-save regardless of AP).
+   * Number of save dice pre-rolled as a natural 6 (legacy observed-save assumption).
    * Each guaranteed save removes one wound before the normal save rolls.
    * Defaults to 0.
    */
@@ -65,6 +65,7 @@ export class CalculateCombatResultUseCase {
       guaranteedDamageValue,
       sustainedHits,
       lethalHits,
+      lethalChoice,
       devastatingWounds,
       mortalWoundsPerHit,
       torrent,
@@ -82,7 +83,7 @@ export class CalculateCombatResultUseCase {
         attacksDist, hitThreshold, hitModifier, hitReroll, guaranteedHitSixes,
         strengthDist, woundModifier, woundReroll, guaranteedWoundSixes,
         ap, damageDist, guaranteedDamageValue, modelCount: 1,
-        sustainedHits, lethalHits, devastatingWounds, mortalWoundsPerHit, torrent,
+        sustainedHits, lethalHits, lethalChoice, devastatingWounds, mortalWoundsPerHit, torrent,
       }],
       toughness,
       savePools: [{ baseSave, fraction: 1, invulnerableSave, saveModifier, saveReroll, fnpThreshold, guaranteedSaves }],

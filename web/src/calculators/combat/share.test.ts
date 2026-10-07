@@ -73,7 +73,7 @@ describe('formatCombatShareText', () => {
     expect(text).toContain('LUDOMATHS - COMBATE WH40K');
     expect(text).toContain('Preset: Bolter Pesado');
     expect(text).toContain('PERFIL');
-    expect(text).toContain('A3 | BH 3+ | F5 | FP-1 | D6+2');
+    expect(text).toContain('A3 | BH 3+ | F5 | FP-1 | Daño D6+2');
     expect(text).toContain('OBJETIVO');
     expect(text).toContain('R4 | 3W | SA 3+ | Inv 4++ | FNP 5+');
     expect(text).toContain('REGLAS');
@@ -105,7 +105,7 @@ describe('formatCombatShareText', () => {
 
     expect(text).toContain('REGLAS');
     expect(text).toContain('- sin reglas especiales');
-    expect(text).toContain('A2 | BH 4+ | F4 | FP-0 | D1');
+    expect(text).toContain('A2 | BH 4+ | F4 | FP0 | Daño 1');
     expect(text).toContain('R4 | 2W | SA 4+');
   });
 });

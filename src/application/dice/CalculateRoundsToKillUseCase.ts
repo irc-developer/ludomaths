@@ -1,32 +1,6 @@
-/**
- * @module CalculateRoundsToKillUseCase
- *
- * Given a weapon unit and a target with N total wounds, computes the
- * probability distribution of the number of shooting rounds needed to kill
- * the target.
- *
- * # Math
- *
- * Let D be the damage distribution for one round (from CalculateUnitCombatUseCase).
- * Let D_n = D₁ + D₂ + ... + D_n be the cumulative damage after n rounds
- * (i.e. multiConvolve(D, n)).
- *
- * P(kill by round n) = P(D_n ≥ W) = 1 − cumulativeProbability(D_n, W − 1)
- *
- * P(kill in exactly round n) = P(kill by round n) − P(kill by round n − 1)
- *
- * E[rounds to kill] ≈ Σ_{n=1}^{maxRounds} n × P(kill in round n)
- * (Approximation improves as maxRounds grows. For high-damage units the loop
- *  exits early once P(kill by round n) ≈ 1.)
- *
- * # Performance note
- *
- * D_n is computed incrementally: D_n = convolve(D_{n−1}, D), starting from
- * the degenerate distribution at 0 (the identity for convolution).
- * This avoids recomputing multiConvolve from scratch each round.
- */
+/** Exact absorption time for one miniature with identical independent rounds. */
 
-import { Distribution, cumulativeProbability } from '@domain/math/distribution';
+import { Distribution } from '@domain/math/distribution';
 import { convolve } from '@domain/math/convolution';
 import { WeaponGroup } from '@domain/dice/weapon';
 import { SavePool } from '@domain/dice/savePool';
@@ -69,6 +43,9 @@ export interface RoundsToKillResult {
   expectedRounds: number;
   /** Damage distribution for a single round of shooting. */
   damagePerRoundDist: Distribution;
+  survivingProbability: number;
+  horizonLimited: boolean;
+  calculationScope?: 'single-miniature' | 'legacy-approximation';
 }
 
 const DEGENERATE_ZERO: Distribution = [{ value: 0, probability: 1 }];
@@ -92,43 +69,49 @@ export class CalculateRoundsToKillUseCase {
     }
 
     // ── Damage distribution per round ──────────────────────────────────────
-    const { totalDamageDist: damagePerRoundDist } = this.unitCase.execute({
+    const { totalDamageDist: damagePerRoundDist, calculationScope } = this.unitCase.execute({
       weaponGroups,
       toughness,
       savePools,
     });
 
-    // ── Iterate rounds ─────────────────────────────────────────────────────
-    // D_n accumulates damage after n rounds via incremental convolution.
-    // Starting from DEGENERATE_ZERO (identity for convolution) means:
-    //   convolve(ZERO, D) = D   (round 1)
-    //   convolve(D, D) = D₂    (round 2) … etc.
-    //
-    // P(kill by round n) = 1 − cumulativeProbability(D_n, W − 1)
-    const killByRound: RoundEntry[] = [];
-    let roundDamageDist: Distribution = DEGENERATE_ZERO;
-    let prevCumulativeProb = 0;
-    let expectedRounds = 0;
-
-    for (let n = 1; n <= maxRounds; n++) {
-      roundDamageDist = convolve(roundDamageDist, damagePerRoundDist);
-
-      // P(total after n rounds ≥ W) = 1 − P(total ≤ W − 1)
-      const cumulativeProb = Math.min(
-        1,
-        1 - cumulativeProbability(roundDamageDist, targetWounds - 1),
-      );
-      const prob = cumulativeProb - prevCumulativeProb;
-
-      killByRound.push({ round: n, probability: prob, cumulativeProbability: cumulativeProb });
-      expectedRounds += n * prob;
-      prevCumulativeProb = cumulativeProb;
-
-      // Early exit: kill is practically certain; further rounds add no information
-      // and continuing would only bloat roundDamageDist size exponentially.
-      if (cumulativeProb >= 1 - 1e-9) break;
+    if (targetWounds > 500 || maxRounds > 1000) throw new RangeError('Calculation limit exceeded');
+    // E[w] = (1 + sum_(d>0) P(d) E[max(0,w-d)]) / P(D>0).
+    // This solves the self-loop at zero damage without truncating the expectation.
+    const positive = damagePerRoundDist.filter(entry => entry.value > 0);
+    const progress = positive.reduce((sum, entry) => sum + entry.probability, 0);
+    const expectations = new Float64Array(targetWounds + 1);
+    for (let w = 1; w <= targetWounds; w++) {
+      expectations[w] = progress === 0 ? Infinity :
+        (1 + positive.reduce((sum, entry) => sum + entry.probability * expectations[Math.max(0, w - entry.value)], 0)) / progress;
     }
-
-    return { killByRound, expectedRounds, damagePerRoundDist };
+    const killByRound: RoundEntry[] = [];
+    let surviving = new Float64Array(targetWounds);
+    surviving[0] = 1;
+    let cumulative = 0;
+    let operations = 0;
+    let horizonLimited = false;
+    for (let round = 1; round <= maxRounds; round++) {
+      const stepOperations = surviving.reduce((sum, mass) => sum + (mass > 0 ? damagePerRoundDist.length : 0), 0);
+      if (operations + stepOperations > 2000000) { horizonLimited = true; break; }
+      operations += stepOperations;
+      const next = new Float64Array(targetWounds);
+      let absorbed = 0;
+      for (let w = 0; w < targetWounds; w++) {
+        if (surviving[w] === 0) continue;
+        for (const entry of damagePerRoundDist) {
+          const mass = surviving[w] * entry.probability;
+          if (w + entry.value >= targetWounds) absorbed += mass;
+          else next[w + entry.value] += mass;
+        }
+      }
+      cumulative = Math.min(1, cumulative + absorbed);
+      killByRound.push({ round, probability: absorbed, cumulativeProbability: cumulative });
+      surviving = next;
+      if (cumulative >= 1 - 1e-9) break;
+    }
+    const survivingProbability = surviving.reduce((sum, mass) => sum + mass, 0);
+    return { killByRound, expectedRounds: expectations[targetWounds], damagePerRoundDist,
+      survivingProbability, horizonLimited, calculationScope };
   }
 }

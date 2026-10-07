@@ -1,3 +1,7 @@
+import { CatalogProvider } from './catalog/CatalogContext';
+import { CombatScenarioProvider } from './calculators/combat/CombatScenarioContext';
+import { s } from './i18n/scenario';
+import './styles/wh40k.css';
 import { useState } from 'react';
 import { HypergeometricCalculator } from './calculators/hypergeometric/HypergeometricCalculator';
 import { ChargeCalculator } from './calculators/charge/ChargeCalculator';
@@ -8,7 +12,7 @@ import { LorcanaCalculator } from './calculators/lorcana/LorcanaCalculator';
 import { SwissSimulator } from './calculators/swiss/SwissSimulator';
 import { colors, sp } from './styles/tokens';
 
-type TabId = 'hyper' | 'charge' | 'combat' | 'required-attacks' | 'buffs' | 'lorcana' | 'swiss';
+type TabId = 'hyper' | 'charge' | 'wh40k' | 'lorcana' | 'swiss';
 
 interface Tab {
   id:    TabId;
@@ -23,23 +27,22 @@ interface Tab {
 const TABS: Tab[] = [
   { id: 'hyper',  label: 'Hipergeometrica' },
   { id: 'charge', label: 'Carga WH40K' },
-  { id: 'combat', label: 'Combate WH40K' },
-  { id: 'required-attacks', label: 'Ataques necesarios WH40K' },
-  { id: 'buffs', label: 'Buffs WH40K' },
+  { id: 'wh40k', label: 'WH40K' },
   { id: 'lorcana', label: 'Lorcana' },
   { id: 'swiss',   label: 'Swiss Melee' },
 ];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>('hyper');
+  const [combatTab, setCombatTab] = useState<'combat' | 'required' | 'buffs'>('combat');
 
   return (
-    <div style={{ minHeight: '100vh', background: colors.bg, color: colors.text }}>
+    <CatalogProvider><CombatScenarioProvider><div style={{ minHeight: '100vh', background: colors.bg, color: colors.text }}>
 
       <header
         style={{
           borderBottom: `1px solid ${colors.border}`,
-          padding: `${sp.md} ${sp.xl}`,
+          padding: `${sp.md} clamp(1rem, 4vw, 2rem)`,
         }}
       >
         <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: colors.primary, margin: 0 }}>
@@ -53,8 +56,9 @@ export default function App() {
       <nav
         style={{
           borderBottom: `1px solid ${colors.border}`,
-          padding: `0 ${sp.xl}`,
+          padding: '0 clamp(0.5rem, 2vw, 2rem)',
           display: 'flex',
+          flexWrap: 'wrap',
           gap: sp.xs,
           overflowX: 'auto',
         }}
@@ -64,6 +68,7 @@ export default function App() {
           return (
             <button
               key={tab.id}
+              aria-pressed={isActive}
               onClick={() => setActiveTab(tab.id)}
               style={{
                 background: 'none',
@@ -84,16 +89,22 @@ export default function App() {
         })}
       </nav>
 
-      <main style={{ maxWidth: 860, margin: '0 auto', padding: sp.xl }}>
+      <main style={{ maxWidth: 1000, margin: '0 auto', padding: 'clamp(0.75rem, 3vw, 2rem)', minWidth: 0 }}>
         {activeTab === 'hyper'   && <HypergeometricCalculator />}
         {activeTab === 'charge'  && <ChargeCalculator />}
-        {activeTab === 'combat'  && <CombatCalculator />}
-        {activeTab === 'required-attacks' && <RequiredAttacksCalculator />}
-        {activeTab === 'buffs'   && <CombatBuffComparisonCalculator />}
+        {activeTab === 'wh40k' && <>
+          <nav className="combat-navigation" aria-label={s('calculationMode')}>
+            {(['combat', 'required', 'buffs'] as const).map(mode => <button key={mode} aria-pressed={combatTab === mode}
+              onClick={() => setCombatTab(mode)}>{s(mode === 'combat' ? 'combatTab' : mode === 'required' ? 'requiredTab' : 'buffsTab')}</button>)}
+          </nav>
+          {combatTab === 'combat' && <CombatCalculator />}
+          {combatTab === 'required' && <RequiredAttacksCalculator />}
+          {combatTab === 'buffs' && <CombatBuffComparisonCalculator />}
+        </>}
         {activeTab === 'lorcana' && <LorcanaCalculator />}
         {activeTab === 'swiss'   && <SwissSimulator />}
       </main>
 
-    </div>
+    </div></CombatScenarioProvider></CatalogProvider>
   );
 }

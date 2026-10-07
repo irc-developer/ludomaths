@@ -1,13 +1,4 @@
-/**
- * @module combatRecord
- *
- * Domain type that represents a saved WH40K combat calculation.
- *
- * Stores snapshots of the attacker and defender profiles at the moment the
- * calculation was performed, not the result. The result is deterministic and
- * cheap to recompute, so re-running the use case on load is preferable to
- * caching a value that could become stale after a formula fix.
- */
+/** Versioned combat inputs; old snapshots require explicit recalculation. */
 
 import { UnitProfile } from '@domain/profiles/unitProfile';
 
@@ -17,6 +8,9 @@ export interface CombatRecord {
    * Must be a non-empty string after trimming.
    */
   label: string;
+  /** Own calculation revision. Missing versions must never be silently recalculated. */
+  engineVersion?: string;
+  calculationScope?: 'single-miniature' | 'legacy-unit';
 
   /**
    * Snapshot of the attacking unit at the time the calculation was saved.

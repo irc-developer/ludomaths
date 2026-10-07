@@ -8,6 +8,7 @@ const DEFAULT_MAX_ROUNDS = 20;
 const EPSILON = 1e-9;
 
 export type CombatBuffRecommendation =
+  | 'hitRoll'
   | 'ballisticSkill'
   | 'save'
   | 'armorPenetration'
@@ -17,6 +18,10 @@ export type CombatBuffRecommendation =
 export interface CombatBuffScenario {
   damagePerRoundDist: Distribution;
   expectedDamage: number;
+  expectedWoundsLost?: number;
+  survivingProbability?: number;
+  computedRounds?: number;
+  horizonLimited?: boolean;
   expectedRoundsToKill: number;
   firstRoundKillProbability: number;
 }
@@ -25,11 +30,13 @@ export interface CompareCombatBuffInput {
   attacker: UnitProfile;
   defender: UnitProfile;
   maxRounds?: number;
+  includeHitRoll?: boolean;
 }
 
 export interface CompareCombatBuffResult {
   baseline: CombatBuffScenario;
   plusBallisticSkill: CombatBuffScenario;
+  plusHitRoll?: CombatBuffScenario;
   plusSave: CombatBuffScenario;
   plusArmorPenetration: CombatBuffScenario;
   plusDamage: CombatBuffScenario;
@@ -53,6 +60,8 @@ export class CompareCombatBuffUseCase {
       defender,
       maxRounds,
     );
+    const plusHitRoll = input.includeHitRoll ? this.evaluate({ ...attacker,
+      weaponGroups: attacker.weaponGroups.map(group => group.torrent ? group : { ...group, hitModifier: (group.hitModifier ?? 0) + 1 }) }, defender, maxRounds) : undefined;
     const plusSave = this.evaluate(
       attacker,
       buffSave(defender),
@@ -72,12 +81,13 @@ export class CompareCombatBuffUseCase {
     return {
       baseline,
       plusBallisticSkill,
+      ...(plusHitRoll ? { plusHitRoll } : {}),
       plusSave,
       plusArmorPenetration,
       plusDamage,
       recommendedOption: chooseRecommendation([
         { option: 'ballisticSkill', scenario: plusBallisticSkill },
-        { option: 'save', scenario: plusSave },
+        ...(plusHitRoll ? [{ option: 'hitRoll' as const, scenario: plusHitRoll }] : []),
         { option: 'armorPenetration', scenario: plusArmorPenetration },
         { option: 'damage', scenario: plusDamage },
       ]),
@@ -100,6 +110,10 @@ export class CompareCombatBuffUseCase {
     return {
       damagePerRoundDist: result.damagePerRoundDist,
       expectedDamage: expectedValue(result.damagePerRoundDist),
+      expectedWoundsLost: result.damagePerRoundDist.reduce((sum, e) => sum + Math.min(defender.wounds, e.value) * e.probability, 0),
+      survivingProbability: result.survivingProbability,
+      computedRounds: result.killByRound.length,
+      horizonLimited: result.horizonLimited,
       expectedRoundsToKill: result.expectedRounds,
       firstRoundKillProbability: result.killByRound[0]?.cumulativeProbability ?? 0,
     };
@@ -150,9 +164,11 @@ function buffDamage(weaponGroups: WeaponGroup[]): WeaponGroup[] {
 function chooseRecommendation(
   candidates: readonly BuffCandidate[],
 ): CombatBuffRecommendation {
-  const bestDamage = Math.max(...candidates.map(candidate => candidate.scenario.expectedDamage));
+  // For one miniature, damage beyond its remaining wounds provides no benefit.
+  const score = (scenario: CombatBuffScenario) => scenario.expectedWoundsLost ?? scenario.expectedDamage;
+  const bestDamage = Math.max(...candidates.map(candidate => score(candidate.scenario)));
   let remaining = candidates.filter(candidate =>
-    Math.abs(candidate.scenario.expectedDamage - bestDamage) <= EPSILON,
+    Math.abs(score(candidate.scenario) - bestDamage) <= EPSILON,
   );
   if (remaining.length === 1) {
     return remaining[0].option;
@@ -160,7 +176,7 @@ function chooseRecommendation(
 
   const bestRounds = Math.min(...remaining.map(candidate => candidate.scenario.expectedRoundsToKill));
   remaining = remaining.filter(candidate =>
-    Math.abs(candidate.scenario.expectedRoundsToKill - bestRounds) <= EPSILON,
+    candidate.scenario.expectedRoundsToKill === bestRounds || Math.abs(candidate.scenario.expectedRoundsToKill - bestRounds) <= EPSILON,
   );
   if (remaining.length === 1) {
     return remaining[0].option;

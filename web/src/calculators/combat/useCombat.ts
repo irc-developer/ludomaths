@@ -1,17 +1,22 @@
+import { useCatalogInput } from '../../catalog/CatalogContext';
+import { scenarioError } from '../../i18n/scenario';
 import { useMemo } from 'react';
 import { expectedValue, type Distribution } from '@domain/math/distribution';
-import { CalculateCombatResultUseCase } from '@application/dice/CalculateCombatResultUseCase';
+import { CalculateUnitCombatUseCase } from '@application/dice/CalculateUnitCombatUseCase';
 import type { CombatParams } from './presets';
-import { resolveRerollPolicy } from './rerollPolicy';
+import { buildCombatScenario } from '@application/dice/combatScenario';
+import { isSquadScenario } from '@application/dice/squadScenario';
+import type { SquadCombatResult } from '@application/dice/CalculateSquadCombatUseCase';
+import { calculateSquad } from './squadCalculations';
+import { useSquadCalculation } from './useSquadCalculation';
 
 // Singleton stateless — creado una vez a nivel de módulo.
-const combatUseCase = new CalculateCombatResultUseCase();
+const combatUseCase = new CalculateUnitCombatUseCase();
 
 function fixed(n: number): Distribution {
   return [{ value: n, probability: 1 }];
 }
 
-const D6: Distribution = [1, 2, 3, 4, 5, 6].map(v => ({ value: v, probability: 1 / 6 }));
 
 function probabilityAtLeast(dist: Distribution, threshold: number): number {
   return dist
@@ -63,7 +68,10 @@ function quantile(dist: Distribution, p: number): number {
 
 /** View model plano: sin tipos del dominio, listo para renderizar. */
 export interface CombatViewModel {
+  squad?: SquadCombatResult;
+  isCalculating?: boolean;
   expectedDamage: number;
+  expectedWoundsLost?: number;
   medianDamage: number;
   mostLikelyDamage: number;
   /** Central P50 interval [Q25, Q75]: the range containing the middle 50 % of outcomes. */
@@ -76,81 +84,41 @@ export interface CombatViewModel {
 }
 
 /**
- * Adaptador entre CalculateCombatResultUseCase y la presentación.
+ * Adaptador entre CalculateUnitCombatUseCase y la presentación.
  *
  * Transforma los parámetros planos del formulario en las Distribution del
  * dominio, ejecuta el pipeline y devuelve un view model con estadísticas
  * clave y la distribución serializada a primitivos.
  */
 export function useCombat(params: CombatParams): CombatViewModel {
-  const {
-    attacks, attacksD6, hitThreshold, hitRerollAll, hitRerollNonSixes, guaranteedHitSix,
-    strength, woundRerollAll, woundRerollNonSixes, guaranteedWoundSix,
-    ap, damage, damageD6, guaranteedDamageSix, damageBonus,
-    toughness, targetWounds, baseSave, invulnerableSave, fnpThreshold, guaranteedSaveSix,
-    sustainedHits, lethalHits, devastatingWounds, mortalWoundsPerHit, torrent,
-  } = params;
-
+  const catalogParams = useCatalogInput(params);
+  const squadMode = isSquadScenario(catalogParams);
+  const async = useSquadCalculation<SquadCombatResult>({ kind: 'combat', params: catalogParams }, squadMode);
   return useMemo(() => {
     try {
-      const baseAttacksDist = attacksD6 ? D6 : fixed(attacks);
-      const baseDamageDist = damageD6 ? D6 : fixed(damage);
-      // Apply a constant bonus to all outcomes (e.g. D6+2 → shift each value by +2).
-      const damageDist: Distribution =
-        (damageBonus ?? 0) > 0
-          ? baseDamageDist.map(e => ({ value: e.value + (damageBonus ?? 0), probability: e.probability }))
-          : baseDamageDist;
-
-      const result = combatUseCase.execute({
-        attacksDist:  baseAttacksDist,
-        hitThreshold,
-        hitReroll: resolveRerollPolicy(hitRerollAll, hitRerollNonSixes, torrent),
-        guaranteedHitSixes: guaranteedHitSix ? 1 : undefined,
-        strengthDist: fixed(strength),
-        woundReroll: resolveRerollPolicy(woundRerollAll, woundRerollNonSixes),
-        guaranteedWoundSixes: guaranteedWoundSix ? 1 : undefined,
-        ap,
-        damageDist,
-        guaranteedDamageValue: damageD6 && guaranteedDamageSix ? 6 + (damageBonus ?? 0) : undefined,
-        toughness,
-        baseSave,
-        invulnerableSave,
-        fnpThreshold,
-        guaranteedSaves: guaranteedSaveSix ? 1 : undefined,
-        sustainedHits,
-        lethalHits,
-        devastatingWounds,
-        mortalWoundsPerHit,
-        torrent,
-      });
-
+      if (squadMode) {
+        if (async.pending || async.error) return { expectedDamage: 0, expectedWoundsLost: 0, medianDamage: 0, mostLikelyDamage: 0,
+          centralRange: { low: 0, high: 0 }, pAtLeastOne: 0, pEliminate: 0, distribution: [], isCalculating: async.pending, error: async.error };
+        const squad = async.available ? async.result! : calculateSquad({ kind: 'combat', params: catalogParams }) as SquadCombatResult;
+        const dist = squad.woundsLostDist;
+        return { squad, expectedDamage: squad.expectedWoundsLost, expectedWoundsLost: squad.expectedWoundsLost,
+          medianDamage: medianOutcome(dist), mostLikelyDamage: modeOutcome(dist),
+          centralRange: { low: quantile(dist, .25), high: quantile(dist, .75) },
+          pAtLeastOne: probabilityAtLeast(dist, 1), pEliminate: squad.pEliminate, distribution: [...dist] };
+      }
+      const scenario = buildCombatScenario(catalogParams);
+      const result = combatUseCase.execute({ weaponGroups: [scenario.weapon], toughness: scenario.target.toughness,
+        savePools: [{ ...scenario.target, fraction: 1, guaranteedSaves: params.guaranteedSaveSix ? 1 : undefined }] });
       const dist = result.totalDamageDist;
-      return {
-        expectedDamage:   expectedValue(dist),
-        medianDamage:     medianOutcome(dist),
-        mostLikelyDamage: modeOutcome(dist),
-        centralRange:     { low: quantile(dist, 0.25), high: quantile(dist, 0.75) },
-        pAtLeastOne:      probabilityAtLeast(dist, 1),
-        pEliminate:       probabilityAtLeast(dist, targetWounds),
-        distribution:     dist.map(e => ({ value: e.value, probability: e.probability })),
-      };
-    } catch (e) {
-      return {
-        expectedDamage: 0,
-        medianDamage: 0,
-        mostLikelyDamage: 0,
-        centralRange: { low: 0, high: 0 },
-        pAtLeastOne: 0,
-        pEliminate: 0,
-        distribution: [],
-        error: e instanceof Error ? e.message : 'Error desconocido',
-      };
+      return { expectedDamage: expectedValue(dist),
+        expectedWoundsLost: dist.reduce((sum, e) => sum + Math.min(params.targetWounds, e.value) * e.probability, 0),
+        medianDamage: medianOutcome(dist), mostLikelyDamage: modeOutcome(dist),
+        centralRange: { low: quantile(dist, 0.25), high: quantile(dist, 0.75) },
+        pAtLeastOne: probabilityAtLeast(dist, 1), pEliminate: probabilityAtLeast(dist, params.targetWounds), distribution: dist.map(entry => ({ ...entry })) };
+    } catch (error) {
+      return { expectedDamage: 0, expectedWoundsLost: 0, medianDamage: 0, mostLikelyDamage: 0,
+        centralRange: { low: 0, high: 0 }, pAtLeastOne: 0, pEliminate: 0, distribution: [],
+        error: scenarioError(error) };
     }
-  }, [
-    attacks, attacksD6, hitThreshold, hitRerollAll, hitRerollNonSixes, guaranteedHitSix,
-    strength, woundRerollAll, woundRerollNonSixes, guaranteedWoundSix,
-    ap, damage, damageD6, guaranteedDamageSix, damageBonus,
-    toughness, targetWounds, baseSave, invulnerableSave, fnpThreshold, guaranteedSaveSix,
-    sustainedHits, lethalHits, devastatingWounds, mortalWoundsPerHit, torrent,
-  ]);
+  }, [params, catalogParams, squadMode, async.available, async.pending, async.error, async.result]);
 }

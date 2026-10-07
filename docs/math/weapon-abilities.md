@@ -1,125 +1,39 @@
-# Weapon abilities de WH40K en el pipeline de combate
+# Combate acotado de WH40K 11.ª
 
-## Qué son y por qué necesitan tratamiento especial
+El cálculo verificado de esta migración usa un grupo de armas idénticas, un modo seleccionado, portadores explícitos y una miniatura objetivo. Los ejemplos son pedagógicos; no son perfiles oficiales. La legalidad completa del equipo, otras unidades y habilidades sin soporte quedan fuera del resultado.
 
-El pipeline estándar de WH40K (ataques → impactos → heridas → tirada de salvación → daño) asume que cada dados de ataque pasa por todas las etapas de manera uniforme. Las *weapon abilities* rompen este flujo: algunas dados de impacto generan impactos adicionales, otras obligan a herir sin tirada, y ciertas heridas se saltan la salvación. Ninguno de estos comportamientos puede modelarse con la función `applyStage` por sí sola, porque esa función aplica una probabilidad **uniforme** a toda la distribución de éxitos.
+## Un ataque, ramas excluyentes
 
-El problema central es que cada *ability* depende de si un dado mostró exactamente 6 (un **impacto / herida crítica**). Para modelarlo correctamente hay que separar la contribución de los 6 del resto de la distribución, calcular los efectos especiales de esa fracción, y luego reunir ambas corrientes al final.
+El núcleo compartido es `src/domain/dice/attackDamage.ts`. Si Z es el daño de un impacto normal, C el del impacto original crítico y X la cantidad fija de Sustained Hits:
 
----
+P(D=d) = P(fallo) · I(d=0) + P(normal) · P(Z=d) + P(crítico) · P(C+Z1+…+ZX=d).
 
-## Las cuatro abilities implementadas
+La suma dentro de la última rama conserva la relación entre el crítico y sus extras. Para impactar a 6+, herir a 2+, sin salvación y Sustained 1 de daño 1, P(D=2)=1/6·(5/6)^2=25/216. Separar los conteos de críticos y normales como binomiales independientes da una distribución incorrecta.
 
-### 1. [SUSTAINED HITS X]
+Lethal permite elegir herida automática o tirar para herir. La herida automática se salva normalmente y no puede generar Devastating. Torrent evita la tirada de impacto y sus críticos. Devastating evita las salvaciones, pero conserva FNP. Cada punto de daño pasa por FNP una vez.
 
-**Regla (10.ª ed.):** cada vez que un dado de ataque muestra un 6 sin modificar (impacto crítico), ese ataque genera X impactos adicionales que se resuelven como impactos normales.
+La armadura compara su umbral tras AP y su modificador. La invulnerable ignora ambos; se elige la probabilidad más favorable. Un 1 natural falla, y un 6 natural no salva automáticamente. El límite neto ±1 corresponde a impactar/herir, no a la salvación.
 
-**Modelo matemático:**
+## Características y contexto
 
-Sea $N$ el total de dados de ataque, $p_\text{crit} = P(D6 \geq 6) = \frac{1}{6}$ (ajustado por *reroll* si aplica), y $p_\text{hit}$ la probabilidad total de impacto.
+Se conserva la distribución completa de A y D: número fijo, D3, D6 y nD3/nD6+k. Cada portador tira sus ataques independientemente. El sumando intrínseco de una expresión no es el bonificador externo. No se reemplazan dados por su media.
 
-El ajuste se obtiene con `combatRollProbabilities(hitThreshold, hitModifier, hitReroll).critical`.
-Repetir fallos conserva el umbral original: en 3+ da $8/36$ críticos. Repetir
-resultados distintos de 6 (`nonSixes`) da $11/36$, conservando el 6 inicial y
-repitiendo una vez 1–5, incluidos los éxitos. La segunda tirada nunca se repite.
+Cobertura empeora BS a distancia; Ignores Cover lo impide. Heavy exige todos sus estados explícitos. Rapid Fire y Melta dependen de la mitad del alcance al seleccionar objetivo. Twin-linked concede permiso para repetir al herir; la decisión de conservar éxitos/seises es separada.
 
-La implementación aproxima el número de impactos mediante dos corrientes
-independientes. Los impactos regulares y los extras comparten tiradas; sus
-conteos están correlacionados. La convolución conserva las medias, pero puede
-alterar la distribución final. Esta limitación previa sigue pendiente.
+## Pérdidas y rondas
 
-$$\text{HitsDist} = \underbrace{\text{Bin}(N,\ p_\text{hit})}_{\text{impactos regulares}} \;+\; \underbrace{X \cdot \text{Bin}(N,\ p_\text{crit})}_{\text{impactos extra}}$$
+El daño potencial D puede superar las heridas restantes W. La pérdida real de una miniatura es min(D,W), y su eliminación es P(D≥W). No se interpreta como probabilidad exacta de eliminar una unidad completa.
 
-Donde $+$ denota la convolución de las dos distribuciones. Los impactos extra se distribuyen idénticamente a los normales desde ese punto — no son críticos y no desencadenan nuevas habilidades.
+Con E(0)=0, la media completa de rondas independientes de perfil/contexto constante es:
 
-**Implementación:** se usa `applyDamage(critHitsDist, [{value: X, probability: 1}])` para obtener la distribución de $X \cdot \text{Bin}(N, p_\text{crit})$. Esto explota que `applyDamage` con daño fijo $X$ es equivalente a multiplicar cada valor de la distribución por $X$.
+E(w) = [1 + suma_(d>0) P(D=d)·E(max(0,w-d))] / P(D>0).
 
----
+Si P(D>0)=0, la media es infinita. La tabla muestra un horizonte finito con probabilidad residual de sobrevivir; esa tabla no recorta la media. Los límites de coste pueden acortar explícitamente el horizonte mostrado o detener la búsqueda inversa, sin certificar un éxito.
 
-### 2. [LETHAL HITS]
+## Soporte y límites
 
-**Regla:** cada impacto crítico (6 sin modificar) hiere automáticamente al objetivo. La tirada de herida se omite para ese impacto. La herida automática **sí** realiza tirada de salvación.
+La entrada común valida hasta 100 portadores, 500 heridas, 10 dados D3/D6 y soporte de A/S/D hasta 100. Un límite conjunto de soporte/coste puede rechazar combinaciones de límites individuales. La búsqueda inversa tiene tope de 10.000 ataques y presupuesto de operaciones.
 
-**Modelo matemático:**
+El piloto JSON ejecuta únicamente Torrent, Heavy, Rapid Fire y Devastating validados por identidad, revisión y huella propias. Otras habilidades se declaran pendientes u omitidas y exigen aceptación parcial cuando afectan al cálculo. Los conteos y dados observados del motor anterior y la asignación mediante fracciones siguen siendo aproximaciones anteriores; no se anuncian como 11.ª exacta.
 
-El pipeline aproxima la distribución mediante dos grupos independientes, aunque
-sus conteos proceden de las mismas tiradas:
-
-- **Impactos críticos:** $k_\text{crit} \sim \text{Bin}(N, p_\text{crit})$ → pasan directamente a la etapa de salvación como heridas automáticas.
-- **Impactos normales:** $k_\text{norm} \sim \text{Bin}(N, p_\text{hit} - p_\text{crit})$ → pasan por la tirada de herida normal.
-
-El valor esperado total de heridas es:
-
-$$E[\text{heridas}] = N p_\text{crit} + N(p_\text{hit} - p_\text{crit}) \cdot p_\text{wound}$$
-
-Comparado con el pipeline estándar ($E = N p_\text{hit} p_\text{wound}$), la diferencia es:
-
-$$\Delta E = N p_\text{crit}(1 - p_\text{wound}) \geq 0$$
-
-Es decir, *Lethal Hits* siempre aumenta el daño esperado, y el incremento es mayor cuanto más difícil es herir ($p_\text{wound}$ pequeño).
-
----
-
-### 3. [DEVASTATING WOUNDS]
-
-**Regla:** cada vez que un dado de herida muestra un 6 sin modificar (herida crítica), esa herida se convierte en heridas mortales iguales al daño del arma. Ninguna tirada de salvación tiene efecto sobre las heridas críticas. El Feel No Pain **sí** aplica.
-
-**Modelo matemático:**
-
-A partir de la distribución de impactos $\text{HitsDist}$, la etapa de heridas se descompone:
-
-$$\text{CritWoundsDist} = \text{applyStage}(\text{HitsDist},\ p_\text{crit\_wound})$$
-
-$$\text{NormWoundsDist} = \text{applyStage}(\text{HitsDist},\ \max(0,\ p_\text{wound} - p_\text{crit\_wound}))$$
-
-donde $p_\text{crit\_wound}$ se obtiene de
-`combatRollProbabilities(woundThreshold(S,T), woundModifier, woundReroll).critical`.
-Si la fuerza es variable, se pondera esta probabilidad para cada valor de fuerza.
-
-Las heridas críticas se separan **antes** de la etapa de salvación y se incorporan directamente al cálculo de daño. Las heridas normales siguen el camino habitual.
-
-El daño esperado total es:
-
-$$E[\text{daño}] = E[\text{impactos}]\cdot\left[p_\text{crit\_wound} + (p_\text{wound} - p_\text{crit\_wound}) \cdot p_\text{fail\_save}\right]$$
-
-Cuando la salvación es imposible ($p_\text{fail\_save} = 1$), los términos se reducen a $E[\text{impactos}] \cdot p_\text{wound}$, idéntico al caso sin *Devastating Wounds* — lo que confirma que la habilidad no tiene utilidad contra una salvación nula.
-
----
-
-### 4. [MORTAL WOUNDS per hit] — $Y$ heridas mortales por impacto
-
-**Regla (interpretación del proyecto):** cada impacto (incluyendo impactos críticos y los extras de *Sustained Hits*) inflige $Y$ heridas mortales adicionales que eluden las salvaciones. El Feel No Pain sigue aplicando.
-
-**Modelo matemático:**
-
-El número de heridas mortales adicionales es una transformación lineal de la distribución total de impactos:
-
-$$\text{MortalDamageDist} = \text{applyDamage}(\text{AllHitsDist},\ [\{Y, 1\}])$$
-
-Esta distribución se convuelve con el daño del pipeline normal **después** del bucle de pools de salvación, ya que las heridas mortales no participan en ningún pool.
-
-Si existe un umbral de Feel No Pain, se aplica a la distribución de daño mortal con el FNP del primer pool de salvación. Para unidades con un solo pool (la mayoría de los casos prácticos) esto es exacto. Para unidades con varios pools distintos es una aproximación; si todos los pools tienen el mismo FNP, la aproximación es exacta.
-
----
-
-## Interacciones entre abilities
-
-Las cuatro habilidades pueden coexistir en el mismo arma:
-
-| Combinación | Efecto |
-|---|---|
-| Sustained + Lethal | Los impactos críticos auto-hieren **y** generan X impactos extra que van a tirada de herida. Los impactos extra **no** son críticos. |
-| Lethal + Devastating | Los impactos críticos auto-hieren (van a tirada de salvación). Los impactos normales hacen tirada de herida; si salen 6, eluden la salvación. |
-| Devastating + Mortal Wounds | Las heridas críticas eluden salvación; adicionalmente, cada impacto genera Y heridas mortales independientes del resultado de herida. |
-
-**Regla invariante de implementación:** los impactos *extra* generados por Sustained Hits son impactos ordinarios. Nunca activan Lethal Hits ni producen heridas críticas para Devastating Wounds.
-
----
-
-## Dónde vive en la arquitectura
-
-- **`src/domain/dice/weapon.ts`** — campos `sustainedHits`, `lethalHits`, `devastatingWounds`, `mortalWoundsPerHit` en `WeaponProfile`. Esta capa modela el concepto de juego puro, sin saber nada de use cases ni infraestructura.
-
-- **`src/application/dice/CalculateUnitCombatUseCase.ts`** — toda la lógica de orquestación. Cada ability añade ramas condicionales al bucle de grupo dentro de `execute()`. La regla de dependencias es respetada: esta capa importa de `domain/`, nunca al revés.
-
-- **`src/application/dice/CalculateCombatResultUseCase.ts`** — fachada de arma única. Solo delega los nuevos campos al use case de unidad sin lógica propia.
+Los registros llevan revisión propia del motor. Un historial antiguo o de otra revisión no se recalcula automáticamente. Los paquetes privados no forman parte del código, las pruebas públicas ni la web compilada.

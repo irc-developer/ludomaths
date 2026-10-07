@@ -35,7 +35,8 @@ describe('useCombatBuffComparison', () => {
     }));
 
     expect(result.current.error).toBeUndefined();
-    expect(result.current.recommendedOption).toBe('ballisticSkill');
+    expect(result.current.recommendedOption).toBe('equal');
+    expect(result.current.plusHitRoll?.expectedDamage).toBeCloseTo(result.current.plusBallisticSkill.expectedDamage, 12);
     expect(result.current.plusBallisticSkill.expectedDamage).toBeGreaterThan(
       result.current.plusDamage.expectedDamage,
     );
@@ -90,6 +91,7 @@ describe('useCombatBuffComparison', () => {
       ap: 4,
       damage: 1,
       toughness: 3,
+      targetWounds: 4,
       baseSave: 6,
     }));
 

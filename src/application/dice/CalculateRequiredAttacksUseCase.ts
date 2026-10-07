@@ -1,14 +1,12 @@
 import type { WeaponProfile } from '@domain/dice/weapon';
 import type { Distribution } from '@domain/math/distribution';
-import { combatRollProbabilities, dieSuccessProbability, chosenSaveThreshold, woundThreshold } from '@domain/dice/combat';
-import { convolve, multiConvolve } from '@domain/math/convolution';
-import { applyStage } from '@domain/math/pipeline';
+import { singleAttackDamage } from '@domain/dice/attackDamage';
 import type { TargetProfile } from './CalculateCombatResultUseCase';
 
 /** Independent attacks against one miniature; no pre-rolled dice. */
 export type RequiredAttacksWeapon = Pick<WeaponProfile,
   'hitThreshold' | 'hitReroll' | 'hitModifier' | 'strengthDist' | 'woundReroll' | 'woundModifier' |
-  'ap' | 'damageDist' | 'torrent' | 'sustainedHits' | 'lethalHits' | 'devastatingWounds' | 'mortalWoundsPerHit'>;
+  'ap' | 'damageDist' | 'torrent' | 'sustainedHits' | 'lethalHits' | 'lethalChoice' | 'devastatingWounds' | 'mortalWoundsPerHit'>;
 export type RequiredAttacksTarget = Pick<TargetProfile,
   'toughness' | 'baseSave' | 'invulnerableSave' | 'saveModifier' | 'saveReroll' | 'fnpThreshold'>;
 
@@ -21,6 +19,8 @@ export interface RequiredAttacksInput {
   successProbability: number;
   /** Search bound, from 1 to 10,000. Defaults to 10,000. */
   maxAttacks?: number;
+  /** Deterministic resource budget; reaching it returns a limit, never an approximation. */
+  maxOperations?: number;
 }
 
 export interface RequiredAttacksResult {
@@ -29,10 +29,9 @@ export interface RequiredAttacksResult {
   attacks: number;
   probability: number;
   previousProbability: number;
-  reason?: 'zeroDamage' | 'noFiniteGuarantee';
+  reason?: 'zeroDamage' | 'noFiniteGuarantee' | 'complexity';
 }
 
-const ZERO: Distribution = [{ value: 0, probability: 1 }];
 
 function integer(value: number, min: number, max: number, name: string): void {
   if (!Number.isInteger(value) || value < min || value > max) {
@@ -48,62 +47,12 @@ function validateDistribution(dist: Distribution, min: number, max: number, name
   }
 }
 
-/** Mixture of mutually exclusive branches, not a sum of independent rolls. */
-function mixture(branches: Array<{ probability: number; dist: Distribution }>): Distribution {
-  const values = new Map<number, number>();
-  for (const branch of branches) {
-    for (const entry of branch.dist) {
-      values.set(entry.value, (values.get(entry.value) ?? 0) + branch.probability * entry.probability);
-    }
-  }
-  const total = Array.from(values.values()).reduce((sum, probability) => sum + probability, 0);
-  return Array.from(values, ([value, probability]) => ({ value, probability: probability / total }))
-    .filter(entry => entry.probability > 0).sort((a, b) => a.value - b.value);
-}
-
-/**
- * Conditions on the hit result so a critical hit and its sustained hits stay
- * correlated. Lethal originals still take saves; sustained extras roll to wound.
- */
-function singleAttackDamage(weapon: RequiredAttacksWeapon, target: RequiredAttacksTarget): Distribution {
-  const hit = combatRollProbabilities(weapon.hitThreshold, weapon.hitModifier, weapon.hitReroll);
-  const wound = weapon.strengthDist.reduce((sum, entry) => {
-    const roll = combatRollProbabilities(woundThreshold(entry.value, target.toughness), weapon.woundModifier, weapon.woundReroll);
-    return { success: sum.success + entry.probability * roll.success, critical: sum.critical + entry.probability * roll.critical };
-  }, { success: 0, critical: 0 });
-  // Invulnerable saves ignore modifiers; compare the actual armor and invulnerable probabilities.
-  const armor = dieSuccessProbability(chosenSaveThreshold(target.baseSave, weapon.ap), target.saveModifier, target.saveReroll);
-  const invulnerable = target.invulnerableSave === undefined ? 0 :
-    dieSuccessProbability(target.invulnerableSave, 0, target.saveReroll);
-  const failSave = 1 - Math.max(armor, invulnerable);
-  const damage = target.fnpThreshold === undefined ? weapon.damageDist :
-    applyStage(weapon.damageDist, 1 - dieSuccessProbability(target.fnpThreshold));
-  const mortals: Distribution = [{ value: weapon.mortalWoundsPerHit ?? 0, probability: 1 }];
-  const mortalDamage = target.fnpThreshold === undefined ? mortals :
-    applyStage(mortals, 1 - dieSuccessProbability(target.fnpThreshold));
-  const damagingHit = (probability: number) => convolve(mixture([
-    { probability, dist: damage }, { probability: 1 - probability, dist: ZERO },
-  ]), mortalDamage);
-  const pUnsaved = weapon.devastatingWounds
-    ? wound.critical + (wound.success - wound.critical) * failSave
-    : wound.success * failSave;
-  const normalHitDamage = damagingHit(pUnsaved);
-  if (weapon.torrent) return normalHitDamage;
-
-  const criticalOriginal = weapon.lethalHits ? damagingHit(failSave) : normalHitDamage;
-  const criticalDamage = convolve(criticalOriginal, multiConvolve(normalHitDamage, weapon.sustainedHits ?? 0));
-  return mixture([
-    { probability: 1 - hit.success, dist: ZERO },
-    { probability: hit.normal, dist: normalHitDamage },
-    { probability: hit.critical, dist: criticalDamage },
-  ]);
-}
-
 export class CalculateRequiredAttacksUseCase {
   execute(input: RequiredAttacksInput): RequiredAttacksResult {
-    const { weapon, target, targetWounds, successProbability, maxAttacks = 10000 } = input;
+    const { weapon, target, targetWounds, successProbability, maxAttacks = 10000, maxOperations = 2000000 } = input;
     integer(targetWounds, 1, 500, 'Heridas restantes');
     integer(maxAttacks, 1, 10000, 'Límite de ataques');
+    integer(maxOperations, 1, 10000000, 'Límite de operaciones');
     if (!Number.isFinite(successProbability) || successProbability <= 0 || successProbability > 1) {
       throw new RangeError('La fiabilidad debe ser mayor que 0% y como máximo 100%.');
     }
@@ -133,7 +82,12 @@ export class CalculateRequiredAttacksUseCase {
     surviving[0] = 1;
     let probability = 0;
     let previousProbability = 0;
+    let operations = 0;
     for (let attacks = 1; attacks <= maxAttacks; attacks++) {
+      const stepOperations = surviving.reduce((sum, mass) => sum + (mass > 0 ? dist.length : 0), 0);
+      if (operations + stepOperations > maxOperations) return { status: 'limit', attacks: attacks - 1,
+        probability, previousProbability, reason: 'complexity' };
+      operations += stepOperations;
       const next = new Float64Array(targetWounds);
       previousProbability = probability;
       for (let wounds = 0; wounds < targetWounds; wounds++) {

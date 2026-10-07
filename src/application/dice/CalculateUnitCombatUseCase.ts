@@ -1,30 +1,7 @@
-/**
- * @module CalculateUnitCombatUseCase
- *
- * Orchestrates WH40K combat for a full unit:
- *
- *   [weapon group 1] ─┐
- *   [weapon group 2] ─┤──► convolve damages ──► totalDamageDist
- *   [weapon group N] ─┘
- *
- * Each weapon group runs the following pipeline:
- *
- *   Stage 1  attacks  → hits
- *              [SUSTAINED HITS X]: critical hit (6) → X extra hits
- *              [LETHAL HITS]:      critical hit (6) → auto-wound (skip wound roll)
- *   Stage 2  hits     → wounds
- *              [DEVASTATING WOUNDS]: critical wound (6) → bypass save
- *   Stage 3  wounds split by save pool fraction
- *   Stage 4  normal wounds → save roll → unsaved wounds → damage
- *              critical wounds (devastating) bypass this stage
- *   Stage 5  (optional) damage → Feel No Pain
- *   Post     [MORTAL WOUNDS per hit]: each hit → Y extra mortal wounds
- *              bypass saves, still subject to FNP
- *
- * Save pools model units where different miniatures carry different armor
- * values. Each pool receives a fraction of the total wounds and applies its
- * own save independently. The damage distributions from all pools are then
- * convolved into a single result per weapon group.
+import { COMBAT_ENGINE_VERSION } from '@domain/combat/calculationVersion';
+import { singleAttackDamage } from '@domain/dice/attackDamage';
+/** Exact independent weapon groups against one homogeneous miniature.
+ * Observed dice and fractional save allocation retain an explicitly legacy path.
  */
 
 import { chosenSaveThreshold, combatRollProbabilities, dieSuccessProbability, woundThreshold } from '@domain/dice/combat';
@@ -51,6 +28,8 @@ export interface UnitCombatInput {
 export interface UnitCombatResult {
   /** Full probability distribution of total damage dealt by the unit. */
   totalDamageDist: Distribution;
+  engineVersion?: string;
+  calculationScope?: 'single-miniature' | 'legacy-approximation';
 }
 
 const DEGENERATE_ZERO: Distribution = [{ value: 0, probability: 1 }];
@@ -138,11 +117,41 @@ export class CalculateUnitCombatUseCase {
     }
 
     for (const group of weaponGroups) {
-      if (!Number.isInteger(group.modelCount) || group.modelCount < 0) {
+      if (!Number.isInteger(group.modelCount) || group.modelCount < 0 || group.modelCount > 100) {
         throw new RangeError(
           `modelCount must be a non-negative integer, got ${group.modelCount}`,
         );
       }
+    }
+
+    if (weaponGroups.length > 20 || savePools.length > 20) throw new RangeError('Calculation complexity limit exceeded');
+    let support = 0;
+    let operations = 0;
+    for (const group of weaponGroups) {
+      for (const dist of [group.attacksDist, group.strengthDist, group.damageDist]) {
+        if (!dist.length || dist.length > 101 || dist.some(e => !Number.isInteger(e.value) || e.value < 0 || e.value > 100 ||
+          !Number.isFinite(e.probability) || e.probability < 0) || Math.abs(dist.reduce((sum, e) => sum + e.probability, 0) - 1) > 1e-9) {
+          throw new RangeError('Invalid characteristic distribution');
+        }
+      }
+      const attacks = Math.max(...group.attacksDist.map(e => e.value)) * group.modelCount;
+      const damage = Math.max(...group.damageDist.map(e => e.value)) * (1 + (group.sustainedHits ?? 0)) + (group.mortalWoundsPerHit ?? 0);
+      support += attacks * damage;
+      operations += attacks * attacks * damage * Math.min(damage + 1, 101);
+    }
+    if (support > 2000 || operations > 2000000) throw new RangeError('Calculation complexity limit exceeded');
+
+    // A single homogeneous target uses mutually exclusive per-attack branches.
+    // Observed dice and fractional allocation remain explicitly legacy calculations.
+    const observed = weaponGroups.some(g => (g.guaranteedHitSixes ?? 0) > 0 ||
+      (g.guaranteedWoundSixes ?? 0) > 0 || g.guaranteedDamageValue !== undefined) ||
+      savePools.some(p => (p.guaranteedSaves ?? 0) > 0);
+    if (savePools.length === 1 && !observed) {
+      const target = { ...savePools[0], toughness };
+      const distributions = weaponGroups.filter(g => g.modelCount > 0).map(g =>
+        applyDamage(multiConvolve(g.attacksDist, g.modelCount), singleAttackDamage(g, target)));
+      return { totalDamageDist: distributions.reduce((a, b) => convolve(a, b), DEGENERATE_ZERO),
+        engineVersion: COMBAT_ENGINE_VERSION, calculationScope: 'single-miniature' };
     }
 
     // ── Per-group pipeline ─────────────────────────────────────────────────
@@ -338,6 +347,6 @@ export class CalculateUnitCombatUseCase {
     }
 
     const totalDamageDist = groupDamageDists.reduce((acc, dist) => convolve(acc, dist));
-    return { totalDamageDist };
+    return { totalDamageDist, calculationScope: 'legacy-approximation' };
   }
 }

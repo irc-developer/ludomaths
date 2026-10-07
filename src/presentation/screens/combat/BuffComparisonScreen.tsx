@@ -125,6 +125,7 @@ export function BuffComparisonScreen({ navigation }: BuffComparisonScreenProps):
 
   return (
     <View style={styles.flex}>
+      <Text>{t('wh40k.scopeLimit')}</Text>
       <FlatList
         data={profiles}
         keyExtractor={item => item.id}

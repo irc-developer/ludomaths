@@ -230,6 +230,20 @@ export function combatRollProbabilities(
  * dieSuccessProbability(4, 0, 'failures') // → 0.75     (4+ with reroll failures)
  * dieSuccessProbability(4, 0, 'ones')     // → 0.583    (4+ with reroll 1s)
  */
+export function saveSuccessProbability(
+  threshold: number,
+  modifier = 0,
+  reroll: DieRerollPolicy = 'none',
+): number {
+  if (!Number.isInteger(threshold) || threshold < 2 || !Number.isInteger(modifier)) {
+    throw new RangeError('Invalid save threshold or modifier');
+  }
+  // Saves have no automatic natural-six success and no hit/wound modifier cap.
+  const succeeds = (face: number) => face !== 1 && face + modifier >= threshold;
+  return finalDieFaceProbabilities(reroll, succeeds).reduce((sum, p, i) =>
+    sum + (succeeds(i + 1) ? p : 0), 0);
+}
+
 export function dieSuccessProbability(
   baseThreshold: number,
   modifier: number = 0,

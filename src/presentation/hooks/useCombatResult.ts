@@ -1,3 +1,4 @@
+import { COMBAT_ENGINE_VERSION } from '@domain/combat/calculationVersion';
 import { useState, useMemo, useCallback } from 'react';
 import { CalculateRoundsToKillUseCase } from '@application/dice/CalculateRoundsToKillUseCase';
 import { SaveCombatRecordUseCase } from '@application/combat/SaveCombatRecordUseCase';
@@ -42,13 +43,13 @@ export function useCombatResult(
   const result = useMemo<RoundsToKillResult | null>(() => {
     if (attacker == null || defender == null) return null;
     if (attacker.weaponGroups.length === 0) return null;
-    return roundsUseCase.execute({
+    try { return roundsUseCase.execute({
       weaponGroups: attacker.weaponGroups,
       toughness: defender.toughness,
       savePools: defender.savePools,
       targetWounds: defender.wounds,
       maxRounds: MAX_ROUNDS,
-    });
+    }); } catch { return null; }
   }, [attacker, defender, roundsUseCase]);
 
   const saveRecord = useCallback(
@@ -57,7 +58,7 @@ export function useCombatResult(
       setSaving(true);
       setSaveError(null);
       try {
-        const stored = await saveUseCase.execute({ label, attacker, defender });
+        const stored = await saveUseCase.execute({ label, attacker, defender, engineVersion: COMBAT_ENGINE_VERSION, calculationScope: 'legacy-unit' });
         setSavedId(stored.id);
       } catch (e: unknown) {
         setSaveError(e instanceof Error ? e.message : 'Unknown error');

@@ -78,6 +78,8 @@ const es: Translations = {
     save: 'Guardar perfil',
   },
   wh40k: {
+    legacyHistory: 'Registro de un motor anterior. No se recalcula automáticamente; vuelve a introducir el escenario para calcularlo con la revisión actual.',
+    scopeLimit: 'Cálculo de daño potencial. La compatibilidad exacta de 11.ª está limitada a una miniatura; estos perfiles de unidades conservan supuestos de asignación anteriores.',
     attackerLabel: 'Atacante',
     defenderLabel: 'Defensor',
     selectUnit: 'Seleccionar unidad…',
@@ -95,7 +97,7 @@ const es: Translations = {
     selectBoth: 'Selecciona atacante y defensor para comparar buffs.',
     noWeapons: 'El atacante seleccionado no tiene armas que mejorar.',
     recommendation: 'Buff recomendado',
-    recommendationRule: 'Métrica principal: daño esperado por ronda. Desempate: rondas esperadas para matar.',
+    recommendationRule: 'Métrica principal: heridas perdidas esperadas por ronda. Desempate: rondas esperadas para eliminar.',
     baseline: 'Base',
     plusBallisticSkill: '+1 BS',
     plusSave: '+1 Salvación',

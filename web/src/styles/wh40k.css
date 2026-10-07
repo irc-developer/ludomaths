@@ -1,0 +1,49 @@
+.combat-navigation, .entry-options { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+.combat-navigation button, .entry-options button { min-height: 44px; padding: .6rem 1rem; border: 1px solid #64748b; border-radius: .6rem; background: #0f172a; color: #e2e8f0; font: inherit; cursor: pointer; }
+.combat-navigation button[aria-pressed=true], .entry-options button[aria-pressed=true] { background: #818cf8; color: #0f172a; border-color: #818cf8; font-weight: 650; }
+button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 3px solid #c7d2fe; outline-offset: 3px; }
+.combat-scenario, .catalog-panel { display: grid; gap: 1rem; min-width: 0; margin-bottom: 1rem; }
+.combat-scenario label, .catalog-panel label { display: grid; gap: .4rem; }
+.scenario-columns, .result-metrics, .improvement-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1rem; min-width: 0; }
+.scenario-columns > *, .result-metrics > *, .improvement-cards > * { min-width: 0; }
+.combat-scenario fieldset { margin: 0; }
+.combat-scenario legend { padding: 0 .25rem; font-weight: 650; }
+.combat-scenario p, .combat-scenario li, .calculation-help p, .comparison-details p { line-height: 1.55; overflow-wrap: anywhere; }
+.combat-scenario small, .scenario-caption { color: #94a3b8; line-height: 1.5; }
+.combat-scenario details > :not(summary), .calculation-help > :not(summary) { margin-top: .65rem; }
+.combat-scenario details ul { padding-left: 1.25rem; }
+.combat-scenario summary, .calculation-help summary, .result-details > summary, .share-panel > summary, .comparison-details > summary { min-height: 44px; display: list-item; align-content: center; cursor: pointer; font-weight: 600; }
+.catalog-management, .calculation-help { color: #94a3b8; font-size: .9rem; }
+.calculation-help { margin-bottom: 1rem; }
+.scope-label { color: #c7d2fe; margin-bottom: .25rem; }
+.scope-notice { border-left: 3px solid #818cf8; padding: .5rem .75rem; line-height: 1.55; }
+.combat-scenario .touch-choice { display: flex; align-items: center; gap: .65rem; min-height: 44px; cursor: pointer; }
+.touch-choice input { flex-shrink: 0; width: 18px; height: 18px; accent-color: #818cf8; }
+.combat-scenario input[type=checkbox] + label { min-height: 44px; display: flex; align-items: center; flex: 1; }
+.optional-number { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.manual-abilities { display: grid; gap: .5rem; }
+.scenario-error { color: #f87171; line-height: 1.5; }
+.unit-search { position: relative; min-width: 0; }
+.search-popup { position: absolute; z-index: 5; top: 100%; left: 0; right: 0; border: 1px solid #64748b; background: #0f172a; border-radius: .5rem; box-shadow: 0 8px 24px #0008; }
+.search-popup ul { list-style: none; margin: 0; padding: .25rem !important; max-height: min(320px, 45vh); overflow-y: auto; overscroll-behavior: contain; }
+.search-popup li { min-height: 44px; padding: .5rem .6rem; display: flex; flex-direction: column; cursor: pointer; }
+.search-popup li.active, .search-popup li:hover { background: #334155; border-radius: .25rem; }
+.search-popup li[aria-selected=true] { border-left: 3px solid #818cf8; }
+.search-popup p { padding: .5rem .75rem; font-size: .85rem; color: #94a3b8; }
+.result-details, .share-panel, .comparison-details { margin-top: 1rem; border: 1px solid #334155; border-radius: .6rem; padding: .5rem .75rem; }
+.result-details > div, .share-panel > div, .comparison-details > div { margin-top: .75rem; }
+.result-details > h3 { margin: .25rem 0; font-size: 1rem; color: #c7d2fe; }
+.improvement-card { border: 1px solid #334155; border-radius: .6rem; padding: 1rem; background: #0f172a; }
+.improvement-card h4 { margin-bottom: .75rem; color: #c7d2fe; }
+.improvement-card dl { display: grid; gap: .5rem; }
+.improvement-card dd { font-size: 1.1rem; margin: 0; }
+.improvement-card dt, .improvement-card small { color: #94a3b8; }
+.combat-result { margin-top: 1rem; }
+.squad-counter { display: grid; gap: .5rem; }
+.squad-counter > label { font-weight: 650; color: #c7d2fe; }
+.squad-counter-controls { display: flex; gap: .5rem; align-items: center; }
+.squad-counter-controls button { min-width: 44px; min-height: 44px; border: 1px solid #64748b; border-radius: .5rem; background: #0f172a; color: #e2e8f0; font: inherit; cursor: pointer; }
+.squad-counter-controls button:disabled { opacity: .4; cursor: default; }
+.squad-profile, .squad-weapon { display: grid; gap: .75rem; margin: .75rem 0; }
+.squad-weapon { border-top: 1px solid #334155; padding-top: .5rem; }
+@media (max-width: 600px) { .scenario-columns, .result-metrics, .improvement-cards { grid-template-columns: 1fr; } .combat-navigation button { flex: 1 1 auto; padding: .5rem .65rem; } }

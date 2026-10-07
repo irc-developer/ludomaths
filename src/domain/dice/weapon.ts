@@ -31,13 +31,13 @@ export interface WeaponProfile {
   ap: number;
   /** Distribution of the damage dealt per unsaved wound. */
   damageDist: Distribution;
-  /** Optional modifier applied to hit rolls. Clamped to [−1, +1]. Defaults to 0. */
+  /** Optional modifier applied to hit rolls. Defaults to 0. */
   hitModifier?: number;
   /** Optional re-roll policy for hit rolls. Defaults to 'none'. */
   hitReroll?: DieRerollPolicy;
   /** Number of hit dice that are pre-rolled as a natural 6. Defaults to 0. */
   guaranteedHitSixes?: number;
-  /** Optional modifier applied to wound rolls. Clamped to [−1, +1]. Defaults to 0. */
+  /** Optional modifier applied to wound rolls. Defaults to 0. */
   woundModifier?: number;
   /** Optional re-roll policy for wound rolls. Defaults to 'none'. */
   woundReroll?: DieRerollPolicy;
@@ -64,11 +64,13 @@ export interface WeaponProfile {
    * then goes through saves as normal.
    */
   lethalHits?: boolean;
+  /** Choice for critical originals; automatic wounds cannot trigger wound-roll abilities. */
+  lethalChoice?: 'autoWound' | 'rollToWound';
 
   /**
    * [DEVASTATING WOUNDS]: each unmodified wound roll of 6 (critical wound) bypasses
    * all saves (armor and invulnerable). The critical wound deals its damage as
-   * mortal wounds. Feel No Pain still applies (10th edition rule).
+   * mortal wounds. Feel No Pain still applies.
    */
   devastatingWounds?: boolean;
 
@@ -85,7 +87,7 @@ export interface WeaponProfile {
    * All attacks automatically become hits, so Stage 1 of the pipeline is skipped.
    * Abilities that require a hit roll (Sustained Hits, Lethal Hits) cannot trigger.
    * Wound rolls, saves and FNP proceed as normal.
-   * Typical weapons: flamers, torrent weapons (10th edition rule).
+   * Typical weapons: flamers, torrent weapons.
    */
   torrent?: boolean;
 }

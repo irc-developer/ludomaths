@@ -1,184 +1,44 @@
 ---
 name: wh40k
-description: "Implement or correct a Warhammer 40K 10th edition combat rule in LudoMaths. Use when touching the combat pipeline, weapon abilities like Sustained Hits, Lethal Hits, Devastating Wounds, Anti-X+, Torrent, Mortal Wounds, Feel No Pain, save pools, or reroll policies."
-argument-hint: "Describe the WH40K mechanic to add, e.g. 'Anti-[keyword] X+ ability' or 'Torrent (auto-hit)'"
+description: "Implement or correct the bounded WH40K 11th edition single-miniature calculation and private catalog adapter."
 ---
 
-# WH40K Combat Pipeline — Skill
+# WH40K calculation workflow
 
-This skill assumes the shared domain, testing, and presentation rules already come from
-the workspace instructions. It only captures the WH40K-specific invariants and workflow.
+Follow workspace layer boundaries, English code/comments/tests, translation-only UI strings and mandatory TDD.
 
-## Pipeline overview (10th edition)
+## Verified scope
 
-```
-N × modelCount attacks
-  │
-  ├─ Stage 1: Attacks → Hits
-  │     pHit = combatRollProbabilities(hitThreshold, hitModifier, hitReroll).success
-  │     [SUSTAINED HITS X] → critical hit (unmod. 6) generates X extra hits
-  │     [LETHAL HITS]      → critical hit (unmod. 6) auto-wounds (skip Stage 2)
-  │
-  ├─ Stage 2: Hits → Wounds
-  │     pWound = Σ_s P(S=s) × combatRollProbabilities(woundThreshold(s,T), mod, reroll).success
-  │     [DEVASTATING WOUNDS] → critical wound (unmod. 6) bypasses Stage 3
-  │
-  ├─ Stage 3: Wounds split by save pool fraction
-  │
-  ├─ Stage 4: Wounds → Save roll → Unsaved wounds → Damage
-  │     effectiveSave = min(baseSave + AP, invulnerableSave)
-  │     failSave = 1 − dieSuccessProbability(effectiveSave, saveModifier, saveReroll)
-  │
-  ├─ Stage 5 (optional): Damage → Feel No Pain
-  │     pFailFNP = 1 − dieSuccessProbability(fnpThreshold)
-  │     Applies to ALL damage including devastating wounds
-  │
-  └─ Post:  [MORTAL WOUNDS per hit] → each hit → Y extra mortal wounds
-              bypass saves, still subject to FNP of first pool
-```
+One group of identical weapons, one selected mode, explicit carriers, one target miniature. Maximum and remaining wounds are separate. Do not call total unit wounds a verified unit-elimination model. Mixed save pools and observed dice remain explicitly legacy approximations.
 
-## Key invariants (from WH40K 10th edition rules)
+The shared per-attack kernel is src/domain/dice/attackDamage.ts. Combat, required attacks and improvement comparison must use it. Condition on the hit outcome; original critical hits and Sustained extras share their branch. Never convolve independent normal/critical counts drawn from the same roll.
 
-| Mechanic | Trigger | Effect | Saves bypass? | FNP bypass? |
-|---|---|---|---|---|
-| Sustained Hits X | Unmod. hit roll = 6 | X extra hits | No | No |
-| Lethal Hits | Unmod. hit roll = 6 | Auto-wound | No | No |
-| Devastating Wounds | Unmod. wound roll = 6 | Bypass save | **Yes** | No |
-| Mortal Wounds per hit | Each hit | Y mortal wounds | **Yes** | No |
-| Feel No Pain | Each damage point | Negate on ≥ threshold | — | — |
+- Hit and wound rolls: natural one fails, natural six is critical; net roll modifier capped at plus/minus one. Preserve natural faces and once-only reroll decisions.
+- Lethal Hits: explicit choice of automatic wound or wound roll. Automatic wounds cannot trigger Devastating Wounds.
+- Torrent: no hit roll, no critical hits.
+- Sustained X: fixed X only in this milestone; extras are normal hits.
+- Devastating Wounds: critical wound damage packet bypasses saves; FNP applies. For the supported single miniature, excess damage is capped only in the actual-loss metric.
+- Armor and invulnerable saves: calculate separately and choose the better probability. AP and armor modifiers never modify invulnerable saves. Natural six is not an automatic save; save modifiers do not use the hit/wound cap.
+- FNP: one independent roll per potential lost wound. Show potential damage and actual loss capped at remaining wounds separately.
+- Cover worsens ranged BS by one; Ignores Cover prevents that change. It does not improve armor.
+- Heavy requires Shooting phase, unengaged unit, no arrival this turn and no model moving over three inches. Do not infer missing context as false.
+- Rapid Fire and Melta use explicit half-range context at target selection. Keep intrinsic dice constants separate from external bonuses.
+- Twin-linked permits wound rerolls; the user chooses failures/non-sixes. A UI option alone never grants a reroll rule.
 
-> **Critical roll = unmodified 6**: modifiers never affect whether a roll is "critical".
-> Reroll policies DO affect the probability of rolling a 6 (a rerolled 6 counts as a critical).
+## Catalog contract
 
-## Critical probability formula
+Use the closed clean v2 schema, own catalog identity/digest/review registry and complete raw-token normalization. Reject unknown nested keys without echoing keys, payloads, parser errors or paths. No original locators, versions, hashes, publications, URLs or provenance enter product data. Private packages stay outside the repository and bundle; tests use synthetic fixtures.
 
-Keep the original hit/wound threshold and modifier when deciding which faces
-are rerolled. Modifiers never change whether the final face is a natural six:
+The current pilot binds torrent, heavy, rapidFire and devastatingWounds only. reviewed is not synonymous with engine support. Relevant pending/unsupported effects require explicit partial acceptance or block calculation. Out-of-scope effects remain visible limitations. Keep a brief notice and expandable detail; never activate effects from rule names.
 
-$$P(\text{crit}) = \texttt{combatRollProbabilities}(T,\ m,\ \textit{rerollPolicy}).\texttt{critical}$$
+Anti, Blast, conditional hit bonuses, riled-up effects and the pending Lethal condition belong to later explicitly authorized work. Do not build a generic effects resolver for this first milestone. See docs/plans/warhammer-rule-effects-integration.md.
 
-With `failures`, $P(crit)=1/6+(1-p)/6$, where $p$ is the original success
-probability without rerolls. A 3+ roll gives 8/36 criticals, not 11/36.
-With `nonSixes`, keep natural sixes and reroll every first result 1–5 once:
-$P(success)=1/6+5p/6$ and $P(crit)=11/36$.
-For variable strength, average success and critical probabilities per strength.
-Natural sixes always succeed for valid hit/wound thresholds, even at 6+ with −1.
-Keep generic impossible-save behavior in `dieSuccessProbability` unchanged.
+## Mathematics and records
 
-For normal wounds/hits probability (subtract crit probability from total):
+Compute round expectation with absorption recurrence over remaining wounds, not the truncated weighted sum of displayed rounds. Report residual survival and the actual horizon; impossible progress has infinite expectation. Distinguish offensive skill improvement from adding to the hit die; defender save improvement is a separate defensive comparison.
 
-$$P(\text{normal}) = \max\!\left(0,\ P(\text{all}) - P(\text{crit})\right)$$
+Enforce resource limits before distribution allocation. A bounded inverse search returns limit/impossible distinctly; never silently discard probability mass. Version new snapshots with the own engine revision. Old or mismatched revisions must not automatically recompute as current calculations.
 
-## Layer placement
+## Checks
 
-| New mechanic type | Where it lives |
-|---|---|
-| New probability function (pure math) | `src/domain/math/` |
-| New weapon keyword (e.g., Anti, Torrent) | `src/domain/dice/weapon.ts` + pipeline in `CalculateUnitCombatUseCase.ts` |
-| New save pool property | `src/domain/dice/savePool.ts` + pipeline Stage 3–5 |
-| New use case (new input/output shape) | `src/application/dice/` |
-
-## Adding a new weapon ability — step by step (TDD)
-
-### 1. Identify the stage
-
-Ask: "At which stage of the pipeline does this mechanic intervene?"
-- Hits stage (Stage 1): new hit-roll variant
-- Wound stage (Stage 2): new wound-roll variant
-- Save stage (Stage 3–4): new save-bypass variant
-- Damage step (Stage 4–5): new damage modifier or FNP variant
-
-### 2. Add the field to `WeaponProfile` or `SavePool`
-
-In `src/domain/dice/weapon.ts` or `src/domain/dice/savePool.ts`.
-Always optional (`?:`) to keep backward compatibility.
-Add JSDoc explaining the WH40K rule precisely (trigger + effect + game edition note if relevant).
-
-### 3. Write the failing test (Red)
-
-Add a new `describe` block in `CalculateUnitCombatUseCase.test.ts`.
-Include a table comment with the manual calculation (see existing tests as model).
-Run with `npx jest --testPathPattern=CalculateUnitCombatUseCase` — must fail.
-
-#### Test fixture pattern
-```ts
-const BASE: WeaponGroup = {
-  attacksDist: fixed(6),
-  hitThreshold: 3,       // pHit=4/6, pCrit=1/6, pNormHit=3/6
-  strengthDist: fixed(4),// S=T=4 → wound 4+ → pWound=3/6, pCritWound=1/6
-  ap: 2,
-  damageDist: fixed(1),
-  modelCount: 1,
-};
-// POOL_IMPOSSIBLE: baseSave=5, AP2 → effective 7 → failSave=1
-// POOL_SAVE:       baseSave=3, AP2 → effective 5 → failSave=4/6
-```
-
-Always verify at least: expected value matches manual formula, probabilities sum to 1.
-
-### 4. Implement in `CalculateUnitCombatUseCase.ts` (Green)
-
-Edit the per-group loop inside `execute()`. Add the new ability field to the
-destructuring and insert the stage logic in the correct place.
-
-Re-use existing helpers:
-- `applyStage(dist, p)` — binomial thinning (hits/wounds/saves)
-- `applyDamage(woundDist, damageDist)` — randomly stopped sum (also used for scaling)
-- `dieSuccessProbability(threshold, modifier, rerollPolicy)` — P(D6 roll succeeds)
-- `combatRollProbabilities(threshold, modifier, rerollPolicy)` — contextual hit/wound success, normal and critical probabilities
-- `convolve(a, b)` — sum of two independent distributions
-- `DEGENERATE_ZERO` — identity element for convolution
-
-#### Scaling trick for variable-multiplier extra hits/wounds
-```ts
-// k crits each producing X extra hits — equivalent to scaling the crit distribution
-const extraHitsDist = applyDamage(critHitsDist, [{ value: X, probability: 1 }]);
-```
-
-### 5. Update `CalculateCombatResultUseCase.ts`
-
-Add the new field to the destructuring and pass it through to `weaponGroups[0]`.
-
-### 6. Verify (Refactor)
-
-```bash
-npx tsc --noEmit
-npx jest --no-coverage
-```
-
-Both must be green before continuing.
-
-## Common mistakes to avoid
-
-| Mistake | Correct approach |
-|---|---|
-| Changing the success threshold to 6 to calculate rerolled criticals | Use `combatRollProbabilities(originalThreshold, modifier, reroll).critical`; eligibility for `failures` depends on the original roll |
-| Forgetting to split crits only when an ability requires it | Only enable the crit-split path when `lethalHits` or `sustainedHits` are active (performance) |
-| Applying FNP twice to devastating wounds | FNP is applied in Stage 5 via the pool loop — devastating wounds enter the same pool damage path |
-| Convolving mortal wounds inside the pool loop | Mortal wounds bypass saves → compute outside the pool loop and convolve into `groupDamageDist` |
-| Extra Sustained hits becoming crits themselves | WH40K rule: Sustained extra hits are **not** critical hits — they do NOT trigger further Lethal Hits or Devastating Wounds |
-
-## i18n keys to add when exposing a new ability in the UI
-
-Add to both `src/infrastructure/i18n/locales/en.ts` and `es.ts`:
-```ts
-profile: {
-  fieldSustainedHits:       'Sustained Hits',
-  fieldLethalHits:          'Lethal Hits',
-  fieldDevastatingWounds:   'Devastating Wounds',
-  fieldMortalWoundsPerHit:  'Mortal Wounds per hit',
-}
-```
-
-## Related files
-
-| File | Role |
-|---|---|
-| `src/domain/dice/weapon.ts` | `WeaponProfile` + `WeaponGroup` interfaces |
-| `src/domain/dice/savePool.ts` | `SavePool` interface |
-| `src/domain/dice/combat.ts` | `combatRollProbabilities`, `dieSuccessProbability`, `woundThreshold`, `chosenSaveThreshold` |
-| `src/domain/math/pipeline.ts` | `applyStage`, `applyDamage` |
-| `src/domain/math/convolution.ts` | `convolve`, `multiConvolve` |
-| `src/application/dice/CalculateUnitCombatUseCase.ts` | Full pipeline orchestration |
-| `src/application/dice/CalculateCombatResultUseCase.ts` | Single-weapon facade |
-| `src/application/dice/CalculateUnitCombatUseCase.test.ts` | All pipeline tests |
+Write a failing regression next to the changed domain/use case, implement, run the focused tests, then required type/build/integration checks. Verify full distribution/mass and cross-calculator agreement, not just means. Do not publish or deploy during local implementation.

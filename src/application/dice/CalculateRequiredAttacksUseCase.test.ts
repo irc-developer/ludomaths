@@ -11,6 +11,10 @@ const BASE: RequiredAttacksInput = {
 const useCase = new CalculateRequiredAttacksUseCase();
 
 describe('CalculateRequiredAttacksUseCase', () => {
+  it('stops at a declared operation budget without claiming success or truncating probability', () => {
+    const result = useCase.execute({ ...BASE, maxOperations: 1 });
+    expect(result).toMatchObject({ status: 'limit', attacks: 0, probability: 0, reason: 'complexity' });
+  });
   it('finds the minimum for a bolter vs a two-wound marine', () => {
     // Each attack wounds unsaved with p = 2/3 * 1/2 * 1/3 = 1/9.
     // P(kill) = 1 - (8/9)^n - n*(1/9)*(8/9)^(n-1).

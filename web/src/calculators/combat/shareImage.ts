@@ -124,6 +124,12 @@ function fmt(value: number): string {
 }
 
 function buildMetrics(params: CombatParams, vm: CombatViewModel): ShareMetric[] {
+  if (vm.squad) return [
+    { label: 'Bajas medias', value: fmt(vm.squad.expectedCasualties), highlight: true },
+    { label: 'P(eliminar escuadra)', value: pct(vm.squad.pEliminate), highlight: true },
+    { label: 'Supervivientes medios', value: fmt(vm.squad.expectedSurvivors) },
+    { label: 'Heridas perdidas', value: fmt(vm.squad.expectedWoundsLost) },
+  ];
   return [
     {
       label: `P(eliminar objetivo de ${params.targetWounds}W)`,
@@ -154,7 +160,7 @@ function buildMetrics(params: CombatParams, vm: CombatViewModel): ShareMetric[] 
 }
 
 function buildVisibleDistribution(vm: CombatViewModel): CombatViewModel['distribution'] {
-  return vm.distribution
+  return [...(vm.squad?.casualtiesDist ?? vm.distribution)]
     .filter(entry => entry.probability >= 0.001)
     .slice(0, 20);
 }
@@ -194,7 +200,7 @@ function createDistributionMarkup(vm: CombatViewModel, startY: number): { markup
   const valueWidth = 60;
   const barWidth = CARD_WIDTH - CARD_PADDING * 2 - labelWidth - valueWidth - 16;
   const parts = [
-    `<text x="${CARD_PADDING}" y="${startY}" fill="#cbd5e1" font-size="16">Distribución completa de daño total entero</text>`,
+    `<text x="${CARD_PADDING}" y="${startY}" fill="#cbd5e1" font-size="16">${vm.squad ? 'Distribución de bajas: resultados destacados' : 'Distribución completa de daño total entero'}</text>`,
   ];
 
   let rowY = startY + 24;

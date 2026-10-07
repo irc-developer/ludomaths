@@ -65,6 +65,7 @@ export function CombatResultScreen({ navigation }: CombatResultScreenProps): Rea
 
   return (
     <View style={styles.flex}>
+      <Text>{t('wh40k.scopeLimit')}</Text>
       {/* Header summary */}
       <View style={styles.summaryCard}>
         {/* Row 1: resultados más interpretables */}

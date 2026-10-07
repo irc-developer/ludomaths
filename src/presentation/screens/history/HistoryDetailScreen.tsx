@@ -1,3 +1,4 @@
+import { canRecalculateRecord } from '@domain/combat/calculationVersion';
 import React, { useEffect, useState, useLayoutEffect, useMemo } from 'react';
 import {
   View,
@@ -35,8 +36,8 @@ export function HistoryDetailScreen({ navigation, route }: HistoryDetailScreenPr
 
   // Re-run combat calculation from the stored snapshots (read-only)
   const { result } = useCombatResult({
-    attacker: record?.attacker ?? null,
-    defender: record?.defender ?? null,
+    attacker: canRecalculateRecord(record) ? record?.attacker ?? null : null,
+    defender: canRecalculateRecord(record) ? record?.defender ?? null : null,
   });
 
   useLayoutEffect(() => {
@@ -63,6 +64,7 @@ export function HistoryDetailScreen({ navigation, route }: HistoryDetailScreenPr
 
   return (
     <View style={styles.flex}>
+      <Text>{t('wh40k.scopeLimit')}</Text>
       {/* Meta */}
       <View style={styles.metaCard}>
         <Text style={styles.metaLabel}>{record.label}</Text>
@@ -74,7 +76,7 @@ export function HistoryDetailScreen({ navigation, route }: HistoryDetailScreenPr
 
       {result == null ? (
         <View style={styles.centered}>
-          <Text style={styles.emptyText}>{t('wh40k.selectUnit')}</Text>
+          <Text style={styles.emptyText}>{t(canRecalculateRecord(record) ? 'wh40k.selectUnit' : 'wh40k.legacyHistory')}</Text>
         </View>
       ) : (
         <>
