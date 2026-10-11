@@ -40,6 +40,8 @@ export interface SavePool {
    * Stage 5 in the combat pipeline.
    */
   fnpThreshold?: number;
+  /** Damage subtracted per attack before FNP, minimum one. Integer in [0, 100]. */
+  damageReduction?: number;
   /**
    * Number of save dice that are pre-rolled as a natural 6.
    * A natural 6 saves regardless of the effective save threshold (AP, invulnerable).

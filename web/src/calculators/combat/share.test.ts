@@ -24,6 +24,12 @@ const BASE_VM: CombatViewModel = {
 };
 
 describe('formatCombatShareText', () => {
+  it('includes damage reduction in the target summary', () => {
+    const params: CombatParams = { attacks: 1, hitThreshold: 3, strength: 4, ap: 0, damage: 3,
+      toughness: 4, targetWounds: 2, baseSave: 3, damageReduction: 1 };
+    expect(formatCombatShareText({ params, vm: BASE_VM })).toContain('Reducción de daño: −1');
+    expect(formatCombatShareText({ params: { ...params, damageReduction: 0 }, vm: BASE_VM })).not.toContain('Reducción de daño');
+  });
   it('shares only the effective reroll policy and omits hit rerolls with Torrent', () => {
     const params: CombatParams = {
       attacks: 1, hitThreshold: 3, strength: 4, ap: 0, damage: 1,

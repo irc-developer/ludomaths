@@ -8,7 +8,7 @@ export type RequiredAttacksWeapon = Pick<WeaponProfile,
   'hitThreshold' | 'hitReroll' | 'hitModifier' | 'strengthDist' | 'woundReroll' | 'woundModifier' |
   'ap' | 'damageDist' | 'torrent' | 'sustainedHits' | 'lethalHits' | 'lethalChoice' | 'devastatingWounds' | 'mortalWoundsPerHit'>;
 export type RequiredAttacksTarget = Pick<TargetProfile,
-  'toughness' | 'baseSave' | 'invulnerableSave' | 'saveModifier' | 'saveReroll' | 'fnpThreshold'>;
+  'toughness' | 'baseSave' | 'invulnerableSave' | 'saveModifier' | 'saveReroll' | 'fnpThreshold' | 'damageReduction'>;
 
 export interface RequiredAttacksInput {
   weapon: RequiredAttacksWeapon;

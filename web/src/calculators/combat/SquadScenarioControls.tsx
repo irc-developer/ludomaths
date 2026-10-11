@@ -58,6 +58,7 @@ function ProfileEditor({ profile, base, side, onChange, showContext = true }: { 
       onChange={event => select(miniatureId ?? '', event.target.value || undefined)}><option value="">{s('select')}</option>
       {modes.map(m => <option key={m.id} value={m.id}>{catalog?.weapons.find(w => w.id === m.weaponId)?.name} · {m.name}</option>)}</select></label>}
     {side === 'defender' && numeric('targetWounds', 'wounds', 1, profile.woundsMax ?? 500, profile.targetWounds)}
+    {side === 'defender' && <>{numeric('damageReduction', 'damageReduction')}<p className="scenario-caption">{s('damageReductionHelp')}</p></>}
     {side === 'attacker' && <p>{s('attacks')}: {profile.attacksExpression} · {s('damage')}: {profile.damageExpression}</p>}
     {side === 'attacker' && showContext && <WeaponContext profile={profile} onChange={onChange} />}
   </div>;
@@ -71,8 +72,10 @@ function ProfileEditor({ profile, base, side, onChange, showContext = true }: { 
       {numeric('toughness', 'toughness', 1)}{numeric('woundsMax', 'maxWounds', 1, 100, profile.targetWounds)}
       {numeric('targetWounds', 'wounds', 1, profile.woundsMax ?? 100)}{numeric('baseSave', 'save', 2, 6)}
       {optional('invulnerableSave', 'invul')}{optional('fnpThreshold', 'fnp')}
+      {numeric('damageReduction', 'damageReduction')}
     </>}
-  </div>{side === 'attacker' && <details><summary>{s('advanced')}</summary><div className="scenario-columns">
+  </div>{side === 'defender' && <p className="scenario-caption">{s('damageReductionHelp')}</p>}
+  {side === 'attacker' && <details><summary>{s('advanced')}</summary><div className="scenario-columns">
     {numeric('damageBonus', 'damageBonus')}{numeric('hitModifier', 'hitModifier', -100)}{numeric('woundModifier', 'woundModifier', -100)}
     {numeric('sustainedHits', 'sustained', 0, 10)}{numeric('rapidFire', 'rapidFire')}{numeric('melta', 'melta')}
   </div>{toggle('torrent', 'torrent')}{toggle('lethalHits', 'lethal')}{toggle('devastatingWounds', 'devastating')}{toggle('heavy', 'heavy')}

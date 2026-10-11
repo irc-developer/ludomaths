@@ -116,7 +116,8 @@ export function defenderErrors(params: CombatScenarioInput): string[] {
   for (const g of all) {
     const p = g.profile, max = p.woundsMax ?? p.targetWounds;
     if (!integer(max, 1, total > 1 || groups.length ? 100 : 500) || !integer(p.targetWounds, 1, max)) errors.push(s('wizardWoundsError'));
-    if (!integer(p.toughness, 1, 100) || !integer(p.baseSave, 2, 6) || [p.invulnerableSave, p.fnpThreshold].some(n => n !== undefined && !integer(n, 2, 6))) errors.push(s('invalidInput'));
+    if (!integer(p.toughness, 1, 100) || !integer(p.baseSave, 2, 6) || !integer(p.damageReduction ?? 0, 0, 100) ||
+      [p.invulnerableSave, p.fnpThreshold].some(n => n !== undefined && !integer(n, 2, 6))) errors.push(s('invalidInput'));
     if (p.targetWounds < max) wounded++;
     if (g.isCharacter && g.count !== 1) errors.push(s('wizardCharacterError'));
   }

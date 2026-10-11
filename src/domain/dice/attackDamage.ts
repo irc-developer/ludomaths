@@ -4,10 +4,11 @@ import type { Distribution } from '../math/distribution';
 import { combatRollProbabilities, dieSuccessProbability, saveSuccessProbability, chosenSaveThreshold, woundThreshold } from './combat';
 import { convolve, multiConvolve } from '../math/convolution';
 import { applyStage } from '../math/pipeline';
+import { reduceDamage } from './damageReduction';
 export type AttackWeapon = Pick<WeaponProfile,
   'hitThreshold' | 'hitReroll' | 'hitModifier' | 'strengthDist' | 'woundReroll' | 'woundModifier' |
   'ap' | 'damageDist' | 'torrent' | 'sustainedHits' | 'lethalHits' | 'lethalChoice' | 'devastatingWounds' | 'mortalWoundsPerHit'>;
-export type AttackTarget = Pick<SavePool, 'baseSave' | 'invulnerableSave' | 'saveModifier' | 'saveReroll' | 'fnpThreshold'> & { toughness: number };
+export type AttackTarget = Pick<SavePool, 'baseSave' | 'invulnerableSave' | 'saveModifier' | 'saveReroll' | 'fnpThreshold' | 'damageReduction'> & { toughness: number };
 const ZERO: Distribution = [{ value: 0, probability: 1 }];
 /** Mixture of mutually exclusive branches, not a sum of independent rolls. */
 function mixture(branches: Array<{ probability: number; dist: Distribution }>): Distribution {
@@ -42,8 +43,9 @@ export function singleAttackDamage(weapon: AttackWeapon, target: AttackTarget): 
   const invulnerable = target.invulnerableSave === undefined ? 0 :
     saveSuccessProbability(target.invulnerableSave, 0, target.saveReroll);
   const failSave = 1 - Math.max(armor, invulnerable);
-  const damage = target.fnpThreshold === undefined ? weapon.damageDist :
-    applyStage(weapon.damageDist, 1 - dieSuccessProbability(target.fnpThreshold));
+  const reducedDamage = reduceDamage(weapon.damageDist, target.damageReduction);
+  const damage = target.fnpThreshold === undefined ? reducedDamage :
+    applyStage(reducedDamage, 1 - dieSuccessProbability(target.fnpThreshold));
   const mortals: Distribution = [{ value: weapon.mortalWoundsPerHit ?? 0, probability: 1 }];
   const mortalDamage = target.fnpThreshold === undefined ? mortals :
     applyStage(mortals, 1 - dieSuccessProbability(target.fnpThreshold));

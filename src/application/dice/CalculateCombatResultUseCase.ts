@@ -15,6 +15,8 @@ import { CalculateUnitCombatUseCase } from './CalculateUnitCombatUseCase';
 
 /** Stats of the unit being attacked. */
 export interface TargetProfile {
+  /** Damage subtracted per attack before FNP, minimum one. */
+  damageReduction?: number;
   toughness: number;
   baseSave: number;
   /** Optional unmodifiable save. When provided, the best of armor and invulnerable is used. */
@@ -75,6 +77,7 @@ export class CalculateCombatResultUseCase {
       saveModifier,
       saveReroll,
       fnpThreshold,
+      damageReduction,
       guaranteedSaves,
     } = input;
 
@@ -86,7 +89,7 @@ export class CalculateCombatResultUseCase {
         sustainedHits, lethalHits, lethalChoice, devastatingWounds, mortalWoundsPerHit, torrent,
       }],
       toughness,
-      savePools: [{ baseSave, fraction: 1, invulnerableSave, saveModifier, saveReroll, fnpThreshold, guaranteedSaves }],
+      savePools: [{ baseSave, fraction: 1, invulnerableSave, saveModifier, saveReroll, fnpThreshold, damageReduction, guaranteedSaves }],
     });
   }
 }

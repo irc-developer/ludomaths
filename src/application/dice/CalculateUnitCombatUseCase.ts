@@ -1,5 +1,6 @@
 import { COMBAT_ENGINE_VERSION } from '@domain/combat/calculationVersion';
 import { singleAttackDamage } from '@domain/dice/attackDamage';
+import { reduceDamage } from '@domain/dice/damageReduction';
 /** Exact independent weapon groups against one homogeneous miniature.
  * Observed dice and fractional save allocation retain an explicitly legacy path.
  */
@@ -108,6 +109,7 @@ export class CalculateUnitCombatUseCase {
     if (savePools.length === 0) {
       throw new RangeError('savePools must not be empty');
     }
+    for (const pool of savePools) reduceDamage(DEGENERATE_ZERO, pool.damageReduction);
 
     const fractionSum = savePools.reduce((acc, p) => acc + p.fraction, 0);
     if (Math.abs(fractionSum - 1) > 1e-9) {
@@ -304,9 +306,11 @@ export class CalculateUnitCombatUseCase {
 
         // Critical wounds (devastating) + unsaved normal wounds deal damage.
         const poolAllWoundsDist = convolve(poolCritWoundDist, poolUnsavedDist);
+        const reducedDamage = reduceDamage(damageDist, pool.damageReduction);
         let poolDamageDist = guaranteedDamageValue !== undefined && savePools.length === 1
-          ? applyDamageWithGuaranteedValue(poolAllWoundsDist, damageDist, guaranteedDamageValue)
-          : applyDamage(poolAllWoundsDist, damageDist);
+          ? applyDamageWithGuaranteedValue(poolAllWoundsDist, reducedDamage,
+            reduceDamage([{ value: guaranteedDamageValue, probability: 1 }], pool.damageReduction)[0].value)
+          : applyDamage(poolAllWoundsDist, reducedDamage);
 
         // Stage 5 (optional): Feel No Pain
         // Each damage point is independently negated on a roll ≥ fnpThreshold.

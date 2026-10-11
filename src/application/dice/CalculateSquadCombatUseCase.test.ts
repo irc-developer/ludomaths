@@ -9,6 +9,18 @@ const defender = { count: 5, woundsMax: 2, toughness: 4, baseSave: 3 };
 const useCase = new CalculateSquadCombatUseCase();
 
 describe('exact squad allocation', () => {
+  it('reduces packets for each defender group before FNP and devastating allocation', () => {
+    const w = { ...weapon, attacksDist: [{ value: 2, probability: 1 }], devastatingWounds: true };
+    const result = useCase.execute({ weaponGroups: [w], defenders: [{ ...defender, count: 2, damageReduction: 2 }] });
+    expect(result.expectedWoundsLost).toBeCloseTo(2 * 35 / 36, 12);
+    expect(result.casualtiesDist.find(e => e.value === 1)?.probability).toBeCloseTo((35 / 36) ** 2, 12);
+    expect(result.pEliminate).toBe(0);
+    const mixed = useCase.execute({ weaponGroups: [weapon], defenders: [
+      { ...defender, count: 1, damageReduction: 2, fnpThreshold: 4 }, { ...defender, count: 1 },
+    ] });
+    expect(mixed.expectedWoundsLost).toBeCloseTo(35 / 72, 12);
+    expect(mixed.woundsLostDist.reduce((sum, e) => sum + e.probability, 0)).toBeCloseTo(1, 12);
+  });
   it('loses excess damage per packet rather than treating the squad as a wound bucket', () => {
     const result = useCase.execute({ weaponGroups: [weapon], defenders: [defender] });
     expect(result.casualtiesDist.map(e => e.value)).toEqual([0, 1]);

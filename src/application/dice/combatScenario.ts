@@ -72,6 +72,7 @@ export interface CombatScenarioInput {
   baseSave:     number;
   invulnerableSave?: number;
   fnpThreshold?:     number;
+  damageReduction?: number;
 
   guaranteedSaveSix?: boolean;
   sustainedHits?:    number;
@@ -98,6 +99,7 @@ export function buildCombatScenario(input: CombatScenarioInput): { weapon: Weapo
   integer(input.ap, 0, 100);
   integer(input.sustainedHits ?? 0, 0, 10);
   integer(input.mortalWoundsPerHit ?? 0, 0, 100);
+  integer(input.damageReduction ?? 0, 0, 100);
   for (const value of [input.invulnerableSave, input.fnpThreshold]) if (value !== undefined) integer(value, 2, 6);
   for (const value of [input.hitModifier ?? 0, input.woundModifier ?? 0, input.saveModifier ?? 0]) integer(value, -100, 100);
   for (const value of [input.rapidFire ?? 0, input.melta ?? 0, input.damageBonus ?? 0]) integer(value, 0, 100);
@@ -132,6 +134,7 @@ export function buildCombatScenario(input: CombatScenarioInput): { weapon: Weapo
     guaranteedDamageValue: input.damageD6 && input.guaranteedDamageSix ? 6 + (input.damageBonus ?? 0) : undefined,
   };
   const target: AttackTarget = { toughness: input.toughness, baseSave: input.baseSave,
-    invulnerableSave: input.invulnerableSave, fnpThreshold: input.fnpThreshold, saveModifier: input.saveModifier };
+    invulnerableSave: input.invulnerableSave, fnpThreshold: input.fnpThreshold, saveModifier: input.saveModifier,
+    damageReduction: input.damageReduction };
   return { weapon, target, woundsMax, remainingWounds: input.targetWounds };
 }

@@ -242,6 +242,8 @@ const strings = {
   pendingDetails: ['Ver habilidades omitidas', 'Show omitted abilities'],
   partialResult: ['Cálculo parcial', 'Partial calculation'],
   damageBonus: ['Bonificador externo al daño', 'External damage bonus'],
+  damageReduction: ['Reducción de daño', 'Damage reduction'],
+  damageReductionHelp: ['Resta esta cantidad al daño de cada ataque, después de los bonificadores y antes de Feel No Pain. Mínimo 1; 0 desactiva la reducción.', 'Subtract this amount from each attack’s damage after bonuses and before Feel No Pain. Minimum 1; 0 disables reduction.'],
   roundsWord: ['rondas', 'rounds'],
   limitedHorizon: [' Horizonte limitado por complejidad; la media es completa.', ' Horizon limited by complexity; the mean is complete.'],
   hitRollBuff: ['Añadir 1 a la tirada de impactar', 'Add 1 to the hit roll'],

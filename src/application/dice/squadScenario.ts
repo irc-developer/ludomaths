@@ -28,7 +28,7 @@ export function replacePrimaryProfile(base: CombatScenarioInput, profile: Combat
       'torrent', 'lethalHits', 'lethalChoice', 'sustainedHits', 'devastatingWounds', 'ignoresCover', 'heavy', 'rapidFire', 'melta',
       'twinLinked', 'withinHalfRange', 'phase', 'engaged', 'setUpThisTurn', 'movedOverThree', 'guaranteedHitSix', 'guaranteedWoundSix',
       'guaranteedDamageSix', 'mortalWoundsPerHit']
-    : ['toughness', 'woundsMax', 'targetWounds', 'baseSave', 'invulnerableSave', 'fnpThreshold', 'saveModifier', 'guaranteedSaveSix'];
+    : ['toughness', 'woundsMax', 'targetWounds', 'baseSave', 'invulnerableSave', 'fnpThreshold', 'damageReduction', 'saveModifier', 'guaranteedSaveSix'];
   const result = { ...base, ...Object.fromEntries(keys.map(key => [key, profile[key]])) };
   if (base.catalogSelection && profile.catalogSelection) result.catalogSelection = { ...base.catalogSelection,
     ...(side === 'attacker' ? { attackerMiniatureId: profile.catalogSelection.attackerMiniatureId, modeId: profile.catalogSelection.modeId }

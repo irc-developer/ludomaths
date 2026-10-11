@@ -75,6 +75,8 @@ export function DefenderSetupScreen({ mode = 'combat' }: { mode?: string }) {
         {numeric('toughness', 'toughness', 1, 100)}{numeric('woundsMax', 'maxWounds', 1, 500, params.targetWounds)}{numeric('baseSave', 'save', 2, 6)}
         {optional('invulnerableSave', 'invul')}{optional('fnpThreshold', 'fnp')}
       </div></fieldset>}
+      <div>{numeric('damageReduction', 'damageReduction', 0, 100)}
+        <p className="scenario-caption">{s('damageReductionHelp')}</p></div>
       {(params.targetModelCount ?? 1) > 1 || params.defenderGroups?.length ? <fieldset><legend>{s('wounds')}</legend>
         <label className="touch-choice"><input type="checkbox" checked={!!wounded} onChange={event => changeWounded(event.target.checked ? 'primary' : undefined)} />{s('wizardWounded')}</label>
         <p className="scenario-caption">{s('wizardWoundedHelp')}</p>

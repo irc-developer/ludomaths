@@ -6,8 +6,9 @@ import { binomialDistribution } from '@domain/math/binomial';
 import { applyStage } from '@domain/math/pipeline';
 import { expectedValue, type Distribution } from '@domain/math/distribution';
 import { dieSuccessProbability } from '@domain/dice/combat';
+import { reduceDamage } from '@domain/dice/damageReduction';
 
-export const SQUAD_ENGINE_VERSION = 'lm-squad-1';
+export const SQUAD_ENGINE_VERSION = 'lm-squad-2';
 export interface SquadDefenderGroup extends AttackTarget {
   count: number;
   woundsMax: number;
@@ -46,6 +47,7 @@ export class CalculateSquadCombatUseCase {
       integer(g.firstModelWounds ?? g.woundsMax, 1, g.woundsMax);
       for (const n of [g.invulnerableSave, g.fnpThreshold]) if (n !== undefined) integer(n, 2, 6);
       integer(g.saveModifier ?? 0, -100, 100);
+      integer(g.damageReduction ?? 0, 0, 100);
       if (g.saveReroll && g.saveReroll !== 'none') throw new RangeError('SQUAD_SAVE_REROLL_UNSUPPORTED');
       if (g.isCharacter) { integer(g.count, 1, 1); characterSeen = true; }
       else if (characterSeen) throw new RangeError('SQUAD_ALLOCATION_ORDER');
@@ -107,7 +109,8 @@ export class CalculateSquadCombatUseCase {
         const cached = damageCache.get(start); if (cached) return cached;
         if (start === initialWounds) return [{ value: start, probability: 1 }];
         const model = models[indexAt[start]];
-        const damage = model.fnpThreshold === undefined ? weapon.damageDist : applyStage(weapon.damageDist, 1 - dieSuccessProbability(model.fnpThreshold));
+        const reducedDamage = reduceDamage(weapon.damageDist, model.damageReduction);
+        const damage = model.fnpThreshold === undefined ? reducedDamage : applyStage(reducedDamage, 1 - dieSuccessProbability(model.fnpThreshold));
         const mass: Mass = new Map();
         for (const d of damage) { spend(); add(mass, Math.min(ends[indexAt[start]], start + d.value), d.probability); }
         const result = distribution(mass); damageCache.set(start, result); return result;

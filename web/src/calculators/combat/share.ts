@@ -3,6 +3,7 @@ import type { CombatViewModel } from './useCombat';
 import { resolveRerollPolicy } from './rerollPolicy';
 import { COMBAT_ENGINE_VERSION } from '@application/dice/combatScenario';
 import { t } from '../../i18n/combat';
+import { s } from '../../i18n/scenario';
 import { buildSquadScenario, individualProfile } from '@application/dice/squadScenario';
 
 interface FormatCombatShareTextInput {
@@ -57,6 +58,7 @@ function formatTarget(params: CombatParams): string {
   if (params.fnpThreshold !== undefined) {
     parts.push(`FNP ${params.fnpThreshold}+`);
   }
+  if (params.damageReduction) parts.push(`${s('damageReduction')}: −${params.damageReduction}`);
 
   return parts.join(' | ');
 }
@@ -108,7 +110,7 @@ export function buildCombatShareContent({ params, vm, presetName }: FormatCombat
       { title: 'ARMAS EN ORDEN DE RESOLUCIÓN', style: 'list', lines: groups.flatMap((g, i) => g.weapons.map((p, j) =>
         `Grupo ${i + 1}, arma ${j + 1}: ${g.count} miniaturas · A${p.attacksExpression ?? (p.attacksD6 ? 'D6' : p.attacks)} · habilidad ${p.hitThreshold}+ · F${p.strength} · FP${-p.ap} · D${formatDamageProfile(p)} · ${formatRules(p).join('; ')}`)) },
       { title: 'DEFENSORES EN ORDEN DE ASIGNACIÓN', style: 'list', lines: scenario.defenders.map((g, i) =>
-        `Grupo ${i + 1}: ${g.count} miniaturas · R${g.toughness} · ${g.woundsMax}W por miniatura · primera ${g.firstModelWounds ?? g.woundsMax}W restantes · SA${g.baseSave}+${g.invulnerableSave ? ' · Inv' + g.invulnerableSave + '++' : ''}${g.fnpThreshold ? ' · FNP' + g.fnpThreshold + '+' : ''}${g.isCharacter ? ' · personaje' : ''}`) },
+        `Grupo ${i + 1}: ${g.count} miniaturas · R${g.toughness} · ${g.woundsMax}W por miniatura · primera ${g.firstModelWounds ?? g.woundsMax}W restantes · SA${g.baseSave}+${g.invulnerableSave ? ' · Inv' + g.invulnerableSave + '++' : ''}${g.fnpThreshold ? ' · FNP' + g.fnpThreshold + '+' : ''}${g.damageReduction ? ` · ${s('damageReduction')}: −${g.damageReduction}` : ''}${g.isCharacter ? ' · personaje' : ''}`) },
       { title: 'RESULTADOS', style: 'list', lines: [`Bajas medias: ${fmt(vm.squad.expectedCasualties)}`,
         `P(eliminar escuadra): ${pct(vm.squad.pEliminate)}`, `Supervivientes medios: ${fmt(vm.squad.expectedSurvivors)}`,
         `Heridas perdidas esperadas: ${fmt(vm.squad.expectedWoundsLost)}`,

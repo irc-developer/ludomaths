@@ -41,6 +41,39 @@ function catalogAttack() {
 }
 
 describe('defender and attack wizard screens', () => {
+  it('keeps damage reduction through mode switches, review edits and report calculation', async () => {
+    const unit = vi.spyOn(CalculateUnitCombatUseCase.prototype, 'execute');
+    await start(); click('Continuar');
+    change('Reducción de daño', '1');
+    click('Ataques necesarios'); click('Mejoras'); click('Combate');
+    expect((screen.getByLabelText('Reducción de daño') as HTMLInputElement).value).toBe('1');
+    click('Continuar'); change('Daño por ataque', '3'); click('Revisar escenario');
+    expect(screen.getByText('Reducción de daño: −1')).toBeTruthy();
+    click('Cambiar defensor');
+    expect((screen.getByLabelText('Reducción de daño') as HTMLInputElement).value).toBe('1');
+    change('Reducción de daño', '2'); click('Guardar y revisar');
+    expect(screen.getByText('Reducción de daño: −2')).toBeTruthy();
+    click('Generar informe');
+    expect(unit.mock.calls.some(([input]) => input.savePools[0].damageReduction === 2)).toBe(true);
+  });
+
+  it('offers explicit damage reduction for catalog defenders and preserves it during resolution', async () => {
+    const squad = vi.spyOn(CalculateSquadCombatUseCase.prototype, 'execute');
+    await start(false); choose('Buscar unidad atacante'); click('Continuar'); choose('Buscar unidad defensora');
+    fireEvent.change(screen.getAllByLabelText('Reducción de daño')[0], { target: { value: '1' } });
+    click('Continuar'); click('Revisar escenario');
+    expect(screen.getByText('Reducción de daño: −1')).toBeTruthy();
+    click('Generar informe');
+    await waitFor(() => expect(squad.mock.calls.some(([input]) => input.defenders[0].damageReduction === 1)).toBe(true));
+  });
+
+  it('blocks invalid damage reduction drafts and accepts zero to disable it', async () => {
+    await start(); click('Continuar'); change('Reducción de daño', '-1'); click('Continuar');
+    expect(screen.getByRole('alert').textContent).toContain('Reducción de daño');
+    expect(screen.getByRole('heading', { name: 'Elige quién recibe el ataque' })).toBeTruthy();
+    change('Reducción de daño', '0'); click('Continuar');
+    expect(screen.getByRole('heading', { name: 'Configura el ataque' })).toBeTruthy();
+  });
   it('isolates decisions and never calculates during preparation, including mode switches and the handoff', async () => {
     const unit = vi.spyOn(CalculateUnitCombatUseCase.prototype, 'execute');
     const squad = vi.spyOn(CalculateSquadCombatUseCase.prototype, 'execute');

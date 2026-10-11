@@ -26,7 +26,10 @@ export function ReportScreen({ scenario, cache, attempt, onRetry, onEdit, onNew 
       <div><p className="wizard-eyebrow">{s('attacker')}</p><h3>{scenario.attackerName}</h3>
         <p>{p.modelCount ?? 1} · {s('wizardParticipating')}</p><button type="button" className="wizard-text-button" onClick={() => onEdit(1)}>← {s('wizardChangeAttacker')}</button></div>
       <div><p className="wizard-eyebrow">{s('defender')}</p><h3>{scenario.defenderName}</h3>
-        <p>{p.targetModelCount ?? 1} · {s('defendingModels')}</p><button type="button" className="wizard-text-button" onClick={() => onEdit(2)}>← {s('wizardChangeDefender')}</button></div>
+        <p>{p.targetModelCount ?? 1} · {s('defendingModels')}</p>
+        {!!p.damageReduction && <p>{s('damageReduction')}: −{p.damageReduction}</p>}
+        {p.defenderGroups?.map((g, i) => g.profile.damageReduction ? <p key={g.id}>{s('defenderGroup')} {i + 2} · {s('damageReduction')}: −{g.profile.damageReduction}</p> : null)}
+        <button type="button" className="wizard-text-button" onClick={() => onEdit(2)}>← {s('wizardChangeDefender')}</button></div>
       <div><p className="wizard-eyebrow">{s('wizardAttack')}</p><h3>{s(p.attackType === 'melee' ? 'melee' : 'ranged')}</h3>
         <p>{s(scenario.mode === 'required' ? 'reportInverseScope' : 'reportActivationScope')}</p>
         <button type="button" className="wizard-text-button" onClick={() => onEdit(3)}>← {s('wizardChangeAttack')}</button></div>

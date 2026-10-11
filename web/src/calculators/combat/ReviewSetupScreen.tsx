@@ -128,6 +128,7 @@ export function ReviewSetupScreen({ mode }: { mode: CombatMode }) {
         <ol className="wizard-review-list">{orderedDefenders.map(g => <li key={g.id}>
           <strong>{g.count} × {profileName(catalog, g.profile, 'defender', g.index === 0 ? s('primaryDefender') : `${s('defenderGroup')} ${g.index + 1}`)}</strong>
           {g.isCharacter && <span className="wizard-review-character">{s('wizardCharacter')}</span>}
+          {!!g.profile.damageReduction && <p>{s('damageReduction')}: −{g.profile.damageReduction}</p>}
           <p>{g.profile.targetWounds < (g.profile.woundsMax ?? g.profile.targetWounds) ?
             `${s('wizardWoundedReview')} ${g.profile.targetWounds} ${s(g.profile.targetWounds === 1 ? 'wizardWoundOf' : 'wizardWoundsOf')} ${g.profile.woundsMax}.` : s('wizardFullWounds')}</p>
           <details><summary>{s('wizardDefenses')}</summary><p>R {g.profile.toughness} · Sv {g.profile.baseSave}+ · H {g.profile.woundsMax ?? g.profile.targetWounds}

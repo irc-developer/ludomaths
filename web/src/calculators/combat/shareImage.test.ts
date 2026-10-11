@@ -23,6 +23,11 @@ const BASE_VM: CombatViewModel = {
 };
 
 describe('buildCombatShareSvg', () => {
+  it('includes damage reduction in the shared image', () => {
+    const params: CombatParams = { attacks: 1, hitThreshold: 3, strength: 4, ap: 0, damage: 3,
+      toughness: 4, targetWounds: 2, baseSave: 3, damageReduction: 1 };
+    expect(buildCombatShareSvg({ params, vm: BASE_VM })).toContain('Reducción de daño: −1');
+  });
   it('uses the effective non-sixes labels from the shared content without clipping long lines', () => {
     const params: CombatParams = {
       attacks: 1, hitThreshold: 3, strength: 4, ap: 0, damage: 1,

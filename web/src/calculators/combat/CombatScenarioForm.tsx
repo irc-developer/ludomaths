@@ -128,6 +128,8 @@ export function CombatScenarioForm({ params: input, onChange, individualAttacks,
         <ul>{(['torrent', 'devastatingWounds', 'heavy', 'rapidFire', 'sustainedHits', 'twinLinked'] as const).filter(key => params[key]).map(key => <li key={key}>{s(key === 'devastatingWounds' ? 'devastating' : key === 'sustainedHits' ? 'sustained' : key)}{key === 'rapidFire' && ` ${params.rapidFire}`}{key === 'sustainedHits' && ` ${params.sustainedHits}`}</li>)}</ul>
       </details>}
     </>}
+    {!attackOnly && (manual || selectedTarget) && <div>{numeric('damageReduction', 'damageReduction', 0, 100)}
+      <p className="scenario-caption">{s('damageReductionHelp')}</p></div>}
     {!attackOnly && squadMode && params.partialCalculation && <div className="scope-notice"><p>{s('profilePartialNotice')}</p>
       <details><summary>{s('pendingDetails')}</summary><ul>{params.calculationLimitations?.map(message => <li key={message}>{message}</li>)}</ul></details>
       <label className="touch-choice"><input type="checkbox" checked={JSON.stringify(params.acceptedSquadOmissions ?? []) === JSON.stringify(params.calculationLimitations ?? [])}

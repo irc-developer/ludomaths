@@ -30,6 +30,8 @@ Improvements affect all attacking weapons, or all defensive armor saves for the 
 
 ## Limits and interface
 
-The engine revision is `lm-squad-1`. Limits are 100 defenders, 100 carriers per weapon, 500 initial wounds, 20 input weapon groups, 20 input defender groups, 300 possible hits across all activations and 20 activations. Each execution also has a default budget of 20 million state operations. Save rerolls and observed dice are rejected explicitly. Larger or more complex cases return a limit; probability distributions are never silently truncated.
+The engine revision is `lm-squad-2`. Limits are 100 defenders, 100 carriers per weapon, 500 initial wounds, 20 input weapon groups, 20 input defender groups, 300 possible hits across all activations and 20 activations. Each execution also has a default budget of 20 million state operations. Save rerolls and observed dice are rejected explicitly. Larger or more complex cases return a limit; probability distributions are never silently truncated.
+
+Defender groups may specify a flat `damageReduction` from 0 to 100 (default 0). Each attack packet subtracts the current defender's reduction after damage bonuses, with a minimum of 1, before Feel No Pain and the model's remaining-wound cap. This also applies to Devastating Wounds packets. It never subtracts from the combined damage total, and standalone additional mortal wounds do not modify a weapon's damage characteristic.
 
 Browser calculations run in a worker after a short input debounce. Changes terminate older work; an older response cannot replace the current scenario's result. The simple existing single-defender route remains available. Tests check independent exhaustive enumeration, probability mass, packet caps, critical-hit dependence, mixed saves, wounded priority, gathered identical attacks, inverse minima, worker cancellation and cross-view quantities.
