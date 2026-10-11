@@ -40,6 +40,64 @@ describe('persistent private catalog', () => {
     render(<CatalogProvider><Probe /></CatalogProvider>);
     await waitFor(() => expect(screen.getByText('test-2')).toBeTruthy());
     expect(storage.writeStoredCatalog).toHaveBeenCalledWith(JSON.stringify(next));
+    expect(published.readPublishedCatalog).not.toHaveBeenCalled();
+  });
+  it('upgrades a saved catalog from the published package without local configuration', async () => {
+    const next = { ...catalog, catalogVersion: 'test-2' };
+    vi.mocked(storage.readStoredCatalog).mockResolvedValue({ version: 1, text });
+    vi.mocked(published.readPublishedCatalog).mockResolvedValue('published successor');
+    vi.spyOn(loader, 'loadCatalog').mockImplementation(async value => value === text ? catalog : next);
+    vi.spyOn(trust, 'hasCatalogUpgrade').mockReturnValue(true);
+    vi.spyOn(trust, 'isCatalogUpgrade').mockReturnValue(true);
+    const view = render(<CatalogProvider><Probe /></CatalogProvider>);
+    await waitFor(() => expect(screen.getByText('test-2')).toBeTruthy());
+    expect(storage.writeStoredCatalog).toHaveBeenCalledWith(JSON.stringify(next));
+
+    view.unmount();
+    vi.mocked(storage.readStoredCatalog).mockResolvedValue({ version: 1, text: JSON.stringify(next) });
+    vi.spyOn(trust, 'hasCatalogUpgrade').mockReturnValue(false);
+    vi.spyOn(loader, 'loadCatalog').mockResolvedValue(next);
+    vi.mocked(published.readPublishedCatalog).mockClear();
+    render(<CatalogProvider><Probe /></CatalogProvider>);
+    await waitFor(() => expect(screen.getByText('test-2')).toBeTruthy());
+    expect(published.readPublishedCatalog).not.toHaveBeenCalled();
+  });
+  it('keeps the saved catalog when the published successor fails validation', async () => {
+    vi.mocked(storage.readStoredCatalog).mockResolvedValue({ version: 1, text });
+    vi.mocked(published.readPublishedCatalog).mockResolvedValue('invalid successor');
+    vi.spyOn(loader, 'loadCatalog').mockResolvedValueOnce(catalog).mockRejectedValueOnce(new Error('invalid successor'));
+    vi.spyOn(trust, 'hasCatalogUpgrade').mockReturnValue(true);
+    render(<CatalogProvider><Probe /></CatalogProvider>);
+    await waitFor(() => expect(screen.getByText(/No se puede admitir/)).toBeTruthy());
+    expect(screen.getByText('test-1')).toBeTruthy();
+    expect(screen.queryByText('invalid successor')).toBeNull();
+    expect(storage.writeStoredCatalog).not.toHaveBeenCalled();
+  });
+  it('ignores a published package outside the registered replacement chain', async () => {
+    vi.mocked(storage.readStoredCatalog).mockResolvedValue({ version: 1, text });
+    vi.mocked(published.readPublishedCatalog).mockResolvedValue('other catalog');
+    vi.spyOn(loader, 'loadCatalog').mockResolvedValue(catalog);
+    vi.spyOn(trust, 'hasCatalogUpgrade').mockReturnValue(true);
+    vi.spyOn(trust, 'isCatalogUpgrade').mockReturnValue(false);
+    render(<CatalogProvider><Probe /></CatalogProvider>);
+    await waitFor(() => expect(trust.isCatalogUpgrade).toHaveBeenCalled());
+    expect(screen.getByText('test-1')).toBeTruthy();
+    expect(storage.writeStoredCatalog).not.toHaveBeenCalled();
+  });
+  it('does not restore a delayed published upgrade after removal', async () => {
+    let complete: (value: string) => void = () => {};
+    vi.mocked(storage.readStoredCatalog).mockResolvedValue({ version: 1, text });
+    vi.mocked(published.readPublishedCatalog).mockImplementation(() => new Promise(resolve => { complete = resolve; }));
+    const validate = vi.spyOn(loader, 'loadCatalog').mockResolvedValue(catalog);
+    vi.spyOn(trust, 'hasCatalogUpgrade').mockReturnValue(true);
+    render(<CatalogProvider><Probe /></CatalogProvider>);
+    await waitFor(() => expect(published.readPublishedCatalog).toHaveBeenCalled());
+    fireEvent.click(screen.getByText('clear'));
+    complete('published successor');
+    await waitFor(() => expect(screen.getByText('empty')).toBeTruthy());
+    expect(validate).toHaveBeenCalledTimes(1);
+    expect(storage.writeStoredCatalog).toHaveBeenCalledTimes(1);
+    expect(storage.writeStoredCatalog).toHaveBeenCalledWith(null);
   });
   it('keeps saved data when the local successor fails validation or is not an approved replacement', async () => {
     vi.mocked(storage.readStoredCatalog).mockResolvedValue({ version: 1, text });

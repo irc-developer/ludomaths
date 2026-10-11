@@ -59,7 +59,9 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         if (!stored) await persist(JSON.stringify(next), current);
         else if (hasCatalogUpgrade(next)) {
           // Probe only obsolete registered revisions; validate before replacing saved data.
-          const upgradeText = await readLocalCatalog();
+          let upgradeText = await readLocalCatalog();
+          if (!isCurrent()) return;
+          if (upgradeText === undefined) upgradeText = await readPublishedCatalog();
           if (!isCurrent() || upgradeText === undefined) return;
           const upgrade = await loadCatalog(upgradeText);
           if (!isCurrent() || !isCatalogUpgrade(next, upgrade)) return;

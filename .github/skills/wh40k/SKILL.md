@@ -29,9 +29,9 @@ The shared per-attack kernel is src/domain/dice/attackDamage.ts. Combat, require
 
 Use the closed clean v2 schema, own catalog identity/digest/review registry and complete raw-token normalization. Reject unknown nested keys without echoing keys, payloads, parser errors or paths. No original locators, versions, hashes, publications, URLs or provenance enter product data. Raw exports and source provenance stay outside the repository and bundle. Iván authorized publishing the three clean pilot catalogs in web/public/catalogs; the combined pilot loads automatically in production. Tests use synthetic fixtures.
 
-The current pilot binds torrent, heavy, rapidFire and devastatingWounds only. reviewed is not synonymous with engine support. Relevant pending/unsupported effects require explicit partial acceptance or block calculation. Out-of-scope effects remain visible limitations. Keep a brief notice and expandable detail; never activate effects from rule names.
+The catalog adapter binds torrent, heavy, rapidFire, devastatingWounds, fixed sustainedHits and twinLinked. The last two capabilities were added for the locally recovered Terminator squads; the published pilot remains unchanged. reviewed is not synonymous with engine support. Relevant pending/unsupported effects require explicit partial acceptance or block calculation. Out-of-scope effects remain visible limitations. Keep a brief notice and expandable detail; never activate effects from rule names.
 
-Anti, Blast, conditional hit bonuses, riled-up effects and the pending Lethal condition belong to later explicitly authorized work. Do not build a generic effects resolver for this first milestone. See docs/plans/warhammer-rule-effects-integration.md.
+Anti, Blast, conditional hit bonuses, riled-up effects, conditional AP, charge-dependent Sustained Hits and the pending Lethal condition remain pending. Do not build a generic effects resolver for this first milestone. See docs/plans/warhammer-rule-effects-integration.md and docs/plans/terminator-catalog-integration.md.
 
 ## Mathematics and records
 

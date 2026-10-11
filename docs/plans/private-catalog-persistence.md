@@ -20,13 +20,13 @@ El endpoint de desarrollo solo admite lectura GET desde loopback y un host local
 
 El almacenamiento pertenece al origen del navegador: cambiar de dominio, puerto, navegador o dispositivo crea otro almacenamiento. Un navegador nuevo recibe el piloto combinado publicado automáticamente, sin importar un archivo ni configurar un servicio privado. Los tres paquetes limpios son accesibles como archivos estáticos; no hay sincronización entre dispositivos. Borrar los datos del sitio elimina la copia guardada, y el modo privado puede no conservarla al cerrar.
 
-Se conserva la revisión propia guardada; actualizar un paquete o el registro no mezcla revisiones ni actualiza silenciosamente el catálogo. Las revisiones no admitidas se rechazan y requieren sustituir el archivo.
+Se conserva la revisión propia guardada salvo una transición explícita del registro de confianza. Al abrir con una revisión sustituida, se valida el sucesor local o, si no hay configuración local, el publicado, incluyendo su SHA-256 y la transición autorizada antes de guardarlo. Un sucesor inválido conserva el catálogo anterior; no se mezclan revisiones. Las selecciones antiguas requieren volver a elegir perfiles.
 
 ## Reglas y alcance
 
 Se reutilizan `resolveCatalogScenario` y los cuatro bindings existentes: Torrent, Heavy, Rapid Fire y Devastating Wounds. Cargar o recuperar el catálogo no ejecuta efectos por nombre. Anti, Blast, hitBonus, riledUp y la condición pendiente de Lethal siguen sin activarse automáticamente. Se mantienen las condiciones necesarias, la aceptación de cálculo parcial y sus omisiones en resultados compartidos.
 
-El piloto contiene dos unidades, cuatro variantes y 18 modos. Se usa también en la pantalla de escuadras, cuyo alcance y límites están en `docs/math/squad-combat.md`. La disponibilidad del catálogo no certifica soporte de todas las habilidades ni legalidad de equipo. La aplicación nativa no recibe este almacenamiento web.
+El catálogo combinado predeterminado se amplió el 11 de octubre de 2026 con Terminator Squad y Terminator Assault Squad: contiene cuatro unidades y 29 modos. Sus opciones y límites se detallan en `docs/plans/terminator-catalog-integration.md`. Los dos archivos piloto individuales conservan sus perfiles originales. Se usa también en la pantalla de escuadras, cuyo alcance y límites están en `docs/math/squad-combat.md`. La disponibilidad del catálogo no certifica soporte de todas las habilidades ni legalidad de equipo. La aplicación nativa no recibe este almacenamiento web.
 
 ## Verificación
 

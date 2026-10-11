@@ -28,7 +28,7 @@ if (!folder) throw new Error('Pass the clean package directory');
 const engine = new CalculateUnitCombatUseCase();
 const inverse = new CalculateRequiredAttacksUseCase();
 const comparison = new CompareCombatBuffUseCase();
-for (const filename of ['orks-pilot.json', 'astartes-pilot.json', 'pilot-combined.json']) {
+for (const filename of process.argv.length > 3 ? process.argv.slice(3) : ['orks-pilot.json', 'astartes-pilot.json', 'pilot-combined.json']) {
   const catalog = validateCatalog(JSON.parse(fs.readFileSync(path.join(folder, filename), 'utf8')));
   const digest = crypto.createHash('sha256').update(canonicalCatalog(catalog)).digest('hex');
   if (digest !== catalog.payloadSha256) throw new Error('Digest mismatch');

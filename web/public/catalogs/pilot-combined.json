@@ -1,7 +1,7 @@
 {
-  "capabilityReviewVersion": "lm-pilot-1",
+  "capabilityReviewVersion": "lm-expanded-1",
   "catalogId": "lm_544087989f1020e6f671870a",
-  "catalogVersion": "pilot-1",
+  "catalogVersion": "expanded-1",
   "compositions": [
     {
       "conditionRuleIds": [],
@@ -74,6 +74,114 @@
         }
       ],
       "unitId": "u_7e900fbd46f2e56f5902f6c9"
+    },
+    {
+      "conditionRuleIds": [],
+      "id": "c_4a414a51f454b5e5045e2dce",
+      "isDefault": false,
+      "members": [
+        {
+          "max": 9,
+          "min": 9,
+          "miniatureId": "m_2ddcab5506685800de001d73"
+        },
+        {
+          "max": 1,
+          "min": 1,
+          "miniatureId": "m_b33e9fbb8fd6a2b7c4509872"
+        }
+      ],
+      "unitId": "u_4ed6f4d7b872610bf552c78a"
+    },
+    {
+      "conditionRuleIds": [],
+      "id": "c_f5dc20f4c747874b4ab61cf9",
+      "isDefault": true,
+      "members": [
+        {
+          "max": 1,
+          "min": 1,
+          "miniatureId": "m_b33e9fbb8fd6a2b7c4509872"
+        },
+        {
+          "max": 4,
+          "min": 4,
+          "miniatureId": "m_2ddcab5506685800de001d73"
+        }
+      ],
+      "unitId": "u_4ed6f4d7b872610bf552c78a"
+    },
+    {
+      "conditionRuleIds": [],
+      "id": "c_8af06748751d5a141c1e0f50",
+      "isDefault": false,
+      "members": [
+        {
+          "max": 9,
+          "min": 9,
+          "miniatureId": "m_0ba292146d286b9ee4d36434"
+        },
+        {
+          "max": 1,
+          "min": 1,
+          "miniatureId": "m_d5e23271f720d37ad3b6457a"
+        }
+      ],
+      "unitId": "u_64757507d267f42e741833fb"
+    },
+    {
+      "conditionRuleIds": [],
+      "id": "c_7ff6f5599a89855ae18c6de5",
+      "isDefault": false,
+      "members": [
+        {
+          "max": 9,
+          "min": 9,
+          "miniatureId": "m_6a44b641dfd005332e4b08af"
+        },
+        {
+          "max": 1,
+          "min": 1,
+          "miniatureId": "m_e2568a5a3478d91538705a48"
+        }
+      ],
+      "unitId": "u_64757507d267f42e741833fb"
+    },
+    {
+      "conditionRuleIds": [],
+      "id": "c_5ab6c830c0573bc76bd4465a",
+      "isDefault": true,
+      "members": [
+        {
+          "max": 4,
+          "min": 4,
+          "miniatureId": "m_0ba292146d286b9ee4d36434"
+        },
+        {
+          "max": 1,
+          "min": 1,
+          "miniatureId": "m_d5e23271f720d37ad3b6457a"
+        }
+      ],
+      "unitId": "u_64757507d267f42e741833fb"
+    },
+    {
+      "conditionRuleIds": [],
+      "id": "c_31514f74832803008ce15d53",
+      "isDefault": false,
+      "members": [
+        {
+          "max": 4,
+          "min": 4,
+          "miniatureId": "m_6a44b641dfd005332e4b08af"
+        },
+        {
+          "max": 1,
+          "min": 1,
+          "miniatureId": "m_e2568a5a3478d91538705a48"
+        }
+      ],
+      "unitId": "u_64757507d267f42e741833fb"
     }
   ],
   "coverage": [
@@ -368,6 +476,234 @@
       "entityId": "wm_fa8e1645c2975878f692d15b",
       "issueCodes": [],
       "state": "complete"
+    },
+    {
+      "component": "characteristics",
+      "entityId": "wm_83b5b8d6560fa4420c36c22f",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "abilities",
+      "entityId": "wm_83b5b8d6560fa4420c36c22f",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "characteristics",
+      "entityId": "wm_c36801184bd9e12e2ae153b5",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "abilities",
+      "entityId": "wm_c36801184bd9e12e2ae153b5",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "characteristics",
+      "entityId": "wm_20e7e57cbf67c48004c4a9f9",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "abilities",
+      "entityId": "wm_20e7e57cbf67c48004c4a9f9",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "characteristics",
+      "entityId": "wm_12baeb2e3bc615c34a7a87e1",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "abilities",
+      "entityId": "wm_12baeb2e3bc615c34a7a87e1",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "characteristics",
+      "entityId": "wm_90689dea9328883789606bd2",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "abilities",
+      "entityId": "wm_90689dea9328883789606bd2",
+      "issueCodes": [],
+      "state": "partial"
+    },
+    {
+      "component": "characteristics",
+      "entityId": "wm_9f18ca209f1301774139b6ad",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "abilities",
+      "entityId": "wm_9f18ca209f1301774139b6ad",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "characteristics",
+      "entityId": "wm_acf78bde38914816000e9e08",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "abilities",
+      "entityId": "wm_acf78bde38914816000e9e08",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "characteristics",
+      "entityId": "wm_ab742f791a115d302945d90b",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "abilities",
+      "entityId": "wm_ab742f791a115d302945d90b",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "characteristics",
+      "entityId": "wm_95793f2dd50d6f9fd29a1c49",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "abilities",
+      "entityId": "wm_95793f2dd50d6f9fd29a1c49",
+      "issueCodes": [],
+      "state": "partial"
+    },
+    {
+      "component": "characteristics",
+      "entityId": "m_2ddcab5506685800de001d73",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "defence",
+      "entityId": "m_2ddcab5506685800de001d73",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "characteristics",
+      "entityId": "m_b33e9fbb8fd6a2b7c4509872",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "defence",
+      "entityId": "m_b33e9fbb8fd6a2b7c4509872",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "equipment",
+      "entityId": "u_4ed6f4d7b872610bf552c78a",
+      "issueCodes": [],
+      "state": "partial"
+    },
+    {
+      "component": "abilities",
+      "entityId": "u_4ed6f4d7b872610bf552c78a",
+      "issueCodes": [],
+      "state": "partial"
+    },
+    {
+      "component": "characteristics",
+      "entityId": "wm_c5280782ec7af1704ef4cdfc",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "abilities",
+      "entityId": "wm_c5280782ec7af1704ef4cdfc",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "characteristics",
+      "entityId": "wm_6078b3fa5c3e8d886a345ff4",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "abilities",
+      "entityId": "wm_6078b3fa5c3e8d886a345ff4",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "characteristics",
+      "entityId": "m_d5e23271f720d37ad3b6457a",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "defence",
+      "entityId": "m_d5e23271f720d37ad3b6457a",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "characteristics",
+      "entityId": "m_e2568a5a3478d91538705a48",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "defence",
+      "entityId": "m_e2568a5a3478d91538705a48",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "characteristics",
+      "entityId": "m_0ba292146d286b9ee4d36434",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "defence",
+      "entityId": "m_0ba292146d286b9ee4d36434",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "characteristics",
+      "entityId": "m_6a44b641dfd005332e4b08af",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "defence",
+      "entityId": "m_6a44b641dfd005332e4b08af",
+      "issueCodes": [],
+      "state": "complete"
+    },
+    {
+      "component": "equipment",
+      "entityId": "u_64757507d267f42e741833fb",
+      "issueCodes": [],
+      "state": "partial"
+    },
+    {
+      "component": "abilities",
+      "entityId": "u_64757507d267f42e741833fb",
+      "issueCodes": [],
+      "state": "partial"
     }
   ],
   "edition": "11",
@@ -963,6 +1299,245 @@
         "w_55779810e2fdd8c6b0a906f2",
         "w_7edd82590a64117dd8b661f0"
       ]
+    },
+    {
+      "allowDuplicates": false,
+      "conditionRuleIds": [],
+      "id": "eq_406162ead968bb3be5a830cf",
+      "kind": "default",
+      "max": 1,
+      "min": 1,
+      "miniatureId": "m_2ddcab5506685800de001d73",
+      "unitId": "u_4ed6f4d7b872610bf552c78a",
+      "weaponIds": [
+        "w_ab936acdc72af1153eab97ad",
+        "w_b2088caeb84459c76c42b85c"
+      ]
+    },
+    {
+      "allowDuplicates": false,
+      "conditionRuleIds": [],
+      "id": "eq_f5824f955824de3d6a17c3ba",
+      "kind": "default",
+      "max": 1,
+      "min": 1,
+      "miniatureId": "m_b33e9fbb8fd6a2b7c4509872",
+      "unitId": "u_4ed6f4d7b872610bf552c78a",
+      "weaponIds": [
+        "w_b2088caeb84459c76c42b85c",
+        "w_ab936acdc72af1153eab97ad"
+      ]
+    },
+    {
+      "allowDuplicates": false,
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "id": "eq_59eae1248e828e8408049433",
+      "kind": "loadout",
+      "max": 1,
+      "min": 0,
+      "miniatureId": "m_b33e9fbb8fd6a2b7c4509872",
+      "unitId": "u_4ed6f4d7b872610bf552c78a",
+      "weaponIds": [
+        "w_b2088caeb84459c76c42b85c"
+      ]
+    },
+    {
+      "allowDuplicates": false,
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "id": "eq_b38031ec26270027ae49f759",
+      "kind": "loadout",
+      "max": 1,
+      "min": 0,
+      "miniatureId": "m_2ddcab5506685800de001d73",
+      "unitId": "u_4ed6f4d7b872610bf552c78a",
+      "weaponIds": [
+        "w_bca3d054e5b8c4d75ed539e7"
+      ]
+    },
+    {
+      "allowDuplicates": false,
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "id": "eq_69dade6f76b14c9bc80c2da2",
+      "kind": "loadout",
+      "max": 1,
+      "min": 0,
+      "miniatureId": "m_2ddcab5506685800de001d73",
+      "unitId": "u_4ed6f4d7b872610bf552c78a",
+      "weaponIds": [
+        "w_ab936acdc72af1153eab97ad"
+      ]
+    },
+    {
+      "allowDuplicates": false,
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "id": "eq_652c5c7bbfa8a2d7644e8f53",
+      "kind": "loadout",
+      "max": 1,
+      "min": 0,
+      "miniatureId": "m_2ddcab5506685800de001d73",
+      "unitId": "u_4ed6f4d7b872610bf552c78a",
+      "weaponIds": [
+        "w_add5d92a8c3b2aa0ef44036e"
+      ]
+    },
+    {
+      "allowDuplicates": false,
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "id": "eq_d41d243c8bd7d4c77c2dcd5c",
+      "kind": "loadout",
+      "max": 1,
+      "min": 0,
+      "miniatureId": "m_2ddcab5506685800de001d73",
+      "unitId": "u_4ed6f4d7b872610bf552c78a",
+      "weaponIds": [
+        "w_b2088caeb84459c76c42b85c"
+      ]
+    },
+    {
+      "allowDuplicates": false,
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "id": "eq_0b5d0e49be785d299ee0566e",
+      "kind": "loadout",
+      "max": 1,
+      "min": 0,
+      "miniatureId": "m_2ddcab5506685800de001d73",
+      "unitId": "u_4ed6f4d7b872610bf552c78a",
+      "weaponIds": [
+        "w_2bbcd53302736dc9690ab0e6"
+      ]
+    },
+    {
+      "allowDuplicates": false,
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "id": "eq_838030d2a8444d398255f114",
+      "kind": "loadout",
+      "max": 1,
+      "min": 0,
+      "miniatureId": "m_2ddcab5506685800de001d73",
+      "unitId": "u_4ed6f4d7b872610bf552c78a",
+      "weaponIds": [
+        "w_b2088caeb84459c76c42b85c",
+        "w_1a62f25d666e89cb3c7ca42c"
+      ]
+    },
+    {
+      "allowDuplicates": false,
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "id": "eq_9398c724f53b665210c51248",
+      "kind": "loadout",
+      "max": 1,
+      "min": 0,
+      "miniatureId": "m_b33e9fbb8fd6a2b7c4509872",
+      "unitId": "u_4ed6f4d7b872610bf552c78a",
+      "weaponIds": [
+        "w_2cfa24947a823e18d1a7aaed"
+      ]
+    },
+    {
+      "allowDuplicates": false,
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "id": "eq_32afc0cb0dd2fd6a1eae6b6b",
+      "kind": "loadout",
+      "max": 1,
+      "min": 0,
+      "miniatureId": "m_b33e9fbb8fd6a2b7c4509872",
+      "unitId": "u_4ed6f4d7b872610bf552c78a",
+      "weaponIds": [
+        "w_ab936acdc72af1153eab97ad"
+      ]
+    },
+    {
+      "allowDuplicates": false,
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "id": "eq_b2bef66bf47dec360da9ec4d",
+      "kind": "loadout",
+      "max": 1,
+      "min": 0,
+      "miniatureId": "m_b33e9fbb8fd6a2b7c4509872",
+      "unitId": "u_4ed6f4d7b872610bf552c78a",
+      "weaponIds": [
+        "w_bca3d054e5b8c4d75ed539e7"
+      ]
+    },
+    {
+      "allowDuplicates": false,
+      "conditionRuleIds": [
+        "r_b1ff47f3884422ae20b4a00a"
+      ],
+      "id": "eq_e1e45cfa2e983d606b7fa7af",
+      "kind": "default",
+      "max": 1,
+      "min": 1,
+      "miniatureId": "m_6a44b641dfd005332e4b08af",
+      "unitId": "u_64757507d267f42e741833fb",
+      "weaponIds": [
+        "w_2e9709f51af83fd4d92a4c60"
+      ]
+    },
+    {
+      "allowDuplicates": false,
+      "conditionRuleIds": [
+        "r_b1ff47f3884422ae20b4a00a"
+      ],
+      "id": "eq_acd418416b1b8444008e8ee3",
+      "kind": "default",
+      "max": 1,
+      "min": 1,
+      "miniatureId": "m_0ba292146d286b9ee4d36434",
+      "unitId": "u_64757507d267f42e741833fb",
+      "weaponIds": [
+        "w_594b2dcd44fc01386250c0df"
+      ]
+    },
+    {
+      "allowDuplicates": false,
+      "conditionRuleIds": [
+        "r_b1ff47f3884422ae20b4a00a"
+      ],
+      "id": "eq_ddbfe93b271ffb7733b5cd6b",
+      "kind": "default",
+      "max": 1,
+      "min": 1,
+      "miniatureId": "m_e2568a5a3478d91538705a48",
+      "unitId": "u_64757507d267f42e741833fb",
+      "weaponIds": [
+        "w_2e9709f51af83fd4d92a4c60"
+      ]
+    },
+    {
+      "allowDuplicates": false,
+      "conditionRuleIds": [
+        "r_b1ff47f3884422ae20b4a00a"
+      ],
+      "id": "eq_446b03d7c33424a8e09ccef4",
+      "kind": "default",
+      "max": 1,
+      "min": 1,
+      "miniatureId": "m_d5e23271f720d37ad3b6457a",
+      "unitId": "u_64757507d267f42e741833fb",
+      "weaponIds": [
+        "w_594b2dcd44fc01386250c0df"
+      ]
     }
   ],
   "factions": [
@@ -978,7 +1553,7 @@
     }
   ],
   "format": "ludomaths-profile-catalog",
-  "generatedAt": "2026-10-07T11:01:07Z",
+  "generatedAt": "2026-10-08T19:12:30.030Z",
   "issues": [
     {
       "affects": "calculation",
@@ -1049,6 +1624,18 @@
     {
       "id": "k_c641821532fde63b70759e83",
       "name": "Beast Snagga"
+    },
+    {
+      "id": "k_92b223e6adb395277e807629",
+      "name": "Monster"
+    },
+    {
+      "id": "k_c6d7d3c118cd4e8cd4cad0ff",
+      "name": "Vehicle"
+    },
+    {
+      "id": "k_44707e1613d5d1caa0bc53d5",
+      "name": "Terminator"
     }
   ],
   "miniatures": [
@@ -1217,9 +1804,315 @@
       "name": "Nob",
       "ruleIds": [],
       "unitId": "u_7e900fbd46f2e56f5902f6c9"
+    },
+    {
+      "characteristics": {
+        "save": {
+          "normalized": 2,
+          "raw": "2+",
+          "status": "parsed"
+        },
+        "toughness": {
+          "normalized": 6,
+          "raw": "6",
+          "status": "parsed"
+        },
+        "woundsMax": {
+          "normalized": 3,
+          "raw": "3",
+          "status": "parsed"
+        }
+      },
+      "id": "m_2ddcab5506685800de001d73",
+      "invulnerableSaves": [
+        {
+          "conditionRuleIds": [],
+          "id": "sv_0205b5f008d43e890219843a",
+          "meleeSave": {
+            "normalized": null,
+            "raw": null,
+            "status": "not-applicable"
+          },
+          "miniatureId": null,
+          "rangedSave": {
+            "normalized": null,
+            "raw": null,
+            "status": "not-applicable"
+          },
+          "save": {
+            "normalized": 4,
+            "raw": "4+",
+            "status": "parsed"
+          },
+          "scope": "unit"
+        }
+      ],
+      "keywordIds": [
+        "k_44707e1613d5d1caa0bc53d5",
+        "k_6d2c2918050cb498288d5646",
+        "k_9f92a00cd58f761179ea5931"
+      ],
+      "name": "Exterminador",
+      "ruleIds": [],
+      "unitId": "u_4ed6f4d7b872610bf552c78a"
+    },
+    {
+      "characteristics": {
+        "save": {
+          "normalized": 2,
+          "raw": "2+",
+          "status": "parsed"
+        },
+        "toughness": {
+          "normalized": 6,
+          "raw": "6",
+          "status": "parsed"
+        },
+        "woundsMax": {
+          "normalized": 3,
+          "raw": "3",
+          "status": "parsed"
+        }
+      },
+      "id": "m_b33e9fbb8fd6a2b7c4509872",
+      "invulnerableSaves": [
+        {
+          "conditionRuleIds": [],
+          "id": "sv_570bc191e93daccf569f4cd1",
+          "meleeSave": {
+            "normalized": null,
+            "raw": null,
+            "status": "not-applicable"
+          },
+          "miniatureId": null,
+          "rangedSave": {
+            "normalized": null,
+            "raw": null,
+            "status": "not-applicable"
+          },
+          "save": {
+            "normalized": 4,
+            "raw": "4+",
+            "status": "parsed"
+          },
+          "scope": "unit"
+        }
+      ],
+      "keywordIds": [
+        "k_44707e1613d5d1caa0bc53d5",
+        "k_6d2c2918050cb498288d5646",
+        "k_9f92a00cd58f761179ea5931"
+      ],
+      "name": "Sargento exterminador",
+      "ruleIds": [],
+      "unitId": "u_4ed6f4d7b872610bf552c78a"
+    },
+    {
+      "characteristics": {
+        "save": {
+          "normalized": 2,
+          "raw": "2+",
+          "status": "parsed"
+        },
+        "toughness": {
+          "normalized": 6,
+          "raw": "6",
+          "status": "parsed"
+        },
+        "woundsMax": {
+          "normalized": 3,
+          "raw": "3",
+          "status": "parsed"
+        }
+      },
+      "id": "m_d5e23271f720d37ad3b6457a",
+      "invulnerableSaves": [
+        {
+          "conditionRuleIds": [],
+          "id": "sv_63d75ee684ef6235bda0f400",
+          "meleeSave": {
+            "normalized": null,
+            "raw": null,
+            "status": "not-applicable"
+          },
+          "miniatureId": null,
+          "rangedSave": {
+            "normalized": null,
+            "raw": null,
+            "status": "not-applicable"
+          },
+          "save": {
+            "normalized": 4,
+            "raw": "4+",
+            "status": "parsed"
+          },
+          "scope": "unit"
+        }
+      ],
+      "keywordIds": [
+        "k_44707e1613d5d1caa0bc53d5",
+        "k_6d2c2918050cb498288d5646",
+        "k_9f92a00cd58f761179ea5931"
+      ],
+      "name": "Sargento exterminador · Twin Lightning Claws",
+      "ruleIds": [],
+      "unitId": "u_64757507d267f42e741833fb"
+    },
+    {
+      "characteristics": {
+        "save": {
+          "normalized": 2,
+          "raw": "2+",
+          "status": "parsed"
+        },
+        "toughness": {
+          "normalized": 6,
+          "raw": "6",
+          "status": "parsed"
+        },
+        "woundsMax": {
+          "normalized": 4,
+          "raw": "4",
+          "status": "parsed"
+        }
+      },
+      "id": "m_e2568a5a3478d91538705a48",
+      "invulnerableSaves": [
+        {
+          "conditionRuleIds": [],
+          "id": "sv_e93c0d2209f1ad4da5e9a9b7",
+          "meleeSave": {
+            "normalized": null,
+            "raw": null,
+            "status": "not-applicable"
+          },
+          "miniatureId": null,
+          "rangedSave": {
+            "normalized": null,
+            "raw": null,
+            "status": "not-applicable"
+          },
+          "save": {
+            "normalized": 4,
+            "raw": "4+",
+            "status": "parsed"
+          },
+          "scope": "unit"
+        }
+      ],
+      "keywordIds": [
+        "k_44707e1613d5d1caa0bc53d5",
+        "k_6d2c2918050cb498288d5646",
+        "k_9f92a00cd58f761179ea5931"
+      ],
+      "name": "Sargento exterminador · Thunder Hammer + Storm Shield",
+      "ruleIds": [],
+      "unitId": "u_64757507d267f42e741833fb"
+    },
+    {
+      "characteristics": {
+        "save": {
+          "normalized": 2,
+          "raw": "2+",
+          "status": "parsed"
+        },
+        "toughness": {
+          "normalized": 6,
+          "raw": "6",
+          "status": "parsed"
+        },
+        "woundsMax": {
+          "normalized": 3,
+          "raw": "3",
+          "status": "parsed"
+        }
+      },
+      "id": "m_0ba292146d286b9ee4d36434",
+      "invulnerableSaves": [
+        {
+          "conditionRuleIds": [],
+          "id": "sv_7f1da354f70f8f8b80de30d3",
+          "meleeSave": {
+            "normalized": null,
+            "raw": null,
+            "status": "not-applicable"
+          },
+          "miniatureId": null,
+          "rangedSave": {
+            "normalized": null,
+            "raw": null,
+            "status": "not-applicable"
+          },
+          "save": {
+            "normalized": 4,
+            "raw": "4+",
+            "status": "parsed"
+          },
+          "scope": "unit"
+        }
+      ],
+      "keywordIds": [
+        "k_9f92a00cd58f761179ea5931",
+        "k_6d2c2918050cb498288d5646",
+        "k_44707e1613d5d1caa0bc53d5"
+      ],
+      "name": "Exterminador · Twin Lightning Claws",
+      "ruleIds": [],
+      "unitId": "u_64757507d267f42e741833fb"
+    },
+    {
+      "characteristics": {
+        "save": {
+          "normalized": 2,
+          "raw": "2+",
+          "status": "parsed"
+        },
+        "toughness": {
+          "normalized": 6,
+          "raw": "6",
+          "status": "parsed"
+        },
+        "woundsMax": {
+          "normalized": 4,
+          "raw": "4",
+          "status": "parsed"
+        }
+      },
+      "id": "m_6a44b641dfd005332e4b08af",
+      "invulnerableSaves": [
+        {
+          "conditionRuleIds": [],
+          "id": "sv_9f3c6e8c502d292a23bc33ab",
+          "meleeSave": {
+            "normalized": null,
+            "raw": null,
+            "status": "not-applicable"
+          },
+          "miniatureId": null,
+          "rangedSave": {
+            "normalized": null,
+            "raw": null,
+            "status": "not-applicable"
+          },
+          "save": {
+            "normalized": 4,
+            "raw": "4+",
+            "status": "parsed"
+          },
+          "scope": "unit"
+        }
+      ],
+      "keywordIds": [
+        "k_9f92a00cd58f761179ea5931",
+        "k_6d2c2918050cb498288d5646",
+        "k_44707e1613d5d1caa0bc53d5"
+      ],
+      "name": "Exterminador · Thunder Hammer + Storm Shield",
+      "ruleIds": [],
+      "unitId": "u_64757507d267f42e741833fb"
     }
   ],
-  "payloadSha256": "147c89ec683b2b82b7fb6a5196b9d11c476cf323612a3ab4f5145a848069ec6a",
+  "payloadSha256": "03e669d6cff84ca278c2a8c846613d3f9e307a957b4ccfe0b1a29d1404d3a982",
   "relations": [
     {
       "conditionRuleIds": [
@@ -2690,6 +3583,380 @@
       "kind": "miniature-keyword",
       "quantity": null,
       "toId": "k_ac8db1743618031a7ea39d75"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "w_1a62f25d666e89cb3c7ca42c",
+      "id": "rel_115ecafb092d9d2093a11e53",
+      "kind": "weapon-mode",
+      "quantity": null,
+      "toId": "wm_83b5b8d6560fa4420c36c22f"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "w_bca3d054e5b8c4d75ed539e7",
+      "id": "rel_e8faf93070b5c64cb8ae215f",
+      "kind": "weapon-mode",
+      "quantity": null,
+      "toId": "wm_c36801184bd9e12e2ae153b5"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "w_b2088caeb84459c76c42b85c",
+      "id": "rel_51684814f40ff2bb77c05178",
+      "kind": "weapon-mode",
+      "quantity": null,
+      "toId": "wm_20e7e57cbf67c48004c4a9f9"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "wm_20e7e57cbf67c48004c4a9f9",
+      "id": "rel_4226935604036e54937a8206",
+      "kind": "mode-rule",
+      "quantity": null,
+      "toId": "r_4afd04a620cf6af8b3d6234b"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "w_bca3d054e5b8c4d75ed539e7",
+      "id": "rel_8431b404a912f18c83c853b6",
+      "kind": "weapon-mode",
+      "quantity": null,
+      "toId": "wm_12baeb2e3bc615c34a7a87e1"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "w_2bbcd53302736dc9690ab0e6",
+      "id": "rel_bb04dfe7b4025d11c3065c2b",
+      "kind": "weapon-mode",
+      "quantity": null,
+      "toId": "wm_90689dea9328883789606bd2"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "wm_90689dea9328883789606bd2",
+      "id": "rel_b7dae22a4ac5b3bdd185bff9",
+      "kind": "mode-rule",
+      "quantity": null,
+      "toId": "r_5f9a24f93ef9c6f0bd2221ed"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "wm_90689dea9328883789606bd2",
+      "id": "rel_76a7effe7ddaa6ff13b0f353",
+      "kind": "mode-rule",
+      "quantity": null,
+      "toId": "r_9a53ea3b397adb20aad0c66f"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "w_ab936acdc72af1153eab97ad",
+      "id": "rel_3efa294eff98acc7f96062e0",
+      "kind": "weapon-mode",
+      "quantity": null,
+      "toId": "wm_9f18ca209f1301774139b6ad"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "w_2cfa24947a823e18d1a7aaed",
+      "id": "rel_106b9cab22b29bdcfa978755",
+      "kind": "weapon-mode",
+      "quantity": null,
+      "toId": "wm_acf78bde38914816000e9e08"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "w_add5d92a8c3b2aa0ef44036e",
+      "id": "rel_18db236733287d81f1054547",
+      "kind": "weapon-mode",
+      "quantity": null,
+      "toId": "wm_ab742f791a115d302945d90b"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "wm_ab742f791a115d302945d90b",
+      "id": "rel_e5f100efd5f43d16cf7418f8",
+      "kind": "mode-rule",
+      "quantity": null,
+      "toId": "r_8b3c6cec14a3f26f34d2f089"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "w_1a62f25d666e89cb3c7ca42c",
+      "id": "rel_d9eeb61b9dbf68be6f43935c",
+      "kind": "weapon-mode",
+      "quantity": null,
+      "toId": "wm_95793f2dd50d6f9fd29a1c49"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "wm_95793f2dd50d6f9fd29a1c49",
+      "id": "rel_7ab2ab297dd393b30a8f0082",
+      "kind": "mode-rule",
+      "quantity": null,
+      "toId": "r_9a53ea3b397adb20aad0c66f"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "u_4ed6f4d7b872610bf552c78a",
+      "id": "rel_d1676ce261674c93e188bd5c",
+      "kind": "unit-miniature",
+      "quantity": null,
+      "toId": "m_2ddcab5506685800de001d73"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "u_4ed6f4d7b872610bf552c78a",
+      "id": "rel_0ec77b4dbe00495746bd0deb",
+      "kind": "unit-miniature",
+      "quantity": null,
+      "toId": "m_b33e9fbb8fd6a2b7c4509872"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "eq_406162ead968bb3be5a830cf",
+      "id": "rel_d47e1518fa1c2a391e1e411e",
+      "kind": "choice-weapon",
+      "quantity": 1,
+      "toId": "w_ab936acdc72af1153eab97ad"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "eq_406162ead968bb3be5a830cf",
+      "id": "rel_9f396513fa2dadc82c1bdeea",
+      "kind": "choice-weapon",
+      "quantity": 1,
+      "toId": "w_b2088caeb84459c76c42b85c"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "eq_f5824f955824de3d6a17c3ba",
+      "id": "rel_778c65dd6f109fb493744886",
+      "kind": "choice-weapon",
+      "quantity": 1,
+      "toId": "w_b2088caeb84459c76c42b85c"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "eq_f5824f955824de3d6a17c3ba",
+      "id": "rel_f14ff78328cfab26f4007889",
+      "kind": "choice-weapon",
+      "quantity": 1,
+      "toId": "w_ab936acdc72af1153eab97ad"
+    },
+    {
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "fromId": "eq_59eae1248e828e8408049433",
+      "id": "rel_faa9eb7e29a2591ae493735a",
+      "kind": "choice-weapon",
+      "quantity": 1,
+      "toId": "w_b2088caeb84459c76c42b85c"
+    },
+    {
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "fromId": "eq_b38031ec26270027ae49f759",
+      "id": "rel_343d27eb252c835023e31f2f",
+      "kind": "choice-weapon",
+      "quantity": 1,
+      "toId": "w_bca3d054e5b8c4d75ed539e7"
+    },
+    {
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "fromId": "eq_69dade6f76b14c9bc80c2da2",
+      "id": "rel_fbb47d84eb8cbfa118133c05",
+      "kind": "choice-weapon",
+      "quantity": 1,
+      "toId": "w_ab936acdc72af1153eab97ad"
+    },
+    {
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "fromId": "eq_652c5c7bbfa8a2d7644e8f53",
+      "id": "rel_7fce74101e9f03193c79571d",
+      "kind": "choice-weapon",
+      "quantity": 1,
+      "toId": "w_add5d92a8c3b2aa0ef44036e"
+    },
+    {
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "fromId": "eq_d41d243c8bd7d4c77c2dcd5c",
+      "id": "rel_03fcc6907008e011ef5efd77",
+      "kind": "choice-weapon",
+      "quantity": 1,
+      "toId": "w_b2088caeb84459c76c42b85c"
+    },
+    {
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "fromId": "eq_0b5d0e49be785d299ee0566e",
+      "id": "rel_a6402255a37126eabc0a0a5c",
+      "kind": "choice-weapon",
+      "quantity": 1,
+      "toId": "w_2bbcd53302736dc9690ab0e6"
+    },
+    {
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "fromId": "eq_838030d2a8444d398255f114",
+      "id": "rel_23ba0e7868fbebd51f8a992e",
+      "kind": "choice-weapon",
+      "quantity": 1,
+      "toId": "w_b2088caeb84459c76c42b85c"
+    },
+    {
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "fromId": "eq_838030d2a8444d398255f114",
+      "id": "rel_558a3c0474a4a092aac1e102",
+      "kind": "choice-weapon",
+      "quantity": 1,
+      "toId": "w_1a62f25d666e89cb3c7ca42c"
+    },
+    {
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "fromId": "eq_9398c724f53b665210c51248",
+      "id": "rel_41b47c3e8a7607190b8689d5",
+      "kind": "choice-weapon",
+      "quantity": 1,
+      "toId": "w_2cfa24947a823e18d1a7aaed"
+    },
+    {
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "fromId": "eq_32afc0cb0dd2fd6a1eae6b6b",
+      "id": "rel_1c52d6df535199cebca7e059",
+      "kind": "choice-weapon",
+      "quantity": 1,
+      "toId": "w_ab936acdc72af1153eab97ad"
+    },
+    {
+      "conditionRuleIds": [
+        "r_e1fc288b201343ffe373877a"
+      ],
+      "fromId": "eq_b2bef66bf47dec360da9ec4d",
+      "id": "rel_0bc77315381b8320977f0e2b",
+      "kind": "choice-weapon",
+      "quantity": 1,
+      "toId": "w_bca3d054e5b8c4d75ed539e7"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "w_2e9709f51af83fd4d92a4c60",
+      "id": "rel_c2753c41b8008829dba5f0ef",
+      "kind": "weapon-mode",
+      "quantity": null,
+      "toId": "wm_c5280782ec7af1704ef4cdfc"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "wm_c5280782ec7af1704ef4cdfc",
+      "id": "rel_c495e6cec5e15f5a53b377d2",
+      "kind": "mode-rule",
+      "quantity": null,
+      "toId": "r_1a47e95059f6ac2e385427b5"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "w_594b2dcd44fc01386250c0df",
+      "id": "rel_67cf600687f78826c16bd369",
+      "kind": "weapon-mode",
+      "quantity": null,
+      "toId": "wm_6078b3fa5c3e8d886a345ff4"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "wm_6078b3fa5c3e8d886a345ff4",
+      "id": "rel_bbe167f08fe81ffeea9e4242",
+      "kind": "mode-rule",
+      "quantity": null,
+      "toId": "r_9c4052b8b13d1b6eda97c77e"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "u_64757507d267f42e741833fb",
+      "id": "rel_a8298dcb978fd2f8fabcb9a6",
+      "kind": "unit-miniature",
+      "quantity": null,
+      "toId": "m_d5e23271f720d37ad3b6457a"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "u_64757507d267f42e741833fb",
+      "id": "rel_bd5026f01c1dc677aa87528d",
+      "kind": "unit-miniature",
+      "quantity": null,
+      "toId": "m_e2568a5a3478d91538705a48"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "u_64757507d267f42e741833fb",
+      "id": "rel_6aa2af7b2a56855ce214fb31",
+      "kind": "unit-miniature",
+      "quantity": null,
+      "toId": "m_0ba292146d286b9ee4d36434"
+    },
+    {
+      "conditionRuleIds": [],
+      "fromId": "u_64757507d267f42e741833fb",
+      "id": "rel_c0343d39184c1be3fea73d9e",
+      "kind": "unit-miniature",
+      "quantity": null,
+      "toId": "m_6a44b641dfd005332e4b08af"
+    },
+    {
+      "conditionRuleIds": [
+        "r_b1ff47f3884422ae20b4a00a"
+      ],
+      "fromId": "eq_e1e45cfa2e983d606b7fa7af",
+      "id": "rel_ce94fd034a84eacf5dfc7734",
+      "kind": "choice-weapon",
+      "quantity": 1,
+      "toId": "w_2e9709f51af83fd4d92a4c60"
+    },
+    {
+      "conditionRuleIds": [
+        "r_b1ff47f3884422ae20b4a00a"
+      ],
+      "fromId": "eq_acd418416b1b8444008e8ee3",
+      "id": "rel_bc5bb08392dda6857a97bd24",
+      "kind": "choice-weapon",
+      "quantity": 1,
+      "toId": "w_594b2dcd44fc01386250c0df"
+    },
+    {
+      "conditionRuleIds": [
+        "r_b1ff47f3884422ae20b4a00a"
+      ],
+      "fromId": "eq_ddbfe93b271ffb7733b5cd6b",
+      "id": "rel_2f15f4703ab58cc932e950f6",
+      "kind": "choice-weapon",
+      "quantity": 1,
+      "toId": "w_2e9709f51af83fd4d92a4c60"
+    },
+    {
+      "conditionRuleIds": [
+        "r_b1ff47f3884422ae20b4a00a"
+      ],
+      "fromId": "eq_446b03d7c33424a8e09ccef4",
+      "id": "rel_45296e9d1f0d7a9a75e6c3dd",
+      "kind": "choice-weapon",
+      "quantity": 1,
+      "toId": "w_594b2dcd44fc01386250c0df"
     }
   ],
   "rules": [
@@ -2968,6 +4235,127 @@
       "requiredContext": [],
       "reviewState": "out-of-scope",
       "reviewVersion": "1.0.0"
+    },
+    {
+      "capabilityId": "blast",
+      "description": "Añade dos ataques por cada cinco miniaturas en la unidad objetivo al seleccionar blancos. Este ajuste todavía no se aplica.",
+      "id": "r_9a53ea3b397adb20aad0c66f",
+      "name": "Blast 2",
+      "parameters": {
+        "additionalAttacksPerFive": 2
+      },
+      "requiredContext": [
+        "targetUnitModelCount"
+      ],
+      "reviewState": "reviewed",
+      "reviewVersion": "1.0.0"
+    },
+    {
+      "capabilityId": "rapidFire",
+      "description": "Añade dos ataques si el objetivo estaba a mitad de alcance al seleccionar blancos.",
+      "id": "r_4afd04a620cf6af8b3d6234b",
+      "name": "Rapid Fire 2",
+      "parameters": {
+        "additionalAttacks": 2
+      },
+      "requiredContext": [
+        "distance",
+        "weaponRange"
+      ],
+      "reviewState": "reviewed",
+      "reviewVersion": "1.0.0"
+    },
+    {
+      "capabilityId": "sustainedHits",
+      "description": "Cada impacto crítico original genera un impacto normal adicional.",
+      "id": "r_8b3c6cec14a3f26f34d2f089",
+      "name": "Sustained Hits 1",
+      "parameters": {
+        "additionalHits": 1
+      },
+      "requiredContext": [],
+      "reviewState": "reviewed",
+      "reviewVersion": "1.0.0"
+    },
+    {
+      "capabilityId": null,
+      "description": "Los ataques contra una unidad dentro de nueve pulgadas reciben +1 AP. Este modificador condicional todavía no se aplica.",
+      "id": "r_e4a55ca36d4d5aac0b0cd14b",
+      "name": "Fury of the First",
+      "parameters": {},
+      "requiredContext": [],
+      "reviewState": "pending",
+      "reviewVersion": null
+    },
+    {
+      "capabilityId": null,
+      "description": "Permite entrar a más de ocho pulgadas horizontalmente de unidades enemigas; despliegue y posición quedan fuera del cálculo.",
+      "id": "r_42bf476f36628f792816eddb",
+      "name": "Deep Strike",
+      "parameters": {},
+      "requiredContext": [],
+      "reviewState": "out-of-scope",
+      "reviewVersion": "1.0.0"
+    },
+    {
+      "capabilityId": null,
+      "description": "Una baliza permite una entrada rápida con descuento de CP una vez por batalla; posición, recursos y retirada de la baliza quedan fuera del cálculo.",
+      "id": "r_d90c073a49a7873445245765",
+      "name": "Teleport Homer",
+      "parameters": {},
+      "requiredContext": [],
+      "reviewState": "out-of-scope",
+      "reviewVersion": "1.0.0"
+    },
+    {
+      "capabilityId": null,
+      "description": "El sargento puede elegir puño, puño sierra o arma de energía. Los demás pueden sustituir el puño por puño sierra. Una miniatura por cada cinco puede llevar cañón de asalto, lanzallamas pesado o Cyclone con bólter inseparable. El cálculo no comprueba automáticamente estos cupos ni la legalidad completa de la lista.",
+      "id": "r_e1fc288b201343ffe373877a",
+      "name": "Opciones de equipo",
+      "parameters": {},
+      "requiredContext": [],
+      "reviewState": "out-of-scope",
+      "reviewVersion": "1.0.0"
+    },
+    {
+      "capabilityId": "twinLinked",
+      "description": "Permite repetir la tirada para herir. La repetición se elige en los ajustes del cálculo.",
+      "id": "r_9c4052b8b13d1b6eda97c77e",
+      "name": "Twin-linked",
+      "parameters": {},
+      "requiredContext": [],
+      "reviewState": "reviewed",
+      "reviewVersion": "1.0.0"
+    },
+    {
+      "capabilityId": null,
+      "description": "Una baliza permite una entrada rápida con descuento de CP una vez por batalla; posición, recursos y retirada de la baliza quedan fuera del cálculo.",
+      "id": "r_cb350197f83e2bf9601da0da",
+      "name": "Teleport Homer",
+      "parameters": {},
+      "requiredContext": [],
+      "reviewState": "out-of-scope",
+      "reviewVersion": "1.0.0"
+    },
+    {
+      "capabilityId": null,
+      "description": "Tras cargar este turno, las garras obtienen Sustained Hits 1 contra objetivos que no sean Monster ni Vehicle; los martillos lo obtienen contra Monster o Vehicle. Este efecto condicional todavía no se aplica.",
+      "id": "r_71cf63c225f5363bbac55507",
+      "name": "Terminatus Assault",
+      "parameters": {},
+      "requiredContext": [],
+      "reviewState": "pending",
+      "reviewVersion": null
+    },
+    {
+      "capabilityId": null,
+      "description": "Cada miniatura lleva garras dobles o martillo con escudo. Las variantes con escudo incluyen su herida adicional. La composición permite mezclar ambos equipos; el cálculo no valida toda la legalidad de una lista.",
+      "id": "r_b1ff47f3884422ae20b4a00a",
+      "name": "Opciones de equipo",
+      "parameters": {},
+      "requiredContext": [],
+      "reviewState": "out-of-scope",
+      "reviewVersion": "1.0.0"
     }
   ],
   "schemaVersion": "2.0.0",
@@ -2981,7 +4369,9 @@
     "profile": "standard",
     "selectedUnitIds": [
       "u_333e7b4ad6750d65230726aa",
-      "u_7e900fbd46f2e56f5902f6c9"
+      "u_7e900fbd46f2e56f5902f6c9",
+      "u_4ed6f4d7b872610bf552c78a",
+      "u_64757507d267f42e741833fb"
     ]
   },
   "units": [
@@ -3064,6 +4454,74 @@
       "ruleIds": [
         "r_65ad4b7158661e92723ab531",
         "r_6e58e155b887c8fe09b9f291"
+      ]
+    },
+    {
+      "compositionIds": [
+        "c_4a414a51f454b5e5045e2dce",
+        "c_f5dc20f4c747874b4ab61cf9"
+      ],
+      "equipmentChoiceIds": [
+        "eq_406162ead968bb3be5a830cf",
+        "eq_f5824f955824de3d6a17c3ba",
+        "eq_59eae1248e828e8408049433",
+        "eq_b38031ec26270027ae49f759",
+        "eq_69dade6f76b14c9bc80c2da2",
+        "eq_652c5c7bbfa8a2d7644e8f53",
+        "eq_d41d243c8bd7d4c77c2dcd5c",
+        "eq_0b5d0e49be785d299ee0566e",
+        "eq_838030d2a8444d398255f114",
+        "eq_9398c724f53b665210c51248",
+        "eq_32afc0cb0dd2fd6a1eae6b6b",
+        "eq_b2bef66bf47dec360da9ec4d"
+      ],
+      "factionIds": [
+        "f_910e2f5f2a24c62ebb4b3308"
+      ],
+      "id": "u_4ed6f4d7b872610bf552c78a",
+      "miniatureIds": [
+        "m_2ddcab5506685800de001d73",
+        "m_b33e9fbb8fd6a2b7c4509872"
+      ],
+      "name": "Escuadra de exterminadores · Terminator Squad",
+      "ruleIds": [
+        "r_f6868b348e6ffcc54f2c9ea7",
+        "r_e4a55ca36d4d5aac0b0cd14b",
+        "r_42bf476f36628f792816eddb",
+        "r_d90c073a49a7873445245765",
+        "r_e1fc288b201343ffe373877a"
+      ]
+    },
+    {
+      "compositionIds": [
+        "c_8af06748751d5a141c1e0f50",
+        "c_7ff6f5599a89855ae18c6de5",
+        "c_5ab6c830c0573bc76bd4465a",
+        "c_31514f74832803008ce15d53"
+      ],
+      "equipmentChoiceIds": [
+        "eq_e1e45cfa2e983d606b7fa7af",
+        "eq_acd418416b1b8444008e8ee3",
+        "eq_ddbfe93b271ffb7733b5cd6b",
+        "eq_446b03d7c33424a8e09ccef4"
+      ],
+      "factionIds": [
+        "f_910e2f5f2a24c62ebb4b3308"
+      ],
+      "id": "u_64757507d267f42e741833fb",
+      "miniatureIds": [
+        "m_d5e23271f720d37ad3b6457a",
+        "m_e2568a5a3478d91538705a48",
+        "m_0ba292146d286b9ee4d36434",
+        "m_6a44b641dfd005332e4b08af"
+      ],
+      "name": "Escuadra de exterminadores de asalto · Terminator Assault Squad",
+      "ruleIds": [
+        "r_f6868b348e6ffcc54f2c9ea7",
+        "r_cb350197f83e2bf9601da0da",
+        "r_42bf476f36628f792816eddb",
+        "r_71cf63c225f5363bbac55507",
+        "r_b1ff47f3884422ae20b4a00a"
       ]
     }
   ],
@@ -4207,6 +5665,700 @@
       },
       "type": "melee",
       "weaponId": "w_27e6ca260e0f757142ee8600"
+    },
+    {
+      "characteristics": {
+        "armourPenetration": {
+          "normalized": 2,
+          "raw": "-2",
+          "status": "parsed"
+        },
+        "attacks": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 2
+          },
+          "raw": "2",
+          "status": "parsed"
+        },
+        "ballisticSkill": {
+          "normalized": 3,
+          "raw": "3+",
+          "status": "parsed"
+        },
+        "damage": {
+          "normalized": {
+            "count": 1,
+            "kind": "dice",
+            "modifier": 3,
+            "sides": 3
+          },
+          "raw": "D3+3",
+          "status": "parsed"
+        },
+        "strength": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 10
+          },
+          "raw": "10",
+          "status": "parsed"
+        },
+        "weaponSkill": {
+          "normalized": null,
+          "raw": null,
+          "status": "not-applicable"
+        }
+      },
+      "id": "wm_83b5b8d6560fa4420c36c22f",
+      "name": "Krak",
+      "range": {
+        "normalized": {
+          "kind": "inches",
+          "value": 36
+        },
+        "raw": "36\"",
+        "status": "parsed"
+      },
+      "ruleIds": [],
+      "targetCondition": {
+        "keywordIds": [],
+        "match": null,
+        "ruleIds": [],
+        "state": "not-applicable"
+      },
+      "type": "ranged",
+      "weaponId": "w_1a62f25d666e89cb3c7ca42c"
+    },
+    {
+      "characteristics": {
+        "armourPenetration": {
+          "normalized": 2,
+          "raw": "-2",
+          "status": "parsed"
+        },
+        "attacks": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 3
+          },
+          "raw": "3",
+          "status": "parsed"
+        },
+        "ballisticSkill": {
+          "normalized": null,
+          "raw": null,
+          "status": "not-applicable"
+        },
+        "damage": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 3
+          },
+          "raw": "3",
+          "status": "parsed"
+        },
+        "strength": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 12
+          },
+          "raw": "12",
+          "status": "parsed"
+        },
+        "weaponSkill": {
+          "normalized": 3,
+          "raw": "3+",
+          "status": "parsed"
+        }
+      },
+      "id": "wm_c36801184bd9e12e2ae153b5",
+      "name": "Hunter",
+      "range": {
+        "normalized": {
+          "kind": "melee"
+        },
+        "raw": "Melee",
+        "status": "parsed"
+      },
+      "ruleIds": [],
+      "targetCondition": {
+        "keywordIds": [
+          "k_92b223e6adb395277e807629",
+          "k_c6d7d3c118cd4e8cd4cad0ff"
+        ],
+        "match": "any",
+        "ruleIds": [],
+        "state": "reviewed"
+      },
+      "type": "melee",
+      "weaponId": "w_bca3d054e5b8c4d75ed539e7"
+    },
+    {
+      "characteristics": {
+        "armourPenetration": {
+          "normalized": 1,
+          "raw": "-1",
+          "status": "parsed"
+        },
+        "attacks": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 2
+          },
+          "raw": "2",
+          "status": "parsed"
+        },
+        "ballisticSkill": {
+          "normalized": 3,
+          "raw": "3+",
+          "status": "parsed"
+        },
+        "damage": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 1
+          },
+          "raw": "1",
+          "status": "parsed"
+        },
+        "strength": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 5
+          },
+          "raw": "5",
+          "status": "parsed"
+        },
+        "weaponSkill": {
+          "normalized": null,
+          "raw": null,
+          "status": "not-applicable"
+        }
+      },
+      "id": "wm_20e7e57cbf67c48004c4a9f9",
+      "name": "Storm Bolter",
+      "range": {
+        "normalized": {
+          "kind": "inches",
+          "value": 24
+        },
+        "raw": "24\"",
+        "status": "parsed"
+      },
+      "ruleIds": [
+        "r_4afd04a620cf6af8b3d6234b"
+      ],
+      "targetCondition": {
+        "keywordIds": [],
+        "match": null,
+        "ruleIds": [],
+        "state": "not-applicable"
+      },
+      "type": "ranged",
+      "weaponId": "w_b2088caeb84459c76c42b85c"
+    },
+    {
+      "characteristics": {
+        "armourPenetration": {
+          "normalized": 2,
+          "raw": "-2",
+          "status": "parsed"
+        },
+        "attacks": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 2
+          },
+          "raw": "2",
+          "status": "parsed"
+        },
+        "ballisticSkill": {
+          "normalized": null,
+          "raw": null,
+          "status": "not-applicable"
+        },
+        "damage": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 2
+          },
+          "raw": "2",
+          "status": "parsed"
+        },
+        "strength": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 8
+          },
+          "raw": "8",
+          "status": "parsed"
+        },
+        "weaponSkill": {
+          "normalized": 4,
+          "raw": "4+",
+          "status": "parsed"
+        }
+      },
+      "id": "wm_12baeb2e3bc615c34a7a87e1",
+      "name": "Standard",
+      "range": {
+        "normalized": {
+          "kind": "melee"
+        },
+        "raw": "Melee",
+        "status": "parsed"
+      },
+      "ruleIds": [],
+      "targetCondition": {
+        "keywordIds": [],
+        "match": null,
+        "ruleIds": [],
+        "state": "not-applicable"
+      },
+      "type": "melee",
+      "weaponId": "w_bca3d054e5b8c4d75ed539e7"
+    },
+    {
+      "characteristics": {
+        "armourPenetration": {
+          "normalized": 1,
+          "raw": "-1",
+          "status": "parsed"
+        },
+        "attacks": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 3
+          },
+          "raw": "3",
+          "status": "parsed"
+        },
+        "ballisticSkill": {
+          "normalized": null,
+          "raw": "-",
+          "status": "unsupported"
+        },
+        "damage": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 1
+          },
+          "raw": "1",
+          "status": "parsed"
+        },
+        "strength": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 5
+          },
+          "raw": "5",
+          "status": "parsed"
+        },
+        "weaponSkill": {
+          "normalized": null,
+          "raw": null,
+          "status": "not-applicable"
+        }
+      },
+      "id": "wm_90689dea9328883789606bd2",
+      "name": "Heavy Flamer",
+      "range": {
+        "normalized": {
+          "kind": "inches",
+          "value": 12
+        },
+        "raw": "12\"",
+        "status": "parsed"
+      },
+      "ruleIds": [
+        "r_5f9a24f93ef9c6f0bd2221ed",
+        "r_9a53ea3b397adb20aad0c66f"
+      ],
+      "targetCondition": {
+        "keywordIds": [],
+        "match": null,
+        "ruleIds": [],
+        "state": "not-applicable"
+      },
+      "type": "ranged",
+      "weaponId": "w_2bbcd53302736dc9690ab0e6"
+    },
+    {
+      "characteristics": {
+        "armourPenetration": {
+          "normalized": 2,
+          "raw": "-2",
+          "status": "parsed"
+        },
+        "attacks": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 3
+          },
+          "raw": "3",
+          "status": "parsed"
+        },
+        "ballisticSkill": {
+          "normalized": null,
+          "raw": null,
+          "status": "not-applicable"
+        },
+        "damage": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 2
+          },
+          "raw": "2",
+          "status": "parsed"
+        },
+        "strength": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 8
+          },
+          "raw": "8",
+          "status": "parsed"
+        },
+        "weaponSkill": {
+          "normalized": 3,
+          "raw": "3+",
+          "status": "parsed"
+        }
+      },
+      "id": "wm_9f18ca209f1301774139b6ad",
+      "name": "Power Fist",
+      "range": {
+        "normalized": {
+          "kind": "melee"
+        },
+        "raw": "Melee",
+        "status": "parsed"
+      },
+      "ruleIds": [],
+      "targetCondition": {
+        "keywordIds": [],
+        "match": null,
+        "ruleIds": [],
+        "state": "not-applicable"
+      },
+      "type": "melee",
+      "weaponId": "w_ab936acdc72af1153eab97ad"
+    },
+    {
+      "characteristics": {
+        "armourPenetration": {
+          "normalized": 2,
+          "raw": "-2",
+          "status": "parsed"
+        },
+        "attacks": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 5
+          },
+          "raw": "5",
+          "status": "parsed"
+        },
+        "ballisticSkill": {
+          "normalized": null,
+          "raw": null,
+          "status": "not-applicable"
+        },
+        "damage": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 1
+          },
+          "raw": "1",
+          "status": "parsed"
+        },
+        "strength": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 5
+          },
+          "raw": "5",
+          "status": "parsed"
+        },
+        "weaponSkill": {
+          "normalized": 3,
+          "raw": "3+",
+          "status": "parsed"
+        }
+      },
+      "id": "wm_acf78bde38914816000e9e08",
+      "name": "Power Weapon",
+      "range": {
+        "normalized": {
+          "kind": "melee"
+        },
+        "raw": "Melee",
+        "status": "parsed"
+      },
+      "ruleIds": [],
+      "targetCondition": {
+        "keywordIds": [],
+        "match": null,
+        "ruleIds": [],
+        "state": "not-applicable"
+      },
+      "type": "melee",
+      "weaponId": "w_2cfa24947a823e18d1a7aaed"
+    },
+    {
+      "characteristics": {
+        "armourPenetration": {
+          "normalized": 2,
+          "raw": "-2",
+          "status": "parsed"
+        },
+        "attacks": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 6
+          },
+          "raw": "6",
+          "status": "parsed"
+        },
+        "ballisticSkill": {
+          "normalized": 3,
+          "raw": "3+",
+          "status": "parsed"
+        },
+        "damage": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 1
+          },
+          "raw": "1",
+          "status": "parsed"
+        },
+        "strength": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 6
+          },
+          "raw": "6",
+          "status": "parsed"
+        },
+        "weaponSkill": {
+          "normalized": null,
+          "raw": null,
+          "status": "not-applicable"
+        }
+      },
+      "id": "wm_ab742f791a115d302945d90b",
+      "name": "Assault Cannon",
+      "range": {
+        "normalized": {
+          "kind": "inches",
+          "value": 24
+        },
+        "raw": "24\"",
+        "status": "parsed"
+      },
+      "ruleIds": [
+        "r_8b3c6cec14a3f26f34d2f089"
+      ],
+      "targetCondition": {
+        "keywordIds": [],
+        "match": null,
+        "ruleIds": [],
+        "state": "not-applicable"
+      },
+      "type": "ranged",
+      "weaponId": "w_add5d92a8c3b2aa0ef44036e"
+    },
+    {
+      "characteristics": {
+        "armourPenetration": {
+          "normalized": 1,
+          "raw": "-1",
+          "status": "parsed"
+        },
+        "attacks": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 8
+          },
+          "raw": "8",
+          "status": "parsed"
+        },
+        "ballisticSkill": {
+          "normalized": 3,
+          "raw": "3+",
+          "status": "parsed"
+        },
+        "damage": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 1
+          },
+          "raw": "1",
+          "status": "parsed"
+        },
+        "strength": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 4
+          },
+          "raw": "4",
+          "status": "parsed"
+        },
+        "weaponSkill": {
+          "normalized": null,
+          "raw": null,
+          "status": "not-applicable"
+        }
+      },
+      "id": "wm_95793f2dd50d6f9fd29a1c49",
+      "name": "Frag",
+      "range": {
+        "normalized": {
+          "kind": "inches",
+          "value": 36
+        },
+        "raw": "36\"",
+        "status": "parsed"
+      },
+      "ruleIds": [
+        "r_9a53ea3b397adb20aad0c66f"
+      ],
+      "targetCondition": {
+        "keywordIds": [],
+        "match": null,
+        "ruleIds": [],
+        "state": "not-applicable"
+      },
+      "type": "ranged",
+      "weaponId": "w_1a62f25d666e89cb3c7ca42c"
+    },
+    {
+      "characteristics": {
+        "armourPenetration": {
+          "normalized": 2,
+          "raw": "-2",
+          "status": "parsed"
+        },
+        "attacks": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 3
+          },
+          "raw": "3",
+          "status": "parsed"
+        },
+        "ballisticSkill": {
+          "normalized": null,
+          "raw": null,
+          "status": "not-applicable"
+        },
+        "damage": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 3
+          },
+          "raw": "3",
+          "status": "parsed"
+        },
+        "strength": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 8
+          },
+          "raw": "8",
+          "status": "parsed"
+        },
+        "weaponSkill": {
+          "normalized": 3,
+          "raw": "3+",
+          "status": "parsed"
+        }
+      },
+      "id": "wm_c5280782ec7af1704ef4cdfc",
+      "name": "Thunder Hammer",
+      "range": {
+        "normalized": {
+          "kind": "melee"
+        },
+        "raw": "Melee",
+        "status": "parsed"
+      },
+      "ruleIds": [
+        "r_1a47e95059f6ac2e385427b5"
+      ],
+      "targetCondition": {
+        "keywordIds": [],
+        "match": null,
+        "ruleIds": [],
+        "state": "not-applicable"
+      },
+      "type": "melee",
+      "weaponId": "w_2e9709f51af83fd4d92a4c60"
+    },
+    {
+      "characteristics": {
+        "armourPenetration": {
+          "normalized": 2,
+          "raw": "-2",
+          "status": "parsed"
+        },
+        "attacks": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 6
+          },
+          "raw": "6",
+          "status": "parsed"
+        },
+        "ballisticSkill": {
+          "normalized": null,
+          "raw": null,
+          "status": "not-applicable"
+        },
+        "damage": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 1
+          },
+          "raw": "1",
+          "status": "parsed"
+        },
+        "strength": {
+          "normalized": {
+            "kind": "fixed",
+            "value": 5
+          },
+          "raw": "5",
+          "status": "parsed"
+        },
+        "weaponSkill": {
+          "normalized": 3,
+          "raw": "3+",
+          "status": "parsed"
+        }
+      },
+      "id": "wm_6078b3fa5c3e8d886a345ff4",
+      "name": "Twin Lightning Claws",
+      "range": {
+        "normalized": {
+          "kind": "melee"
+        },
+        "raw": "Melee",
+        "status": "parsed"
+      },
+      "ruleIds": [
+        "r_9c4052b8b13d1b6eda97c77e"
+      ],
+      "targetCondition": {
+        "keywordIds": [],
+        "match": null,
+        "ruleIds": [],
+        "state": "not-applicable"
+      },
+      "type": "melee",
+      "weaponId": "w_594b2dcd44fc01386250c0df"
     }
   ],
   "weapons": [
@@ -4324,6 +6476,80 @@
         "wm_3d309b8752493a044145d21d"
       ],
       "name": "Grenade Launcher",
+      "ruleIds": []
+    },
+    {
+      "id": "w_bca3d054e5b8c4d75ed539e7",
+      "modeIds": [
+        "wm_c36801184bd9e12e2ae153b5",
+        "wm_12baeb2e3bc615c34a7a87e1"
+      ],
+      "name": "Chainfist",
+      "ruleIds": []
+    },
+    {
+      "id": "w_b2088caeb84459c76c42b85c",
+      "modeIds": [
+        "wm_20e7e57cbf67c48004c4a9f9"
+      ],
+      "name": "Storm Bolter",
+      "ruleIds": []
+    },
+    {
+      "id": "w_2bbcd53302736dc9690ab0e6",
+      "modeIds": [
+        "wm_90689dea9328883789606bd2"
+      ],
+      "name": "Heavy Flamer",
+      "ruleIds": []
+    },
+    {
+      "id": "w_ab936acdc72af1153eab97ad",
+      "modeIds": [
+        "wm_9f18ca209f1301774139b6ad"
+      ],
+      "name": "Power Fist",
+      "ruleIds": []
+    },
+    {
+      "id": "w_2cfa24947a823e18d1a7aaed",
+      "modeIds": [
+        "wm_acf78bde38914816000e9e08"
+      ],
+      "name": "Power Weapon",
+      "ruleIds": []
+    },
+    {
+      "id": "w_add5d92a8c3b2aa0ef44036e",
+      "modeIds": [
+        "wm_ab742f791a115d302945d90b"
+      ],
+      "name": "Assault Cannon",
+      "ruleIds": []
+    },
+    {
+      "id": "w_1a62f25d666e89cb3c7ca42c",
+      "modeIds": [
+        "wm_83b5b8d6560fa4420c36c22f",
+        "wm_95793f2dd50d6f9fd29a1c49"
+      ],
+      "name": "Cyclone Missile Launcher",
+      "ruleIds": []
+    },
+    {
+      "id": "w_2e9709f51af83fd4d92a4c60",
+      "modeIds": [
+        "wm_c5280782ec7af1704ef4cdfc"
+      ],
+      "name": "Thunder Hammer",
+      "ruleIds": []
+    },
+    {
+      "id": "w_594b2dcd44fc01386250c0df",
+      "modeIds": [
+        "wm_6078b3fa5c3e8d886a345ff4"
+      ],
+      "name": "Twin Lightning Claws",
       "ruleIds": []
     }
   ]
