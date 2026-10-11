@@ -127,15 +127,15 @@ describe('defender and attack wizard screens', () => {
     await start(); change('Miniaturas que atacan', '2'); click('Continuar'); click('Continuar');
     fireEvent.click(screen.getByText('Editar grupos de armas'));
     click('Añadir grupo con otro equipo');
-    const group = within(screen.getByRole('group', { name: 'Grupo atacante 2', exact: true }));
+    const group = within(screen.getByRole('group', { name: 'Grupo atacante 2' }));
     fireEvent.click(group.getByText('Ajustes avanzados'));
-    fireEvent.click(group.getByRole('checkbox', { name: 'Heavy', exact: true }));
+    fireEvent.click(group.getByRole('checkbox', { name: 'Heavy' }));
     fireEvent.click(screen.getByText('Editar grupos de armas'));
     click('Revisar escenario');
     const links = within(screen.getByRole('alert')).getAllByRole('link');
     expect(links).toHaveLength(4);
     expect(links.every(link => link.textContent?.startsWith('Grupo atacante 2 · Arma y modo 1: Arma manual (Heavy):'))).toBe(true);
-    const context = within(screen.getByRole('group', { name: 'Grupo atacante 2 · Arma y modo 1', exact: true }));
+    const context = within(screen.getByRole('group', { name: 'Grupo atacante 2 · Arma y modo 1' }));
     fireEvent.click(links[0]); expect(document.activeElement).toBe(context.getByLabelText('Fase'));
     fireEvent.change(context.getByLabelText('Fase'), { target: { value: 'shooting' } });
     for (const label of ['Unidad trabada', 'Desplegada este turno', 'Alguna miniatura movió más de 3 pulgadas'])
