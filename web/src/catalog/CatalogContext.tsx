@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { ProfileCatalog } from '@domain/profiles/catalog';
+import { hasCatalogUpgrade, isCatalogUpgrade } from '@domain/profiles/catalogTrust';
 import { resolveCatalogScenario } from '@application/dice/catalogScenario';
 import type { CombatScenarioInput } from '@application/dice/combatScenario';
 import { loadCatalog, loadCatalogFile } from './loadCatalog';
@@ -9,11 +10,17 @@ import { readPublishedCatalog } from './publishedCatalog';
 import { s } from '../i18n/scenario';
 import { catalogOmissions } from './catalogReview';
 import { isSquadScenario } from '@application/dice/squadScenario';
+import { applyCatalogEquipment } from '@application/dice/catalogEquipment';
 
 interface CatalogSession { catalog: ProfileCatalog | null; error: string | null; loading: boolean; storageNotice: string | null;
   importFile: (file: File) => Promise<void>; clear: () => void }
 const CatalogContext = createContext<CatalogSession>({ catalog: null, error: null, loading: false, storageNotice: null,
   importFile: async () => {}, clear: () => {} });
+const ResolvedScenario = createContext(false);
+/** Reports consume the effective copy validated at confirmation, including its provenance. */
+export function ResolvedScenarioProvider({ children }: { children: ReactNode }) {
+  return <ResolvedScenario.Provider value={true}>{children}</ResolvedScenario.Provider>;
+}
 export function CatalogProvider({ children }: { children: ReactNode }) {
   const [catalog, setCatalog] = useState<ProfileCatalog | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +57,15 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         if (!isCurrent()) return;
         setCatalog(next);
         if (!stored) await persist(JSON.stringify(next), current);
+        else if (hasCatalogUpgrade(next)) {
+          // Probe only obsolete registered revisions; validate before replacing saved data.
+          const upgradeText = await readLocalCatalog();
+          if (!isCurrent() || upgradeText === undefined) return;
+          const upgrade = await loadCatalog(upgradeText);
+          if (!isCurrent() || !isCatalogUpgrade(next, upgrade)) return;
+          setCatalog(upgrade);
+          await persist(JSON.stringify(upgrade), current);
+        }
       } catch { if (isCurrent()) setError(s('invalidCatalog')); }
       finally { if (isCurrent()) setLoading(false); }
     })();
@@ -75,15 +91,23 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   return <CatalogContext.Provider value={{ catalog, error, loading, storageNotice, importFile, clear }}>{children}</CatalogContext.Provider>;
 }
 export const useCatalog = () => useContext(CatalogContext);
-export function useCatalogInput(params: CombatScenarioInput): CombatScenarioInput {
+export function useCatalogInput(input: CombatScenarioInput): CombatScenarioInput {
   const { catalog } = useCatalog();
+  const resolved = useContext(ResolvedScenario);
   return useMemo(() => {
-    if (!params.catalogSelection) return params;
-    if (!catalog) return { ...params, calculationBlocked: true };
-    try {
-      const review = resolveCatalogScenario(catalog, params.catalogSelection, params);
+    if (resolved) return input;
+    try { return resolveCatalogInput(catalog, input); }
+    catch { return { ...input, calculationBlocked: true }; }
+  }, [catalog, input, resolved]);
+}
+/** Resolves all weapon/defender pairs without executing the probability engine. */
+export function resolveCatalogInput(catalog: ProfileCatalog | null, input: CombatScenarioInput, allowPartial = false): CombatScenarioInput {
+    if (!input.catalogSelection) return input;
+    if (!catalog) return { ...input, calculationBlocked: true };
+      const params = applyCatalogEquipment(catalog, input);
+      const review = resolveCatalogScenario(catalog, params.catalogSelection!, params);
       const omitted = catalogOmissions(review);
-      const incomplete = !params.catalogSelection.modeId || !params.catalogSelection.defenderMiniatureId;
+      const incomplete = !params.catalogSelection!.modeId || !params.catalogSelection!.defenderMiniatureId;
       const resolve = (profile: CombatScenarioInput, side: 'attacker' | 'defender') => {
         const saved = profile.catalogSelection;
         if (!saved || saved.catalogId !== catalog.catalogId || saved.catalogVersion !== catalog.catalogVersion || saved.payloadSha256 !== catalog.payloadSha256) throw new RangeError('CATALOG_SELECTION_EXPIRED');
@@ -109,9 +133,7 @@ export function useCatalogInput(params: CombatScenarioInput): CombatScenarioInpu
       }
       const limitations = [...new Set(omitted.map(rule => rule.name + ': ' + rule.description))].sort();
       const accepted = JSON.stringify(params.acceptedSquadOmissions ?? []) === JSON.stringify(limitations);
-      return { ...review.params, calculationBlocked: incomplete || isSquadScenario(params) && limitations.length > 0 && !accepted, partialCalculation: omitted.length > 0,
+      return { ...review.params, calculationBlocked: incomplete || !allowPartial && isSquadScenario(params) && limitations.length > 0 && !accepted, partialCalculation: omitted.length > 0,
         primaryExtraWeapons, attackerEquipmentGroups, defenderGroups,
         calculationLimitations: limitations };
-    } catch { return { ...params, calculationBlocked: true }; }
-  }, [catalog, params]);
 }

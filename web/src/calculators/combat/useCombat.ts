@@ -1,6 +1,6 @@
 import { useCatalogInput } from '../../catalog/CatalogContext';
 import { scenarioError } from '../../i18n/scenario';
-import { useMemo } from 'react';
+import { useReportCalculation } from './ReportExecution';
 import { expectedValue, type Distribution } from '@domain/math/distribution';
 import { CalculateUnitCombatUseCase } from '@application/dice/CalculateUnitCombatUseCase';
 import type { CombatParams } from './presets';
@@ -94,7 +94,7 @@ export function useCombat(params: CombatParams): CombatViewModel {
   const catalogParams = useCatalogInput(params);
   const squadMode = isSquadScenario(catalogParams);
   const async = useSquadCalculation<SquadCombatResult>({ kind: 'combat', params: catalogParams }, squadMode);
-  return useMemo(() => {
+  return useReportCalculation(() => {
     try {
       if (squadMode) {
         if (async.pending || async.error) return { expectedDamage: 0, expectedWoundsLost: 0, medianDamage: 0, mostLikelyDamage: 0,
@@ -120,5 +120,5 @@ export function useCombat(params: CombatParams): CombatViewModel {
         centralRange: { low: 0, high: 0 }, pAtLeastOne: 0, pEliminate: 0, distribution: [],
         error: scenarioError(error) };
     }
-  }, [params, catalogParams, squadMode, async.available, async.pending, async.error, async.result]);
+  }, [params, catalogParams, squadMode, async.available, async.pending, async.error, async.result], 'combat:' + JSON.stringify(catalogParams));
 }

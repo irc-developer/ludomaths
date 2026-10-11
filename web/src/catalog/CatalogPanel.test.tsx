@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import App from '../App';
+import { LegacyCombatHarness } from '../test/LegacyCombatHarness';
 import { validateCatalog, type ProfileCatalog, type CatalogMode } from '@domain/profiles/catalog';
 import { syntheticCatalog, syntheticTrust } from '@domain/profiles/catalogFixture';
 import * as loader from './loadCatalog';
@@ -42,7 +42,7 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 async function start(catalog = fixture()) {
   vi.spyOn(loader, 'loadCatalog').mockResolvedValue(catalog);
-  render(<App />);
+  render(<LegacyCombatHarness />);
   fireEvent.click(screen.getByRole('button', { name: 'WH40K' }));
   await waitFor(() => expect(screen.getByRole('combobox', { name: 'Buscar unidad atacante' })).toBeTruthy());
   return catalog;
@@ -73,10 +73,11 @@ describe('squad catalog selection', () => {
     catalog.compositions.push(...compositions);
     await start(catalog);
     choose('Buscar unidad atacante', 'Élite Unit');
-    const attacker = screen.getByRole('combobox', { name: 'Atacante · Aplicar composición del catálogo' }) as HTMLSelectElement;
+    let attacker = screen.getByRole('combobox', { name: 'Atacante · Aplicar composición del catálogo' }) as HTMLSelectElement;
     fireEvent.change(attacker, { target: { value: compositions[1].id } });
     expect(attacker.value).toBe(compositions[1].id);
     expect((screen.getByLabelText('Miniaturas que atacan') as HTMLInputElement).value).toBe('20');
+    attacker = screen.getByRole('combobox', { name: 'Atacante · Aplicar composición del catálogo' }) as HTMLSelectElement;
     expect(screen.getByText('Composición y equipo')).toBeTruthy();
     expect(screen.getByText('Composición aplicada. Puedes ajustar las cantidades actuales y el equipo.')).toBeTruthy();
     fireEvent.change(attacker, { target: { value: compositions[0].id } });

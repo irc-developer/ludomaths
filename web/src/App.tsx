@@ -1,13 +1,11 @@
 import { CatalogProvider } from './catalog/CatalogContext';
 import { CombatScenarioProvider } from './calculators/combat/CombatScenarioContext';
+import { CombatWorkspace } from './calculators/combat/CombatWorkspace';
 import { s } from './i18n/scenario';
 import './styles/wh40k.css';
 import { useState } from 'react';
 import { HypergeometricCalculator } from './calculators/hypergeometric/HypergeometricCalculator';
 import { ChargeCalculator } from './calculators/charge/ChargeCalculator';
-import { CombatCalculator } from './calculators/combat/CombatCalculator';
-import { RequiredAttacksCalculator } from './calculators/required-attacks/RequiredAttacksCalculator';
-import { CombatBuffComparisonCalculator } from './calculators/buffs/CombatBuffComparisonCalculator';
 import { LorcanaCalculator } from './calculators/lorcana/LorcanaCalculator';
 import { SwissSimulator } from './calculators/swiss/SwissSimulator';
 import { colors, sp } from './styles/tokens';
@@ -97,9 +95,7 @@ export default function App() {
             {(['combat', 'required', 'buffs'] as const).map(mode => <button key={mode} aria-pressed={combatTab === mode}
               onClick={() => setCombatTab(mode)}>{s(mode === 'combat' ? 'combatTab' : mode === 'required' ? 'requiredTab' : 'buffsTab')}</button>)}
           </nav>
-          {combatTab === 'combat' && <CombatCalculator />}
-          {combatTab === 'required' && <RequiredAttacksCalculator />}
-          {combatTab === 'buffs' && <CombatBuffComparisonCalculator />}
+          <CombatWorkspace mode={combatTab} onModeChange={setCombatTab} />
         </>}
         {activeTab === 'lorcana' && <LorcanaCalculator />}
         {activeTab === 'swiss'   && <SwissSimulator />}

@@ -11,6 +11,10 @@ describe('required attacks calculator', () => {
     fireEvent.click(screen.getByRole('button', { name: 'WH40K' }));
     fireEvent.click(screen.getByRole('button', { name: 'Entrada manual' }));
     fireEvent.click(screen.getByRole('button', { name: 'Ataques necesarios' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Revisar escenario' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Generar informe' }));
     const result = screen.getAllByRole('status').find(element => within(element).queryByText('34 ataques'))!;
     expect(within(result).getByText('34 ataques')).toBeTruthy();
     expect(within(result).getByText('90%')).toBeTruthy();

@@ -11,6 +11,7 @@ export interface SectionCardProps {
   children: ReactNode;
   compact?: boolean;
   scopeLabel?: string;
+  report?: boolean;
 }
 
 /**
@@ -19,7 +20,7 @@ export interface SectionCardProps {
  * SRP: su única responsabilidad es la presentación del encuadre educativo.
  * Los detalles de cálculo son responsabilidad de los componentes hijos.
  */
-export function SectionCard({ title, formula, explanation, children, compact = false, scopeLabel }: SectionCardProps) {
+export function SectionCard({ title, formula, explanation, children, compact = false, scopeLabel, report = false }: SectionCardProps) {
   return (
     <section
       style={{
@@ -29,7 +30,7 @@ export function SectionCard({ title, formula, explanation, children, compact = f
         marginBottom: sp.lg,
       }}
     >
-      <h2
+      {!report && <h2
         style={{
           fontWeight: 600,
           fontSize: '1.1rem',
@@ -38,10 +39,10 @@ export function SectionCard({ title, formula, explanation, children, compact = f
         }}
       >
         {title}
-      </h2>
+      </h2>}
 
-      {compact && <p className="scope-label">{scopeLabel ?? s('scopeShort')}</p>}
-      {compact ? <details className="calculation-help"><summary>{s('calculationHelp')}</summary><p>{formula}</p><p>{explanation}</p></details> : <><pre
+      {compact && !report && <p className="scope-label">{scopeLabel ?? s('scopeShort')}</p>}
+      {compact ? !report && <details className="calculation-help"><summary>{s('calculationHelp')}</summary><p>{formula}</p><p>{explanation}</p></details> : <><pre
         style={{
           background: colors.surfaceAlt,
           borderRadius: 6,
@@ -69,6 +70,7 @@ export function SectionCard({ title, formula, explanation, children, compact = f
       </p></>}
 
       {children}
+      {report && <details className="calculation-help"><summary>{s('calculationHelp')}</summary><p>{scopeLabel ?? s('scopeShort')}</p><p>{formula}</p><p>{explanation}</p></details>}
     </section>
   );
 }

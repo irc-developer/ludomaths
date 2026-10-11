@@ -2,6 +2,19 @@ import { validateCatalog, canonicalCatalog } from './catalog';
 import { syntheticCatalog, syntheticTrust } from './catalogFixture';
 
 describe('closed private catalog contract', () => {
+  it('admits only the closed reviewed fixed-hit and reroll capabilities', () => {
+    const input = validateCatalog(syntheticCatalog(), syntheticTrust);
+    input.rules.push({ id: 'r_' + '8'.repeat(24), name: 'Synthetic hits', description: 'Synthetic effect',
+      reviewState: 'reviewed', reviewVersion: '1.0.0', capabilityId: 'sustainedHits',
+      parameters: { additionalHits: 1 }, requiredContext: [] });
+    input.rules.push({ id: 'r_' + '9'.repeat(24), name: 'Synthetic reroll', description: 'Synthetic effect',
+      reviewState: 'reviewed', reviewVersion: '1.0.0', capabilityId: 'twinLinked', parameters: {}, requiredContext: [] });
+    expect(validateCatalog(input, syntheticTrust).rules).toHaveLength(2);
+    input.rules[0].parameters = { additionalHits: 0 };
+    expect(() => validateCatalog(input, syntheticTrust)).toThrow('CATALOG_INVALID');
+    input.rules[0].parameters = { additionalHits: 1, unexpected: 3 };
+    expect(() => validateCatalog(input, syntheticTrust)).toThrow('CATALOG_INVALID');
+  });
   it('admits a clean synthetic reviewed selection', () => {
     expect(validateCatalog(syntheticCatalog(), syntheticTrust).units).toHaveLength(1);
   });

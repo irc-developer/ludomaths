@@ -25,6 +25,19 @@ const rule = (capabilityId: string, digit: string): CatalogRule => ({ id: id('r'
   reviewState: 'reviewed', reviewVersion: '1.0.0', capabilityId, parameters: {}, requiredContext: [] });
 
 describe('catalog effect binding', () => {
+  it('binds reviewed fixed Sustained Hits and Twin-linked without granting rerolls automatically', () => {
+    const { catalog, selection } = setup();
+    catalog.rules.push({ ...rule('sustainedHits', '3'), parameters: { additionalHits: 1 } }, rule('twinLinked', '4'));
+    catalog.weaponModes[0].ruleIds.push(id('r', '3'), id('r', '4'));
+    const review = resolveCatalogScenario(catalog, selection, base);
+    expect(review.params.sustainedHits).toBe(1);
+    expect(review.params.twinLinked).toBe(true);
+    expect(review.params.woundRerollAll).toBeUndefined();
+    expect(review.pending).toEqual([]);
+    catalog.rules[0].reviewVersion = 'unknown';
+    expect(resolveCatalogScenario(catalog, selection, base).params.sustainedHits).toBeUndefined();
+    expect(resolveCatalogScenario(catalog, selection, base).pending).toContain(catalog.rules[0]);
+  });
   it('does not leak manual abilities or defensive saves into a new selected profile', () => {
     const { catalog, selection } = setup();
     const review = resolveCatalogScenario(catalog, selection, { ...base, fnpThreshold: 2, invulnerableSave: 2, torrent: true, sustainedHits: 4 });

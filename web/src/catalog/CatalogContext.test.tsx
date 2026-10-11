@@ -7,6 +7,7 @@ import * as loader from './loadCatalog';
 import * as storage from './catalogStorage';
 import * as local from './localCatalog';
 import * as published from './publishedCatalog';
+import * as trust from '@domain/profiles/catalogTrust';
 
 vi.mock('./catalogStorage', () => ({ readStoredCatalog: vi.fn(), writeStoredCatalog: vi.fn() }));
 vi.mock('./localCatalog', () => ({ readLocalCatalog: vi.fn() }));
@@ -29,6 +30,39 @@ function Probe() {
 describe('persistent private catalog', () => {
   const catalog = validateCatalog(syntheticCatalog(), syntheticTrust);
   const text = JSON.stringify(catalog);
+  it('updates an obsolete saved catalog only to an explicitly approved validated successor', async () => {
+    const next = { ...catalog, catalogVersion: 'test-2' };
+    vi.mocked(storage.readStoredCatalog).mockResolvedValue({ version: 1, text });
+    vi.mocked(local.readLocalCatalog).mockResolvedValue('next');
+    vi.spyOn(loader, 'loadCatalog').mockImplementation(async value => value === text ? catalog : next);
+    vi.spyOn(trust, 'hasCatalogUpgrade').mockReturnValue(true);
+    vi.spyOn(trust, 'isCatalogUpgrade').mockReturnValue(true);
+    render(<CatalogProvider><Probe /></CatalogProvider>);
+    await waitFor(() => expect(screen.getByText('test-2')).toBeTruthy());
+    expect(storage.writeStoredCatalog).toHaveBeenCalledWith(JSON.stringify(next));
+  });
+  it('keeps saved data when the local successor fails validation or is not an approved replacement', async () => {
+    vi.mocked(storage.readStoredCatalog).mockResolvedValue({ version: 1, text });
+    vi.mocked(local.readLocalCatalog).mockResolvedValue('private bad successor');
+    vi.spyOn(loader, 'loadCatalog').mockResolvedValueOnce(catalog).mockRejectedValueOnce(new Error('private bad successor'));
+    vi.spyOn(trust, 'hasCatalogUpgrade').mockReturnValue(true);
+    render(<CatalogProvider><Probe /></CatalogProvider>);
+    await waitFor(() => expect(screen.getByText(/No se puede admitir/)).toBeTruthy());
+    expect(screen.getByText('test-1')).toBeTruthy();
+    expect(screen.queryByText('private bad successor')).toBeNull();
+    expect(storage.writeStoredCatalog).not.toHaveBeenCalled();
+  });
+  it('ignores a valid local catalog from a different replacement chain', async () => {
+    vi.mocked(storage.readStoredCatalog).mockResolvedValue({ version: 1, text });
+    vi.mocked(local.readLocalCatalog).mockResolvedValue('other');
+    vi.spyOn(loader, 'loadCatalog').mockResolvedValue(catalog);
+    vi.spyOn(trust, 'hasCatalogUpgrade').mockReturnValue(true);
+    vi.spyOn(trust, 'isCatalogUpgrade').mockReturnValue(false);
+    render(<CatalogProvider><Probe /></CatalogProvider>);
+    await waitFor(() => expect(trust.isCatalogUpgrade).toHaveBeenCalled());
+    expect(screen.getByText('test-1')).toBeTruthy();
+    expect(storage.writeStoredCatalog).not.toHaveBeenCalled();
+  });
   it('revalidates a saved catalog on opening without a local request', async () => {
     vi.mocked(storage.readStoredCatalog).mockResolvedValue({ version: 1, text });
     const validate = vi.spyOn(loader, 'loadCatalog').mockResolvedValue(catalog);

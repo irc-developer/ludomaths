@@ -13,6 +13,7 @@ import { buildCombatShareSvg, copyCombatShareImage } from './shareImage';
 import { scenarioInput } from './scenarioStyles';
 import { isSquadScenario } from '@application/dice/squadScenario';
 import { SquadCounter } from './SquadScenarioControls';
+import { useReportExecution } from './ReportExecution';
 
 const pct = (value: number) => `${(value * 100).toFixed(1)}%`;
 const fmt = (value: number) => value.toFixed(2);
@@ -21,7 +22,10 @@ export function CombatCalculator() {
   return <CombatScenarioBoundary><CombatCalculatorView /></CombatScenarioBoundary>;
 }
 function CombatCalculatorView() {
-  const { params, setParams, ready } = useCombatScenario();
+  const { params, setParams, ready, confirmed, manualAttackerName, manualDefenderName } = useCombatScenario();
+  const execution = useReportExecution();
+  const [reportGoal, setReportGoal] = useState(() => execution?.cache.get('casualtyGoal') as number | undefined ?? params.casualtyGoal);
+  const casualtyGoal = confirmed ? reportGoal : params.casualtyGoal;
   const [shareOpen, setShareOpen] = useState(false);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'text' | 'image' | 'fallback' | 'manual'>('idle');
   const shareTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -29,7 +33,8 @@ function CombatCalculatorView() {
   const effectiveParams = useCatalogInput(params);
   const squadMode = isSquadScenario(effectiveParams);
   const valid = ready && !vm.error && !vm.isCalculating;
-  const sharePayload = { params: effectiveParams, vm };
+  const sharePayload = { params: confirmed ? { ...effectiveParams, casualtyGoal } : effectiveParams, vm,
+    presetName: confirmed ? `${manualAttackerName} → ${manualDefenderName}` : undefined };
   const shareText = valid && shareOpen ? formatCombatShareText(sharePayload) : '';
   const shareImageUrl = valid && shareOpen ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(buildCombatShareSvg(sharePayload))}` : '';
   async function copyText(next: 'text' | 'fallback' = 'text') {
@@ -42,12 +47,12 @@ function CombatCalculatorView() {
     const result = await copyCombatShareImage(sharePayload);
     if (result === 'copied') setCopyStatus('image'); else await copyText('fallback');
   }
-  return <SectionCard compact title={s('title')} formula={s(squadMode ? 'squadFormula' : 'formula')} explanation={s(squadMode ? 'squadHelp' : 'scope')} scopeLabel={s(squadMode ? 'squadScope' : 'scopeShort')}>
-    <CombatScenarioForm params={params} onChange={next => { setParams(next); setCopyStatus('idle'); }} />
+  return <SectionCard compact report={confirmed} title={s('title')} formula={s(squadMode ? 'squadFormula' : 'formula')} explanation={s(squadMode ? 'squadHelp' : 'scope')} scopeLabel={s(squadMode ? 'squadScope' : 'scopeShort')}>
+    {!confirmed && <CombatScenarioForm params={params} onChange={next => { setParams(next); setCopyStatus('idle'); }} />}
     <ScenarioResultNotice ready={ready} error={vm.error} />
-    {ready && vm.isCalculating && <p role="status">{s('squadCalculating')}</p>}
+    {ready && vm.isCalculating && <p role="status">{s(confirmed ? 'reportGenerating' : 'squadCalculating')}</p>}
     {valid && <div className="combat-result">
-      {effectiveParams.partialCalculation && <p className="scope-notice">{s('partialResult')}</p>}
+      {!confirmed && effectiveParams.partialCalculation && <p className="scope-notice">{s('partialResult')}</p>}
       {vm.squad ? <>
         <p>{params.modelCount ?? 1} {s('attackersWord')} {vm.squad.modelCount} {s('defendersWord')}</p>
         <div className="result-metrics" role="status" aria-live="polite">
@@ -56,9 +61,10 @@ function CombatCalculatorView() {
           <ResultBox label={s('averageSurvivors')} value={fmt(vm.squad.expectedSurvivors)} />
           <ResultBox label={s('lost')} value={fmt(vm.squad.expectedWoundsLost)} />
         </div>
-        <SquadCounter label={s('casualtyGoal')} value={params.casualtyGoal ?? vm.squad.modelCount} max={vm.squad.modelCount}
-          onChange={value => setParams({ ...params, casualtyGoal: value })} />
-        <ResultBox label={s('casualtyChance')} value={pct(vm.squad.casualtiesDist.filter(e => e.value >= (params.casualtyGoal ?? vm.squad!.modelCount)).reduce((sum, e) => sum + e.probability, 0))} />
+        {confirmed && <p className="scenario-caption">{s('reportConsultGoal')}</p>}
+        <SquadCounter label={s('casualtyGoal')} value={casualtyGoal ?? vm.squad.modelCount} max={vm.squad.modelCount}
+          onChange={value => { if (confirmed) { setReportGoal(value); execution?.cache.set('casualtyGoal', value); } else setParams({ ...params, casualtyGoal: value }); }} />
+        <ResultBox label={s('casualtyChance')} value={pct(vm.squad.casualtiesDist.filter(e => e.value >= (casualtyGoal ?? vm.squad!.modelCount)).reduce((sum, e) => sum + e.probability, 0))} />
         <DistributionBar entries={Array.from({ length: vm.squad.modelCount + 1 }, (_, value) => ({ value,
           probability: vm.squad!.casualtiesDist.find(e => e.value === value)?.probability ?? 0 }))}
           minProbability={0} maxEntries={101} title={s('casualtiesDistribution')} />

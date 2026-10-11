@@ -2,9 +2,11 @@ import type { ProfileCatalog } from '@domain/profiles/catalog';
 import type { CombatScenarioInput } from './combatScenario';
 import { resolveCatalogScenario, type CatalogSelection } from './catalogScenario';
 import { individualProfile, replacePrimaryProfile } from './squadScenario';
+import { createCatalogEquipment, applyCatalogEquipment } from './catalogEquipment';
 
 /** Suggest the minimum listed composition; current battle quantities remain user input. */
-export function applyCatalogComposition(catalog: ProfileCatalog, base: CombatScenarioInput, side: 'attacker' | 'defender', compositionId: string): CombatScenarioInput {
+export function applyCatalogComposition(catalog: ProfileCatalog, base: CombatScenarioInput, side: 'attacker' | 'defender', compositionId: string,
+  options: { deferEquipment?: boolean } = {}): CombatScenarioInput {
   const composition = catalog.compositions.find(c => c.id === compositionId);
   const selection = base.catalogSelection;
   const unitId = side === 'attacker' ? selection?.attackerUnitId : selection?.defenderUnitId;
@@ -41,11 +43,18 @@ export function applyCatalogComposition(catalog: ProfileCatalog, base: CombatSce
     return { ...reviewed.params, catalogSelection: next, calculationBlocked: false };
   };
   const main = profile(primary.miniatureId);
-  return { ...replacePrimaryProfile(base, main, side), catalogSelection: main.catalogSelection,
+  const result: CombatScenarioInput = { ...replacePrimaryProfile(base, main, side), catalogSelection: main.catalogSelection,
     ...(side === 'attacker' ? { modelCount: total, primaryExtraWeapons: [],
       attackerEquipmentGroups: others.map((m, i) => ({ id: `composition-a-${i}`, count: m.min, weapons: [profile(m.miniatureId)] })) }
       : { modelCount: base.modelCount, targetModelCount: total, primaryIsCharacter: false,
         casualtyGoal: total, defenderGroups: others.map((m, i) => ({ id: `composition-d-${i}`, count: m.min, profile: profile(m.miniatureId) })) }),
     acceptedSquadOmissions: [],
   };
+  if (side === 'attacker') {
+    result.squadEquipment = createCatalogEquipment(catalog, result);
+    // Unit setup precedes the target and weapon context in the wizard.
+    if (options.deferEquipment) return result;
+    return applyCatalogEquipment(catalog, result);
+  }
+  return result;
 }

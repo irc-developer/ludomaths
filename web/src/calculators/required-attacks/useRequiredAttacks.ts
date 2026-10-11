@@ -1,6 +1,7 @@
 import { useCatalogInput } from '../../catalog/CatalogContext';
 import { scenarioError } from '../../i18n/scenario';
 import { useMemo } from 'react';
+import { useReportCalculation } from '../combat/ReportExecution';
 import { CalculateRequiredAttacksUseCase } from '@application/dice/CalculateRequiredAttacksUseCase';
 import type { CombatParams } from '../combat/presets';
 import { buildCombatScenario } from '@application/dice/combatScenario';
@@ -19,11 +20,12 @@ export type RequiredAttacksParams = Omit<CombatParams,
 const useCase = new CalculateRequiredAttacksUseCase();
 
 export function useRequiredAttacks(params: RequiredAttacksParams) {
-  const catalogParams = useCatalogInput({ ...params, attacks: params.attacks ?? 1 });
+  const input = useMemo(() => ({ ...params, attacks: params.attacks ?? 1 }), [params]);
+  const catalogParams = useCatalogInput(input);
   const squadMode = isSquadScenario(catalogParams);
   const request = { kind: 'required' as const, params: { ...catalogParams, successPercent: params.successPercent } };
   const async = useSquadCalculation<RequiredSquadResult>(request, squadMode);
-  return useMemo(() => {
+  return useReportCalculation(() => {
     try {
       if (squadMode) {
         if (async.pending || async.error) return { result: undefined, squadResult: undefined, isCalculating: async.pending, error: async.error };
@@ -42,5 +44,5 @@ export function useRequiredAttacks(params: RequiredAttacksParams) {
     } catch (error) {
       return { result: undefined, error: scenarioError(error) };
     }
-  }, [params, catalogParams, squadMode, async.available, async.pending, async.error, async.result]);
+  }, [params, catalogParams, squadMode, async.available, async.pending, async.error, async.result], 'required:' + JSON.stringify(catalogParams));
 }

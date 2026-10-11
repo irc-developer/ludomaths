@@ -1,6 +1,6 @@
 import { useCatalogInput } from '../../catalog/CatalogContext';
 import { scenarioError } from '../../i18n/scenario';
-import { useMemo } from 'react';
+import { useReportCalculation } from '../combat/ReportExecution';
 import { CompareCombatBuffUseCase, type CompareCombatBuffResult } from '@application/dice/CompareCombatBuffUseCase';
 import type { UnitProfile } from '@domain/profiles/unitProfile';
 import type { CombatParams } from '../combat/presets';
@@ -22,7 +22,7 @@ export function useCombatBuffComparison(params: CombatParams): CombatBuffCompari
   const catalogParams = useCatalogInput(params);
   const squadMode = isSquadScenario(catalogParams);
   const async = useSquadCalculation<SquadImprovementResult>({ kind: 'improvements', params: catalogParams }, squadMode);
-  return useMemo(() => {
+  return useReportCalculation<CombatBuffComparisonViewModel>(() => {
     try {
       if (squadMode) {
         if (async.pending || async.error) return { baseline: emptyScenario(), plusBallisticSkill: emptyScenario(), plusSave: emptyScenario(),
@@ -49,7 +49,7 @@ export function useCombatBuffComparison(params: CombatParams): CombatBuffCompari
         error: scenarioError(error),
       };
     }
-  }, [params, catalogParams, squadMode, async.available, async.pending, async.error, async.result]);
+  }, [params, catalogParams, squadMode, async.available, async.pending, async.error, async.result], 'buffs:' + JSON.stringify(catalogParams));
 }
 
 function emptyScenario() {

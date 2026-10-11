@@ -129,6 +129,7 @@ function buildMetrics(params: CombatParams, vm: CombatViewModel): ShareMetric[] 
     { label: 'P(eliminar escuadra)', value: pct(vm.squad.pEliminate), highlight: true },
     { label: 'Supervivientes medios', value: fmt(vm.squad.expectedSurvivors) },
     { label: 'Heridas perdidas', value: fmt(vm.squad.expectedWoundsLost) },
+    { label: `Objetivo: ${params.casualtyGoal ?? vm.squad.modelCount} bajas`, value: pct(vm.squad.casualtiesDist.filter(e => e.value >= (params.casualtyGoal ?? vm.squad!.modelCount)).reduce((sum, e) => sum + e.probability, 0)) },
   ];
   return [
     {
@@ -222,21 +223,22 @@ function createDistributionMarkup(vm: CombatViewModel, startY: number): { markup
 }
 
 function getContextSections(content: CombatShareContent): CombatShareContent['sections'] {
-  return content.sections.filter(section => section.title === 'PERFIL' || section.title === 'OBJETIVO' || section.title === 'REGLAS');
+  return content.sections.filter(section => !['RESULTADOS', 'DISTRIBUCIÓN DE BAJAS', 'DISTRIBUCIÓN'].includes(section.title));
 }
 
 function buildCombatShareSvgDocument(input: CombatShareImageInput): { svg: string; width: number; height: number } {
   const content = buildCombatShareContent(input);
   const contextSections = getContextSections(content);
-  const headerLines = [content.title, content.subtitle].filter((line): line is string => Boolean(line));
-  const metricsMarkup = createMetricsMarkup(buildMetrics(input.params, input.vm), 144);
+  const headerLines = [content.title, ...(content.subtitle ? wrapText(content.subtitle, 78) : [])];
+  const headerHeight = Math.max(144, 72 + (headerLines.length - 1) * 28 + 48);
+  const metricsMarkup = createMetricsMarkup(buildMetrics(input.params, input.vm), headerHeight);
   const distributionMarkup = createDistributionMarkup(input.vm, metricsMarkup.endY + 42);
   const sectionMarkup = createSectionMarkup(contextSections, distributionMarkup.endY + 30);
   const height = sectionMarkup.endY + 20;
 
   const headerText = headerLines
     .map((line, index) => {
-      const y = index === 0 ? 62 : 96;
+      const y = index === 0 ? 62 : 96 + (index - 1) * 28;
       const size = index === 0 ? 30 : 18;
       const weight = index === 0 ? 800 : 500;
       const color = index === 0 ? '#f8fafc' : '#94a3b8';
@@ -247,8 +249,8 @@ function buildCombatShareSvgDocument(input: CombatShareImageInput): { svg: strin
   const svg = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${CARD_WIDTH}" height="${height}" viewBox="0 0 ${CARD_WIDTH} ${height}">`,
     '<rect width="100%" height="100%" fill="#0f172a" rx="28" />',
-    '<rect x="0" y="0" width="100%" height="120" fill="#111c35" rx="28" />',
-    '<rect x="0" y="94" width="100%" height="26" fill="#818cf8" opacity="0.16" />',
+    `<rect x="0" y="0" width="100%" height="${headerHeight - 24}" fill="#111c35" rx="28" />`,
+    `<rect x="0" y="${headerHeight - 50}" width="100%" height="26" fill="#818cf8" opacity="0.16" />`,
     '<g font-family="Segoe UI, Inter, Arial, sans-serif">',
     headerText,
     metricsMarkup.markup,

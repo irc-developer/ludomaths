@@ -36,7 +36,8 @@ export const catalogSchema = {
     },
     "capabilityReviewVersion": {
       "enum": [
-        "lm-pilot-1"
+        "lm-pilot-1",
+        "lm-expanded-1"
       ]
     },
     "scope": {
@@ -1639,6 +1640,154 @@ export const catalogSchema = {
             "capabilityId": {
               "enum": [
                 null
+              ]
+            },
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            },
+            "reviewVersion": {
+              "enum": [
+                "1.0.0"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "description",
+            "requiredContext",
+            "reviewState",
+            "capabilityId",
+            "parameters",
+            "reviewVersion"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/rId"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 150
+            },
+            "description": {
+              "type": "string",
+              "maxLength": 1500
+            },
+            "requiredContext": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "distance",
+                  "weaponRange",
+                  "phase",
+                  "unengaged",
+                  "setUpThisTurn",
+                  "maxModelMovement",
+                  "targetKeywords",
+                  "targetUnitModelCount",
+                  "lethalChoice",
+                  "riledUp",
+                  "attackType",
+                  "attackerWithinObjective",
+                  "targetWithinObjective"
+                ]
+              },
+              "maxItems": 5000
+            },
+            "reviewState": {
+              "enum": [
+                "reviewed"
+              ]
+            },
+            "capabilityId": {
+              "enum": [
+                "sustainedHits"
+              ]
+            },
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "additionalHits": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10
+                }
+              },
+              "required": [
+                "additionalHits"
+              ],
+              "additionalProperties": false
+            },
+            "reviewVersion": {
+              "enum": [
+                "1.0.0"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "description",
+            "requiredContext",
+            "reviewState",
+            "capabilityId",
+            "parameters",
+            "reviewVersion"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/rId"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 150
+            },
+            "description": {
+              "type": "string",
+              "maxLength": 1500
+            },
+            "requiredContext": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "distance",
+                  "weaponRange",
+                  "phase",
+                  "unengaged",
+                  "setUpThisTurn",
+                  "maxModelMovement",
+                  "targetKeywords",
+                  "targetUnitModelCount",
+                  "lethalChoice",
+                  "riledUp",
+                  "attackType",
+                  "attackerWithinObjective",
+                  "targetWithinObjective"
+                ]
+              },
+              "maxItems": 5000
+            },
+            "reviewState": {
+              "enum": [
+                "reviewed"
+              ]
+            },
+            "capabilityId": {
+              "enum": [
+                "twinLinked"
               ]
             },
             "parameters": {

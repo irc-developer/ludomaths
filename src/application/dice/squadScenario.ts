@@ -3,8 +3,16 @@ import type { SquadCombatInput, SquadDefenderGroup } from './CalculateSquadComba
 
 /** A reusable individual profile must not contain the enclosing squad session. */
 export function individualProfile(input: CombatScenarioInput): CombatScenarioInput {
-  const { targetModelCount: _target, primaryExtraWeapons: _weapons, attackerEquipmentGroups: _attacker,
-    defenderGroups: _defender, primaryIsCharacter: _character, casualtyGoal: _goal, requiredSquadUnit: _unit, acceptedSquadOmissions: _accepted, ...profile } = input;
+  const profile = { ...input };
+  delete profile.squadEquipment;
+  delete profile.targetModelCount;
+  delete profile.primaryExtraWeapons;
+  delete profile.attackerEquipmentGroups;
+  delete profile.defenderGroups;
+  delete profile.primaryIsCharacter;
+  delete profile.casualtyGoal;
+  delete profile.requiredSquadUnit;
+  delete profile.acceptedSquadOmissions;
   return { ...profile, modelCount: 1 };
 }
 export function isSquadScenario(input: CombatScenarioInput): boolean {

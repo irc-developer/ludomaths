@@ -1,9 +1,11 @@
 import type { CatalogSelection } from './catalogScenario';
+import type { CatalogEquipmentDraft } from '@domain/profiles/catalogEquipment';
 import { characteristicDistribution } from '@domain/dice/characteristic';
 import type { WeaponGroup } from '@domain/dice/weapon';
 import type { AttackTarget } from '@domain/dice/attackDamage';
 export { COMBAT_ENGINE_VERSION } from '@domain/combat/calculationVersion';
 export interface CombatScenarioInput {
+  squadEquipment?: CatalogEquipmentDraft;
   targetModelCount?: number;
   primaryExtraWeapons?: CombatScenarioInput[];
   attackerEquipmentGroups?: Array<{ id: string; count: number; weapons: CombatScenarioInput[] }>;

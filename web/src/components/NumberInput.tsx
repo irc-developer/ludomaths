@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { colors } from '../styles/tokens';
+import { usePersistentNumber } from './NumberDrafts';
 
 export interface NumberInputProps {
   value: number;
@@ -11,26 +12,30 @@ export interface NumberInputProps {
   id?: string;
   'aria-label'?: string;
   compact?: boolean;
+  draftKey?: string;
+  draftLabel?: string;
   onDraftValidityChange?: (invalid: boolean) => void;
 }
 
 /** Keep the editing text separate from the number accepted by the calculator. */
 export function NumberInput({ value, onChange, disabled = false, min = 0, max, step = 1, id,
-  'aria-label': ariaLabel, compact = false, onDraftValidityChange }: NumberInputProps) {
+  'aria-label': ariaLabel, compact = false, draftKey, draftLabel, onDraftValidityChange }: NumberInputProps) {
   const [draft, setDraft] = useState('');
   const [editing, setEditing] = useState(false);
+  const persistent = usePersistentNumber(draftKey ?? ariaLabel, draftLabel ?? ariaLabel ?? draftKey ?? '', id, value, min, max, step);
 
   return (
     <input
       id={id}
       aria-label={ariaLabel}
+      aria-invalid={persistent?.invalid || undefined}
       disabled={disabled}
       type="number"
       inputMode={Number.isInteger(step) ? 'numeric' : 'decimal'}
       min={min}
       max={max}
       step={step}
-      value={editing ? draft : value}
+      value={persistent ? persistent.text : editing ? draft : value}
       onFocus={() => {
         setDraft(String(value));
         setEditing(true);
@@ -38,13 +43,14 @@ export function NumberInput({ value, onChange, disabled = false, min = 0, max, s
       onChange={event => {
         const text = event.target.value;
         setDraft(text);
-        onDraftValidityChange?.(text.trim() === '');
+        if (persistent) persistent.set(text);
+        else onDraftValidityChange?.(text.trim() === '');
         // Empty and incomplete input must not replace the last accepted number.
         if (text.trim() === '') return;
         const next = Number(text);
         if (Number.isFinite(next)) onChange(next);
       }}
-      onBlur={() => { setEditing(false); onDraftValidityChange?.(false); }}
+      onBlur={() => { setEditing(false); if (!persistent) onDraftValidityChange?.(false); }}
       onKeyDown={event => {
         if (event.key === 'Enter') event.currentTarget.blur();
       }}
@@ -54,7 +60,7 @@ export function NumberInput({ value, onChange, disabled = false, min = 0, max, s
         minHeight: 44,
         flexShrink: compact ? 0 : undefined,
         background: colors.surfaceAlt,
-        border: `1px solid ${colors.controlBorder}`,
+        border: `1px solid ${persistent?.invalid ? '#f87171' : colors.controlBorder}`,
         borderRadius: 6,
         color: colors.text,
         padding: compact ? '0.5rem' : '0.5rem 0.75rem',

@@ -20,6 +20,7 @@ export function InputField({ label, value, onChange, disabled = false, min = 0, 
       <label htmlFor={id} style={{ fontSize: '0.75rem', color: colors.muted }}>{label}</label>
       <NumberInput
         id={id}
+        draftKey={label}
         disabled={disabled}
         min={min}
         max={max}

@@ -1,5 +1,6 @@
 import { CatalogPanel } from '../../catalog/CatalogPanel';
-import { useCatalogInput } from '../../catalog/CatalogContext';
+import { CatalogEquipmentPanel } from '../../catalog/CatalogEquipmentPanel';
+import { useCatalogInput, useCatalog } from '../../catalog/CatalogContext';
 import { useCombatScenario } from './CombatScenarioContext';
 import { useId } from 'react';
 import { InputField } from '../../components/InputField';
@@ -12,18 +13,25 @@ import { scenarioInput, scenarioPanel } from './scenarioStyles';
 import { SquadCounter, SquadScenarioControls } from './SquadScenarioControls';
 import { isSquadScenario } from '@application/dice/squadScenario';
 
-interface Props { params: CombatParams; onChange: (params: CombatParams) => void; individualAttacks?: boolean }
+interface Props { params: CombatParams; onChange: (params: CombatParams) => void; individualAttacks?: boolean; attackOnly?: boolean }
 /** All three calculators edit the same scenario; required context stays outside disclosures. */
-export function CombatScenarioForm({ params: input, onChange, individualAttacks }: Props) {
+export function CombatScenarioForm({ params: input, onChange, individualAttacks, attackOnly = false }: Props) {
   const id = useId();
-  const { entryMode, setEntryMode, setDraftInvalid } = useCombatScenario();
-  const params = useCatalogInput(input);
+  const { entryMode, setEntryMode, setDraftInvalid, attackModes, setAttackModes } = useCombatScenario();
+  const { catalog } = useCatalog();
+  const resolved = useCatalogInput(input);
+  const params = attackOnly ? { ...resolved, attackType: input.attackType } : resolved;
   const squadMode = isSquadScenario(params);
   const manual = entryMode === 'manual';
   const selectedWeapon = !!params.catalogSelection?.modeId;
   const selectedTarget = !!params.catalogSelection?.defenderMiniatureId;
-  const needsRange = (params.rapidFire ?? 0) > 0 || (params.melta ?? 0) > 0;
-  const missingContext = needsRange && params.withinHalfRange === undefined || !!params.heavy &&
+  const allWeapons = [params, ...(params.primaryExtraWeapons ?? []), ...(params.attackerEquipmentGroups ?? []).flatMap(g => g.weapons)];
+  const contextualWeapons = params.squadEquipment ? allWeapons : [params];
+  const needsRange = params.attackType !== 'melee' && contextualWeapons.some(w => (w.rapidFire ?? 0) > 0 || (w.melta ?? 0) > 0);
+  const needsHeavy = params.attackType !== 'melee' && contextualWeapons.some(w => w.heavy);
+  const needsCover = params.attackType !== 'melee' && allWeapons.some(w => !w.ignoresCover);
+  const hasLethal = contextualWeapons.some(w => w.lethalHits);
+  const missingContext = needsRange && params.withinHalfRange === undefined || needsHeavy &&
     (!params.phase || params.engaged === undefined || params.setUpThisTurn === undefined || params.movedOverThree === undefined);
   const set = <K extends keyof CombatParams>(key: K, value: CombatParams[K]) => onChange({ ...params, [key]: value });
   const numeric = (key: keyof CombatParams, label: ScenarioKey, min: number, max: number, fallback = 0) =>
@@ -39,89 +47,110 @@ export function CombatScenarioForm({ params: input, onChange, individualAttacks 
     </div>;
   const activeAdjustments = !!(params.damageBonus || params.hitModifier || params.woundModifier || params.hitRerollAll ||
     params.hitRerollNonSixes || params.woundRerollAll || params.woundRerollNonSixes);
+  function changeAttackType(next: 'ranged' | 'melee') {
+    const selection = input.catalogSelection;
+    const key = `${selection?.attackerUnitId}/${selection?.attackerMiniatureId}/`;
+    const current = catalog?.weaponModes.find(m => m.id === selection?.modeId);
+    if (current) setAttackModes(old => ({ ...old, [`${key}${current.type}`]: current.id }));
+    const ids = catalog?.equipmentChoices.filter(c => c.miniatureId === selection?.attackerMiniatureId).flatMap(c => c.weaponIds) ?? [];
+    const modes = catalog?.weaponModes.filter(m => ids.includes(m.weaponId) && m.type === next) ?? [];
+    const saved = attackModes[`${key}${next}`];
+    const modeId = modes.some(m => m.id === saved) ? saved : modes.length === 1 ? modes[0].id : undefined;
+    onChange({ ...input, attackType: next, phase: undefined,
+      catalogSelection: selection ? { ...selection, modeId } : undefined,
+      primaryExtraWeapons: manual ? input.primaryExtraWeapons?.map(w => ({ ...w, attackType: next })) : input.primaryExtraWeapons,
+      attackerEquipmentGroups: manual ? input.attackerEquipmentGroups?.map(g => ({ ...g, weapons: g.weapons.map(w => ({ ...w, attackType: next })) })) : input.attackerEquipmentGroups });
+  }
   function changeEntry(next: 'catalog' | 'manual') {
     if (next === entryMode) return;
     setEntryMode(next);
     const manualProfile = (profile: CombatParams) => ({ ...profile, catalogSelection: undefined, calculationBlocked: false });
-    onChange({ ...params, catalogSelection: undefined, partialCalculation: false, calculationBlocked: false, calculationLimitations: [],
+    onChange({ ...params, squadEquipment: undefined, catalogSelection: undefined, partialCalculation: false, calculationBlocked: false, calculationLimitations: [],
       primaryExtraWeapons: next === 'manual' ? params.primaryExtraWeapons?.map(manualProfile) : [],
       attackerEquipmentGroups: next === 'manual' ? params.attackerEquipmentGroups?.map(g => ({ ...g, weapons: g.weapons.map(manualProfile) })) : [],
       defenderGroups: next === 'manual' ? params.defenderGroups?.map(g => ({ ...g, profile: manualProfile(g.profile) })) : [] });
   }
   return <div className="combat-scenario">
+    {!attackOnly && <>
     <div className="entry-options" aria-label={s('type')}>
       <button aria-pressed={!manual} onClick={() => changeEntry('catalog')}>{s('catalogEntry')}</button>
       <button aria-pressed={manual} onClick={() => changeEntry('manual')}>{s('manual')}</button>
     </div>
-    <CatalogPanel params={input} onChange={onChange} />
+    </>}
+    {attackOnly && !input.squadEquipment && <label>{s('type')}<select style={scenarioInput} value={input.attackType ?? 'ranged'}
+      onChange={event => changeAttackType(event.target.value as 'ranged' | 'melee')}>
+      <option value="ranged">{s('ranged')}</option><option value="melee">{s('melee')}</option></select></label>}
+    {attackOnly && !manual && <CatalogPanel attackStep params={input} onChange={onChange} />}
+    {!attackOnly && <><CatalogPanel params={input} onChange={onChange} />
     <div className="scenario-columns" style={scenarioPanel}>
-      <SquadCounter label={s('attackingModels')} value={params.modelCount ?? 1} onChange={value => set('modelCount', value)} />
+      <SquadCounter label={s('attackingModels')} value={params.modelCount ?? 1} max={params.squadEquipment?.initialModelCount ?? 100} onChange={value => set('modelCount', value)} />
       <SquadCounter label={s('defendingModels')} value={params.targetModelCount ?? 1} onChange={value => onChange({ ...params,
         targetModelCount: value, casualtyGoal: Math.min(params.casualtyGoal ?? value, value) })} />
-    </div>
+    </div></>}
+    {!manual && input.squadEquipment && <CatalogEquipmentPanel params={input} onChange={onChange} participantsHelp={attackOnly ? s('wizardEquipmentSurvivorsHelp') : undefined} />}
     {manual ? <>
       <p className="scenario-caption">{s('manualNotice')}</p>
-      <details style={scenarioPanel}><summary>{s('example')}</summary>
+      {!attackOnly && <details style={scenarioPanel}><summary>{s('example')}</summary>
         <label>{s('example')}<select style={scenarioInput} value="custom" onChange={event => {
           const preset = WH40K_PRESETS.find(example => example.id === event.target.value);
           if (preset) onChange({ ...preset.params, woundsMax: preset.params.targetWounds });
         }}><option value="custom">{s('custom')}</option>{WH40K_PRESETS.map(preset => <option key={preset.id} value={preset.id}>{preset.name}</option>)}</select></label>
-      </details>
+      </details>}
       <div className="scenario-columns">
         <fieldset style={scenarioPanel}><legend>{s('weapon')}</legend>
-          <label>{s('type')}<select style={scenarioInput} value={params.attackType ?? 'ranged'} onChange={event => set('attackType', event.target.value as 'ranged' | 'melee')}>
-            <option value="ranged">{s('ranged')}</option><option value="melee">{s('melee')}</option></select></label>
+          {!attackOnly && <label>{s('type')}<select style={scenarioInput} value={params.attackType ?? 'ranged'} onChange={event => set('attackType', event.target.value as 'ranged' | 'melee')}>
+            <option value="ranged">{s('ranged')}</option><option value="melee">{s('melee')}</option></select></label>}
           {!individualAttacks && <>
             <label>{s('attacks')}<input style={scenarioInput} value={params.attacksExpression ?? (params.attacksD6 ? 'D6' : params.attacks)}
               onChange={event => set('attacksExpression', event.target.value)} /></label></>}
           {!params.torrent && numeric('hitThreshold', 'skill', 2, 6)}{numeric('strength', 'strength', 1, 100)}
-          <label>{s('ap')}<input type="number" style={scenarioInput} value={params.ap === 0 ? 0 : -params.ap} min={-100} max={0}
-            onChange={event => set('ap', event.target.value === '' ? NaN : -Number(event.target.value))} /></label>
+          <label>{s('ap')}<NumberInput id={`${id}-ap`} draftKey={s('ap')} value={params.ap === 0 ? 0 : -params.ap} min={-100} max={0}
+            onChange={value => set('ap', -value)} onDraftValidityChange={setDraftInvalid} /></label>
           <label>{s('damage')}<input style={scenarioInput} value={params.damageExpression ?? (params.damageD6 ? 'D6' : params.damage)}
             onChange={event => set('damageExpression', event.target.value)} /></label>
           <small>{s('expressionHelp')}</small>
         </fieldset>
-        <fieldset style={scenarioPanel}><legend>{s(squadMode ? 'primaryDefender' : 'target')}</legend>
+        {!attackOnly && <fieldset style={scenarioPanel}><legend>{s(squadMode ? 'primaryDefender' : 'target')}</legend>
           {squadMode && <p className="scenario-caption">{s('modelWoundsHelp')}</p>}
           {numeric('toughness', 'toughness', 1, 100)}{numeric('woundsMax', 'maxWounds', 1, 500, params.targetWounds)}
           {numeric('targetWounds', 'wounds', 1, 500)}{numeric('baseSave', 'save', 2, 6)}
           {optional('invulnerableSave', 'invul', 'invulValue', 4)}{optional('fnpThreshold', 'fnp', 'fnpValue', 5)}
-        </fieldset>
+        </fieldset>}
       </div>
     </> : <>
-      {(selectedWeapon || selectedTarget) && <div className="scenario-columns" style={scenarioPanel}>
+      {!attackOnly && (selectedWeapon || selectedTarget) && <div className="scenario-columns" style={scenarioPanel}>
         {selectedTarget && <div>{squadMode && <p className="scenario-caption">{s('modelWoundsHelp')}</p>}{numeric('targetWounds', 'wounds', 1, params.woundsMax ?? 500)}
           <small>{s('maxWounds')}: {params.woundsMax}</small></div>}
       </div>}
       {(selectedWeapon || selectedTarget) && <details style={scenarioPanel}><summary>{s('characteristics')}</summary>
         {selectedWeapon && <p>{s('attacks')}: {params.attacksExpression} · {s('skill')}: {params.torrent ? s('torrent') : `${params.hitThreshold}+`} · {s('strength')}: {params.strength} · {s('apShort')} {params.ap === 0 ? 0 : -params.ap} · {s('damage')}: {params.damageExpression}</p>}
-        {selectedTarget && <p>{s('toughness')}: {params.toughness} · {s('save')}: {params.baseSave}+ · {s('maxWounds')}: {params.woundsMax}
+        {!attackOnly && selectedTarget && <p>{s('toughness')}: {params.toughness} · {s('save')}: {params.baseSave}+ · {s('maxWounds')}: {params.woundsMax}
           {params.invulnerableSave !== undefined && ` · ${s('invul')}: ${params.invulnerableSave}++`}</p>}
-        <ul>{(['torrent', 'devastatingWounds', 'heavy', 'rapidFire'] as const).filter(key => params[key]).map(key => <li key={key}>{s(key === 'devastatingWounds' ? 'devastating' : key)}{key === 'rapidFire' && ` ${params.rapidFire}`}</li>)}</ul>
+        <ul>{(['torrent', 'devastatingWounds', 'heavy', 'rapidFire', 'sustainedHits', 'twinLinked'] as const).filter(key => params[key]).map(key => <li key={key}>{s(key === 'devastatingWounds' ? 'devastating' : key === 'sustainedHits' ? 'sustained' : key)}{key === 'rapidFire' && ` ${params.rapidFire}`}{key === 'sustainedHits' && ` ${params.sustainedHits}`}</li>)}</ul>
       </details>}
     </>}
-    {squadMode && params.partialCalculation && <div className="scope-notice"><p>{s('profilePartialNotice')}</p>
+    {!attackOnly && squadMode && params.partialCalculation && <div className="scope-notice"><p>{s('profilePartialNotice')}</p>
       <details><summary>{s('pendingDetails')}</summary><ul>{params.calculationLimitations?.map(message => <li key={message}>{message}</li>)}</ul></details>
       <label className="touch-choice"><input type="checkbox" checked={JSON.stringify(params.acceptedSquadOmissions ?? []) === JSON.stringify(params.calculationLimitations ?? [])}
         onChange={event => onChange({ ...params, acceptedSquadOmissions: event.target.checked ? params.calculationLimitations : [] })} />{s('acceptSquadPartial')}</label>
     </div>}
-    {(manual || params.catalogSelection?.attackerMiniatureId || selectedTarget) && <SquadScenarioControls params={params} onChange={onChange} />}
+    {(!attackOnly || !params.squadEquipment) && (manual || params.catalogSelection?.attackerMiniatureId || selectedTarget) && <SquadScenarioControls side={attackOnly ? 'attacker' : undefined} params={params} onChange={onChange} />}
     {(manual || selectedWeapon) && <>
-      {((params.attackType ?? 'ranged') === 'ranged' && !params.ignoresCover || params.heavy || (params.rapidFire ?? 0) > 0 || (params.melta ?? 0) > 0 || params.lethalHits) &&
+      {(needsCover || needsHeavy || needsRange || hasLethal) &&
         <fieldset style={scenarioPanel}><legend>{s('situation')}</legend>
           {missingContext && <p id={`${id}-context-help`} className="scenario-caption">{s('contextRequired')}</p>}
-          {(params.attackType ?? 'ranged') === 'ranged' && !params.ignoresCover && toggle('cover', 'cover')}
-          {((params.rapidFire ?? 0) > 0 || (params.melta ?? 0) > 0) && <label>{s('halfRange')}
+          {needsCover && toggle('cover', 'cover')}
+          {needsRange && <label>{s('halfRange')}
             <select style={scenarioInput} aria-invalid={params.withinHalfRange === undefined} aria-describedby={missingContext ? `${id}-context-help` : undefined} value={params.withinHalfRange === undefined ? '' : String(params.withinHalfRange)} onChange={event => set('withinHalfRange', event.target.value === '' ? undefined : event.target.value === 'true')}>
               <option value="">{s('select')}</option><option value="true">{s('yes')}</option><option value="false">{s('outsideHalfRange')}</option></select></label>}
-          {params.heavy && <>
+          {needsHeavy && <>
             <label>{s('phase')}<select style={scenarioInput} aria-invalid={!params.phase} aria-describedby={missingContext ? `${id}-context-help` : undefined} value={params.phase ?? ''} onChange={event => set('phase', event.target.value as 'shooting' | 'fight')}>
               <option value="">{s('select')}</option><option value="shooting">{s('shooting')}</option><option value="fight">{s('fight')}</option></select></label>
             {(['engaged', 'setUpThisTurn', 'movedOverThree'] as const).map((key, index) => <label key={key}>{s((['engaged', 'arrived', 'moved'] as const)[index])}
               <select style={scenarioInput} aria-invalid={params[key] === undefined} aria-describedby={missingContext ? `${id}-context-help` : undefined} value={params[key] === undefined ? '' : String(params[key])} onChange={event => set(key, event.target.value === '' ? undefined : event.target.value === 'true')}>
                 <option value="">{s('select')}</option><option value="true">{s('yes')}</option><option value="false">{s('no')}</option></select></label>)}
           </>}
-          {params.lethalHits && <label>{s('lethalChoice')}<select style={scenarioInput} value={params.lethalChoice ?? 'autoWound'} onChange={event => set('lethalChoice', event.target.value as 'autoWound' | 'rollToWound')}>
+          {hasLethal && <label>{s('lethalChoice')}<select style={scenarioInput} value={params.lethalChoice ?? 'autoWound'} onChange={event => set('lethalChoice', event.target.value as 'autoWound' | 'rollToWound')}>
             <option value="autoWound">{s('autoWound')}</option><option value="rollToWound">{s('rollWound')}</option></select></label>}
         </fieldset>}
       {activeAdjustments && <p className="scope-notice">{s('activeAdjustments')}</p>}

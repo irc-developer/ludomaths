@@ -60,7 +60,7 @@ export function resolveCatalogScenario(catalog: ProfileCatalog, selection: Catal
     }
     const weapon = catalog.weapons.find(w => w.id === mode.weaponId)!;
     const applicable = rules([...unit.ruleIds, ...miniature.ruleIds, ...weapon.ruleIds, ...mode.ruleIds, ...mode.targetCondition.ruleIds], 'attacker');
-    const supported = new Set(['torrent', 'heavy', 'rapidFire', 'devastatingWounds']);
+    const supported = new Set(['torrent', 'heavy', 'rapidFire', 'devastatingWounds', 'sustainedHits', 'twinLinked']);
     const abilities = applicable.filter(rule => rule.reviewState === 'reviewed' && rule.reviewVersion === '1.0.0' && supported.has(rule.capabilityId ?? ''));
     pending.push(...applicable.filter(rule => !abilities.includes(rule)));
     const has = (capability: string) => abilities.some(r => r.capabilityId === capability);
@@ -72,8 +72,9 @@ export function resolveCatalogScenario(catalog: ProfileCatalog, selection: Catal
       hitThreshold: torrent && skill.raw === '-' && skill.status === 'unsupported' ? 2 : scalar(skill),
       attacksD6: false, damageD6: false, torrent, heavy: has('heavy'),
       rapidFire: abilities.find(r => r.capabilityId === 'rapidFire')?.parameters.additionalAttacks as number | undefined,
-      devastatingWounds: has('devastatingWounds'), lethalHits: false, sustainedHits: undefined, melta: undefined,
-      ignoresCover: false, twinLinked: false, mortalWoundsPerHit: undefined,
+      devastatingWounds: has('devastatingWounds'), lethalHits: false,
+      sustainedHits: abilities.find(r => r.capabilityId === 'sustainedHits')?.parameters.additionalHits as number | undefined, melta: undefined,
+      ignoresCover: false, twinLinked: has('twinLinked'), mortalWoundsPerHit: undefined,
       guaranteedHitSix: undefined, guaranteedWoundSix: undefined, guaranteedDamageSix: undefined };
     const condition = mode.targetCondition;
     if (condition.state === 'reviewed' && condition.keywordIds.length) {

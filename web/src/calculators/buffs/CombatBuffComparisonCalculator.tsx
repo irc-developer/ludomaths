@@ -16,7 +16,7 @@ export function CombatBuffComparisonCalculator() {
   return <CombatScenarioBoundary><CombatBuffComparisonView /></CombatScenarioBoundary>;
 }
 function CombatBuffComparisonView() {
-  const { params, setParams, ready } = useCombatScenario();
+  const { params, setParams, ready, confirmed } = useCombatScenario();
   const vm = useCombatBuffComparison(params);
   const effectiveParams = useCatalogInput(params);
   const squadMode = isSquadScenario(effectiveParams);
@@ -50,12 +50,12 @@ function CombatBuffComparisonView() {
       <div><dt>{s('lost')}</dt><dd>{fmt(result.expectedWoundsLost)}</dd></div>
     </dl>{label !== 'baseline' && <p><small>{s('difference')}: {fmt(result.expectedCasualties - vm.squadComparison!.baseline.expectedCasualties)} {s('averageCasualties').toLowerCase()}</small></p>}</article>)}</div>;
   }
-  return <SectionCard compact title={s('buffsTitle')} formula={s(squadMode ? 'squadFormula' : 'formula')} explanation={s(squadMode ? 'squadHelp' : 'scope')} scopeLabel={s(squadMode ? 'squadScope' : 'scopeShort')}>
-    <CombatScenarioForm params={params} onChange={setParams} />
+  return <SectionCard compact report={confirmed} title={s('buffsTitle')} formula={s(squadMode ? 'squadFormula' : 'formula')} explanation={s(squadMode ? 'squadHelp' : 'scope')} scopeLabel={s(squadMode ? 'squadScope' : 'scopeShort')}>
+    {!confirmed && <CombatScenarioForm params={params} onChange={setParams} />}
     <ScenarioResultNotice ready={ready} error={vm.error} />
-    {ready && vm.isCalculating && <p role="status">{s('squadCalculating')}</p>}
+    {ready && vm.isCalculating && <p role="status">{s(confirmed ? 'reportGenerating' : 'squadCalculating')}</p>}
     {ready && !vm.error && !vm.isCalculating && <div className="combat-result">
-      {effectiveParams.partialCalculation && <p className="scope-notice">{s('partialResult')}</p>}
+      {!confirmed && effectiveParams.partialCalculation && <p className="scope-notice">{s('partialResult')}</p>}
       {vm.squadComparison ? <>
         <p>{s('improvementScope')}</p>
         <h3>{s('offense')}</h3><p role="status">{s('recommendation')}: <strong>{s(recommendation)}</strong></p>
