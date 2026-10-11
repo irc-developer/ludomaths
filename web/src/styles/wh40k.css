@@ -10,6 +10,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 .combat-scenario legend { padding: 0 .25rem; font-weight: 650; }
 .combat-scenario p, .combat-scenario li, .calculation-help p, .comparison-details p { line-height: 1.55; overflow-wrap: anywhere; }
 .combat-scenario small, .scenario-caption { color: #94a3b8; line-height: 1.5; }
+.armour-penetration-field { display: grid; gap: .4rem; min-width: 0; }
+.number-input-with-prefix { display: flex; align-items: center; gap: .5rem; min-width: 0; }
+.number-input-prefix { width: .65em; flex-shrink: 0; color: #e2e8f0; font-size: 1.25rem; text-align: center; }
 .combat-scenario details > :not(summary), .calculation-help > :not(summary) { margin-top: .65rem; }
 .combat-scenario details ul { padding-left: 1.25rem; }
 .combat-scenario summary, .calculation-help summary, .result-details > summary, .share-panel > summary, .comparison-details > summary { min-height: 44px; display: list-item; align-content: center; cursor: pointer; font-weight: 600; }

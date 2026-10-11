@@ -228,15 +228,49 @@ describe('defender and attack wizard screens', () => {
     click('Revisar escenario'); expect(screen.getByRole('heading', { name: 'Revisa el escenario' })).toBeTruthy();
   });
 
+  it('enters AP using digits, retains it across navigation, and calculates with its magnitude', async () => {
+    const inverse = vi.spyOn(CalculateRequiredAttacksUseCase.prototype, 'execute');
+    await start(); click('Continuar'); click('Continuar'); click('Ataques necesarios');
+    const input = screen.getByLabelText('FP') as HTMLInputElement;
+    expect(input.inputMode).toBe('numeric');
+    change('FP', '0');
+    expect(input.closest('.number-input-with-prefix')?.querySelector('.number-input-prefix')?.textContent).toBe('');
+    for (const invalid of ['-1', '1.5', '101']) {
+      change('FP', invalid); click('Revisar escenario');
+      expect(screen.getByRole('alert').textContent).toContain('FP');
+      expect(input.getAttribute('aria-invalid')).toBe('true');
+      expect(inverse).not.toHaveBeenCalled();
+    }
+    change('FP', '2');
+    expect(input.closest('.number-input-with-prefix')?.querySelector('.number-input-prefix')?.textContent).toBe('−');
+    click('← Atrás'); click('Continuar');
+    expect((screen.getByLabelText('FP') as HTMLInputElement).value).toBe('2');
+    click('Revisar escenario');
+    expect(screen.getByText(/FP -2/)).toBeTruthy();
+    click('Generar informe');
+    expect(inverse).toHaveBeenCalledWith(expect.objectContaining({ weapon: expect.objectContaining({ ap: 2 }) }));
+  });
+
+  it('uses AP magnitudes independently for the main weapon, extra weapons and equipment groups', async () => {
+    await start(); click('Continuar'); click('Continuar');
+    fireEvent.click(screen.getByText('Editar grupos de armas'));
+    click('Añadir otra arma a este grupo'); click('Añadir grupo con otro equipo');
+    const fields = screen.getAllByLabelText('FP') as HTMLInputElement[];
+    expect(fields).toHaveLength(3);
+    fields.forEach((field, index) => fireEvent.change(field, { target: { value: String(index + 1) } }));
+    click('Revisar escenario');
+    for (const ap of [1, 2, 3]) expect(screen.getByText(new RegExp(`FP -${ap}`))).toBeTruthy();
+  });
+
   it('preserves empty AP and reliability drafts and lets a reliability shortcut correct its own field', async () => {
     await start(); click('Continuar'); click('Continuar'); click('Ataques necesarios');
-    change('FP (0 o valor negativo)', ''); change('Fiabilidad deseada (%)', '');
+    change('FP', ''); change('Fiabilidad deseada (%)', '');
     click('← Atrás'); click('Continuar');
-    expect((screen.getByLabelText('FP (0 o valor negativo)') as HTMLInputElement).value).toBe('');
+    expect((screen.getByLabelText('FP') as HTMLInputElement).value).toBe('');
     expect((screen.getByLabelText('Fiabilidad deseada (%)') as HTMLInputElement).value).toBe('');
     click('95%'); click('Revisar escenario');
     expect(screen.getByRole('alert').textContent).toContain('FP');
-    change('FP (0 o valor negativo)', '-1'); click('Revisar escenario');
+    change('FP', '1'); click('Revisar escenario');
     expect(screen.getByRole('heading', { name: 'Revisa el escenario' })).toBeTruthy();
   });
 });

@@ -4,6 +4,7 @@ import type { CombatScenarioInput } from '@application/dice/combatScenario';
 import { useCatalog } from '../../catalog/CatalogContext';
 import { resolveCatalogScenario } from '@application/dice/catalogScenario';
 import { NumberInput } from '../../components/NumberInput';
+import { ArmourPenetrationField } from './ArmourPenetrationField';
 import { InputField } from '../../components/InputField';
 import { s, type ScenarioKey } from '../../i18n/scenario';
 import { scenarioInput, scenarioPanel } from './scenarioStyles';
@@ -24,7 +25,6 @@ export function SquadCounter({ label, value, onChange, max = 100 }: { label: str
 }
 
 function ProfileEditor({ profile, base, side, onChange, showContext = true }: { profile: Profile; base: Profile; side: 'attacker' | 'defender'; onChange: (profile: Profile) => void; showContext?: boolean }) {
-  const id = useId();
   const { catalog } = useCatalog(); const { entryMode, setDraftInvalid } = useCombatScenario();
   const set = <K extends keyof Profile>(key: K, value: Profile[K]) => onChange({ ...profile, [key]: value });
   const numeric = (key: keyof Profile, label: ScenarioKey, min = 0, max = 100, fallback = 0) =>
@@ -65,7 +65,7 @@ function ProfileEditor({ profile, base, side, onChange, showContext = true }: { 
     {side === 'attacker' ? <>
       <label>{s('attacks')}<input style={scenarioInput} value={profile.attacksExpression ?? (profile.attacksD6 ? 'D6' : profile.attacks)} onChange={event => set('attacksExpression', event.target.value)} /></label>
       {numeric('hitThreshold', 'skill', 2, 6)}{numeric('strength', 'strength', 1)}
-      <label>{s('ap')}<NumberInput id={`${id}-ap`} draftKey={s('ap')} min={-100} max={0} value={-profile.ap} onChange={value => set('ap', -value)} onDraftValidityChange={setDraftInvalid} /></label>
+      <ArmourPenetrationField value={profile.ap} onChange={value => set('ap', value)} onDraftValidityChange={setDraftInvalid} />
       <label>{s('damage')}<input style={scenarioInput} value={profile.damageExpression ?? (profile.damageD6 ? 'D6' : profile.damage)} onChange={event => set('damageExpression', event.target.value)} /></label>
     </> : <>
       {numeric('toughness', 'toughness', 1)}{numeric('woundsMax', 'maxWounds', 1, 100, profile.targetWounds)}

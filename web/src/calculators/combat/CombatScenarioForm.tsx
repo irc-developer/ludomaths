@@ -5,6 +5,7 @@ import { useCombatScenario } from './CombatScenarioContext';
 import { useId } from 'react';
 import { InputField } from '../../components/InputField';
 import { NumberInput } from '../../components/NumberInput';
+import { ArmourPenetrationField } from './ArmourPenetrationField';
 import { RerollControls } from './RerollControls';
 import { updateRerollSelection } from './rerollPolicy';
 import { WH40K_PRESETS, type CombatParams } from './presets';
@@ -103,8 +104,7 @@ export function CombatScenarioForm({ params: input, onChange, individualAttacks,
             <label>{s('attacks')}<input style={scenarioInput} value={params.attacksExpression ?? (params.attacksD6 ? 'D6' : params.attacks)}
               onChange={event => set('attacksExpression', event.target.value)} /></label></>}
           {!params.torrent && numeric('hitThreshold', 'skill', 2, 6)}{numeric('strength', 'strength', 1, 100)}
-          <label>{s('ap')}<NumberInput id={`${id}-ap`} draftKey={s('ap')} value={params.ap === 0 ? 0 : -params.ap} min={-100} max={0}
-            onChange={value => set('ap', -value)} onDraftValidityChange={setDraftInvalid} /></label>
+          <ArmourPenetrationField value={params.ap} onChange={value => set('ap', value)} onDraftValidityChange={setDraftInvalid} />
           <label>{s('damage')}<input style={scenarioInput} value={params.damageExpression ?? (params.damageD6 ? 'D6' : params.damage)}
             onChange={event => set('damageExpression', event.target.value)} /></label>
           <small>{s('expressionHelp')}</small>
