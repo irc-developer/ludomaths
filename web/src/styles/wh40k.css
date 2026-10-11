@@ -90,7 +90,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 .wizard-primary-button span { margin-left: .75rem; }
 .wizard-primary-button:disabled { opacity: .5; cursor: default; }
 .wizard-error-summary { padding: 1rem; border: 1px solid #f87171; border-radius: .5rem; margin-bottom: 1.25rem; }
-.wizard-error-summary a { color: #fca5a5; line-height: 1.5; }
+.wizard-error-summary ul { margin: .75rem 0 0; padding-left: 1.25rem; display: grid; gap: .65rem; }
+.wizard-error-summary li { line-height: 1.5; overflow-wrap: anywhere; }
+.wizard-error-summary a { color: #fca5a5; line-height: 1.5; text-underline-offset: .2em; }
 .wizard-return { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-bottom: .75rem; }
 .wizard-return p { margin: 0; font-size: .85rem; }
 .wizard-progress button { display: flex; align-items: center; gap: .4rem; min-height: 44px; padding: 0; border: 0; background: none; color: #c7d2fe; font: inherit; cursor: pointer; }
@@ -102,6 +104,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 .wizard-main input[type=checkbox] { width: 18px; height: 18px; min-height: 18px; padding: 0; flex-shrink: 0; }
 .wizard-main .combat-scenario > .scenario-columns { grid-template-columns: 1fr; }
 .wizard-defenses, .wizard-weapon-contexts { display: grid; gap: 1rem; }
+.attack-context-fields { display: grid; gap: 1rem; }
+.attack-context-field label { display: block; margin-bottom: .4rem; }
+.attack-context-field .scenario-caption { margin: .5rem 0 0; }
+.attack-context-field select[aria-invalid=true] { border-color: #f59e0b !important; }
+.attack-context-field select:focus { outline: 2px solid #c7d2fe; outline-offset: 3px; }
 .wizard-weapon-contexts:empty, .wizard-weapon-contexts fieldset:has(> div:empty) { display: none; }
 .wizard-main details > summary { min-height: 44px; align-content: center; cursor: pointer; color: #c7d2fe; }
 .wizard-main details[open] > summary { margin-bottom: .75rem; }

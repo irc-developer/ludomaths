@@ -69,7 +69,8 @@ describe('shared WH40K workspace', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: /^Heavy$/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Guardar y revisar' }));
     expect(screen.queryByRole('region', { name: 'Estadísticas resultantes' })).toBeNull();
-    expect(screen.getByRole('alert').textContent).toContain('Completa las condiciones');
+    expect(screen.getByRole('alert').textContent).toContain('Arma manual (Heavy): elige la fase');
+    expect(screen.getByRole('alert').querySelectorAll('li')).toHaveLength(4);
     fireEvent.change(screen.getByLabelText('Fase'), { target: { value: 'shooting' } });
     for (const label of ['Unidad trabada', 'Desplegada este turno', 'Alguna miniatura movió más de 3 pulgadas']) {
       fireEvent.change(screen.getByLabelText(label), { target: { value: 'false' } });

@@ -79,9 +79,23 @@ describe('defender and attack wizard screens', () => {
   it('requires Heavy context explicitly and retains an empty attack field when revisiting it', async () => {
     await start(); click('Continuar'); click('Continuar');
     fireEvent.click(screen.getByRole('checkbox', { name: 'Heavy' }));
-    click('Revisar escenario'); expect(screen.getByRole('alert').textContent).toContain('condiciones');
+    click('Revisar escenario');
+    let links = within(screen.getByRole('alert')).getAllByRole('link');
+    expect(links.map(link => link.textContent)).toEqual([
+      'Arma manual (Heavy): elige la fase en la que se realiza el ataque.',
+      'Arma manual (Heavy): indica si la unidad atacante está trabada.',
+      'Arma manual (Heavy): indica si la unidad atacante se ha desplegado este turno.',
+      'Arma manual (Heavy): indica si alguna miniatura atacante ha movido más de 3 pulgadas.',
+    ]);
+    fireEvent.click(links[0]); expect(document.activeElement).toBe(screen.getByLabelText('Fase'));
     change('Fase', 'shooting');
+    expect(document.activeElement).toBe(screen.getByLabelText('Fase'));
+    links = within(screen.getByRole('alert')).getAllByRole('link');
+    expect(links).toHaveLength(3);
+    expect(screen.getByRole('alert').textContent).not.toContain('elige la fase');
+    fireEvent.click(links[0]); expect(document.activeElement).toBe(screen.getByLabelText('Unidad trabada'));
     for (const label of ['Unidad trabada', 'Desplegada este turno', 'Alguna miniatura movió más de 3 pulgadas']) change(label, 'false');
+    expect(screen.queryByRole('alert')).toBeNull();
     change('Fuerza (F)', ''); change('Habilidad para impactar', '3');
     click('← Atrás'); click('Continuar'); click('Mejoras');
     expect((screen.getByLabelText('Fuerza (F)') as HTMLInputElement).value).toBe('');
@@ -107,6 +121,27 @@ describe('defender and attack wizard screens', () => {
     expect(screen.getByRole('alert').textContent).toContain('cantidades');
     change('Miniaturas restantes', '3'); click('Continuar');
     expect(screen.getByRole('heading', { name: 'Configura el ataque' })).toBeTruthy();
+  });
+
+  it('links missing context to the weapon in an independent equipment group', async () => {
+    await start(); change('Miniaturas que atacan', '2'); click('Continuar'); click('Continuar');
+    fireEvent.click(screen.getByText('Editar grupos de armas'));
+    click('Añadir grupo con otro equipo');
+    const group = within(screen.getByRole('group', { name: 'Grupo atacante 2', exact: true }));
+    fireEvent.click(group.getByText('Ajustes avanzados'));
+    fireEvent.click(group.getByRole('checkbox', { name: 'Heavy', exact: true }));
+    fireEvent.click(screen.getByText('Editar grupos de armas'));
+    click('Revisar escenario');
+    const links = within(screen.getByRole('alert')).getAllByRole('link');
+    expect(links).toHaveLength(4);
+    expect(links.every(link => link.textContent?.startsWith('Grupo atacante 2 · Arma y modo 1: Arma manual (Heavy):'))).toBe(true);
+    const context = within(screen.getByRole('group', { name: 'Grupo atacante 2 · Arma y modo 1', exact: true }));
+    fireEvent.click(links[0]); expect(document.activeElement).toBe(context.getByLabelText('Fase'));
+    fireEvent.change(context.getByLabelText('Fase'), { target: { value: 'shooting' } });
+    for (const label of ['Unidad trabada', 'Desplegada este turno', 'Alguna miniatura movió más de 3 pulgadas'])
+      fireEvent.change(context.getByLabelText(label), { target: { value: 'false' } });
+    expect(screen.queryByRole('alert')).toBeNull();
+    click('Revisar escenario'); expect(screen.getByRole('heading', { name: 'Revisa el escenario' })).toBeTruthy();
   });
 
   it('defers target compatibility to attack and retains equipment after changing the defender', async () => {
@@ -164,9 +199,32 @@ describe('defender and attack wizard screens', () => {
     catalogAttack(); click('Otro equipo');
     fireEvent.change(within(screen.getByRole('group', { name: 'Equipo 1' })).getByLabelText('Portadores'), { target: { value: '1' } });
     expect((screen.getByLabelText('Fase') as HTMLSelectElement).value).toBe('');
-    click('Revisar escenario'); expect(screen.getByRole('alert').textContent).toContain('condiciones');
+    click('Revisar escenario');
+    const links = within(screen.getByRole('alert')).getAllByRole('link');
+    expect(links).toHaveLength(4);
+    expect(links.every(link => link.textContent?.startsWith('cyclone · krak (Heavy):'))).toBe(true);
+    fireEvent.click(links[0]); expect(document.activeElement).toBe(screen.getByLabelText('Fase'));
     change('Fase', 'shooting');
     for (const label of ['Unidad trabada', 'Desplegada este turno', 'Alguna miniatura movió más de 3 pulgadas']) change(label, 'false');
+    click('Revisar escenario'); expect(screen.getByRole('heading', { name: 'Revisa el escenario' })).toBeTruthy();
+  });
+
+  it('identifies the weapon needing half-range and accepts an explicit outside-half-range answer', async () => {
+    await start(false, ({ catalog }) => {
+      catalog.rules.push({ id: 'rapid', name: 'Rapid Fire 1', description: 'Range context', reviewState: 'reviewed', reviewVersion: '1.0.0',
+        capabilityId: 'rapidFire', parameters: { additionalAttacks: 1 }, requiredContext: ['withinHalfRange'] });
+      catalog.weaponModes.find(m => m.id === 'krak')!.ruleIds.push('rapid');
+    });
+    catalogAttack(); click('Otro equipo');
+    fireEvent.change(within(screen.getByRole('group', { name: 'Equipo 1' })).getByLabelText('Portadores'), { target: { value: '1' } });
+    click('Revisar escenario');
+    const link = within(screen.getByRole('alert')).getByRole('link');
+    expect(link.textContent).toBe('cyclone · krak (Rapid Fire): indica si el objetivo está dentro o fuera de la mitad del alcance.');
+    fireEvent.click(link);
+    const range = screen.getByLabelText('Dentro de la mitad del alcance al elegir objetivo');
+    expect(document.activeElement).toBe(range);
+    fireEvent.change(range, { target: { value: 'false' } });
+    expect(screen.queryByRole('alert')).toBeNull();
     click('Revisar escenario'); expect(screen.getByRole('heading', { name: 'Revisa el escenario' })).toBeTruthy();
   });
 

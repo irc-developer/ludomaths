@@ -9,6 +9,7 @@ import { WeaponContext } from './SquadScenarioControls';
 import { WizardScreen, type WizardError } from './WizardScreen';
 import { defenderErrors, validateAttack } from './wizardValidation';
 import { s } from '../../i18n/scenario';
+import { attackContextId } from './attackContext';
 
 export type CombatMode = 'combat' | 'required' | 'buffs';
 export function AttackSetupScreen({ mode }: { mode: CombatMode }) {
@@ -16,8 +17,9 @@ export function AttackSetupScreen({ mode }: { mode: CombatMode }) {
   const { catalog } = useCatalog();
   const drafts = useNumberDrafts();
   const [submitted, setSubmitted] = useState(0), id = useId();
-  const { params, errors: attackErrors, objectiveInvalid } = validateAttack(catalog, input, mode, successPercent);
-  const errors: WizardError[] = [...attackErrors, ...defenderErrors(params)].map(message => ({ target: `${id}-attack`, message }));
+  const { params, issues: attackIssues, objectiveInvalid } = validateAttack(catalog, input, mode, successPercent);
+  const errors: WizardError[] = [...attackIssues.map(issue => ({ ...issue, target: issue.target ?? `${id}-attack` })),
+    ...defenderErrors(params).map(message => ({ step: 2, message }))];
   useEffect(() => { if (wizardFocus) document.getElementById(wizardFocus)?.focus(); }, [wizardFocus]);
   errors.push(...Object.entries(drafts.fields).filter(([key, field]) => key.startsWith('attack/') && field.invalid)
     .map(([, field]) => ({ target: field.id, message: `${field.label}: ${s('invalidInput')}` })));
@@ -32,10 +34,10 @@ export function AttackSetupScreen({ mode }: { mode: CombatMode }) {
       {input.squadEquipment && <p className="scenario-caption">{s('wizardSharedContext')}</p>}
       {!input.squadEquipment && <div className="wizard-weapon-contexts">
         {(params.primaryExtraWeapons ?? []).map((w, i) => <fieldset key={`primary-${i}`}><legend>{s('primaryGroup')} · {s('weapon')} {i + 2}</legend>
-          <WeaponContext profile={w} onChange={next => setParams({ ...params, primaryExtraWeapons: params.primaryExtraWeapons?.map((old, index) => index === i ? next : old) })} />
+          <WeaponContext profile={w} contextId={attackContextId('primary', i + 1)} onChange={next => setParams({ ...params, primaryExtraWeapons: params.primaryExtraWeapons?.map((old, index) => index === i ? next : old) })} />
         </fieldset>)}
         {params.attackerEquipmentGroups?.flatMap((g, i) => g.weapons.map((w, j) => <fieldset key={`${g.id}-${j}`}><legend>{s('attackerGroup')} {i + 2} · {s('weapon')} {j + 1}</legend>
-          <WeaponContext profile={w} onChange={next => setParams({ ...params, attackerEquipmentGroups: params.attackerEquipmentGroups?.map(old => old.id === g.id ?
+          <WeaponContext profile={w} contextId={attackContextId(g.id, j)} onChange={next => setParams({ ...params, attackerEquipmentGroups: params.attackerEquipmentGroups?.map(old => old.id === g.id ?
             { ...old, weapons: old.weapons.map((p, index) => index === j ? next : p) } : old) })} />
         </fieldset>))}
       </div>}

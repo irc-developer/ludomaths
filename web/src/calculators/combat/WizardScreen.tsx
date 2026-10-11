@@ -10,7 +10,7 @@ export function WizardScreen({ step, title, help, children, errors, submitted, o
   const id = useId(), heading = useRef<HTMLHeadingElement>(null), errorSummary = useRef<HTMLDivElement>(null);
   const { setWizardStep } = useCombatScenario();
   useEffect(() => { heading.current?.focus(); }, []);
-  useEffect(() => { if (submitted && errors.length) errorSummary.current?.focus(); }, [submitted, errors.length]);
+  useEffect(() => { if (submitted && errors.length) errorSummary.current?.focus(); }, [submitted]);
   const labels = [s('attacker'), s('defender'), s('wizardAttack'), s('wizardReview')];
   return <section className="attacker-wizard" aria-labelledby={`${id}-heading`}>
     <header className="wizard-heading"><p className="wizard-eyebrow">{s(step === 2 ? 'wizardStepTwo' : step === 3 ? 'wizardStepThree' : 'wizardStepFour')}</p>

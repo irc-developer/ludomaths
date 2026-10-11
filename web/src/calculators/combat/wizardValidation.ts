@@ -4,13 +4,16 @@ import { resolveCatalogScenario } from '@application/dice/catalogScenario';
 import { buildSquadScenario, isSquadScenario, replacePrimaryProfile } from '@application/dice/squadScenario';
 import { resolveCatalogInput } from '../../catalog/CatalogContext';
 import { s, scenarioError } from '../../i18n/scenario';
+import { missingAttackContext } from './attackContext';
 
 export function validateAttack(catalog: ProfileCatalog | null, input: CombatScenarioInput, mode: string, successPercent: number) {
   let params = input;
   const errors: string[] = [];
+  let contextIssues: ReturnType<typeof missingAttackContext> = [];
   try {
     params = resolveCatalogInput(catalog, input, true);
     if (input.catalogSelection && params.attackType !== (input.attackType ?? 'ranged')) throw new Error('CATALOG_ATTACK_TYPE');
+    contextIssues = missingAttackContext(params, catalog);
     const mixed = !!params.primaryExtraWeapons?.length || !!params.attackerEquipmentGroups?.length;
     const validation = mode === 'required' && !isSquadScenario(params) ? { ...params, attacks: 1, attacksExpression: '1', attacksD6: false, modelCount: 1 } :
       mode === 'required' && !mixed && params.requiredSquadUnit !== 'activations' ? { ...params, modelCount: 1 } : params;
@@ -27,7 +30,7 @@ export function validateAttack(catalog: ProfileCatalog | null, input: CombatScen
     } else buildCombatScenario(validation);
   } catch (failure) {
     const code = failure instanceof Error ? failure.message : '';
-    errors.push(code === 'CATALOG_TARGET_NOT_ELIGIBLE' ? s('modeTargetInvalid') :
+    if (!contextIssues.length || !['Half-range context is required', 'Heavy requires phase, engagement, arrival and movement context'].includes(code)) errors.push(code === 'CATALOG_TARGET_NOT_ELIGIBLE' ? s('modeTargetInvalid') :
       code === 'EQUIPMENT_COUNTS' ? s('equipmentCountError') : code === 'EQUIPMENT_SHARED_LIMIT' ? s('equipmentSharedLimit') :
       code.startsWith('CATALOG_') ? s('selectionInvalid') : scenarioError(failure));
   }
@@ -37,7 +40,8 @@ export function validateAttack(catalog: ProfileCatalog | null, input: CombatScen
   const objectiveInvalid = mode === 'required' && (!Number.isFinite(successPercent) || successPercent <= 0 || successPercent > 100 ||
     isSquadScenario(params) && (!Number.isInteger(goal) || goal < 1 || goal > (params.targetModelCount ?? 1) ||
       !['attacks', 'models', 'activations'].includes(params.requiredSquadUnit ?? 'attacks')));
-  return { params, errors, objectiveInvalid };
+  const issues = [...contextIssues.map(({ message, target }) => ({ message, target })), ...errors.map(message => ({ message, target: undefined }))];
+  return { params, errors: issues.map(issue => issue.message), issues, objectiveInvalid };
 }
 
 export interface ReviewIssue { message: string; step: 1 | 2 | 3 | 4; target?: string }
@@ -80,7 +84,7 @@ export function validateReview(catalog: ProfileCatalog | null, input: CombatScen
     }
   } catch { issues.push({ step: 2, message: s('wizardMissingDefender') }); }
   const attack = validateAttack(catalog, input, mode, successPercent);
-  issues.push(...attack.errors.map(message => ({ step: 3 as const, message })));
+  issues.push(...attack.issues.map(issue => ({ step: 3 as const, ...issue })));
   if (attack.objectiveInvalid) issues.push({ step: 3, target: 'wizard-attack-objective', message: `${s('wizardObjective')}: ${s('invalidInput')}` });
   return { params: attack.params, issues };
 }

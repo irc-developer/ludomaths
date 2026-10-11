@@ -10,8 +10,9 @@ import { updateRerollSelection } from './rerollPolicy';
 import { WH40K_PRESETS, type CombatParams } from './presets';
 import { s, type ScenarioKey } from '../../i18n/scenario';
 import { scenarioInput, scenarioPanel } from './scenarioStyles';
-import { SquadCounter, SquadScenarioControls } from './SquadScenarioControls';
+import { SquadCounter, SquadScenarioControls, WeaponContext } from './SquadScenarioControls';
 import { isSquadScenario } from '@application/dice/squadScenario';
+import { attackContextId } from './attackContext';
 
 interface Props { params: CombatParams; onChange: (params: CombatParams) => void; individualAttacks?: boolean; attackOnly?: boolean }
 /** All three calculators edit the same scenario; required context stays outside disclosures. */
@@ -31,8 +32,6 @@ export function CombatScenarioForm({ params: input, onChange, individualAttacks,
   const needsHeavy = params.attackType !== 'melee' && contextualWeapons.some(w => w.heavy);
   const needsCover = params.attackType !== 'melee' && allWeapons.some(w => !w.ignoresCover);
   const hasLethal = contextualWeapons.some(w => w.lethalHits);
-  const missingContext = needsRange && params.withinHalfRange === undefined || needsHeavy &&
-    (!params.phase || params.engaged === undefined || params.setUpThisTurn === undefined || params.movedOverThree === undefined);
   const set = <K extends keyof CombatParams>(key: K, value: CombatParams[K]) => onChange({ ...params, [key]: value });
   const numeric = (key: keyof CombatParams, label: ScenarioKey, min: number, max: number, fallback = 0) =>
     <InputField label={s(label)} value={Number(params[key] ?? fallback)} min={min} max={max} onChange={value => set(key, value)} onDraftValidityChange={setDraftInvalid} />;
@@ -138,20 +137,8 @@ export function CombatScenarioForm({ params: input, onChange, individualAttacks,
     {(manual || selectedWeapon) && <>
       {(needsCover || needsHeavy || needsRange || hasLethal) &&
         <fieldset style={scenarioPanel}><legend>{s('situation')}</legend>
-          {missingContext && <p id={`${id}-context-help`} className="scenario-caption">{s('contextRequired')}</p>}
           {needsCover && toggle('cover', 'cover')}
-          {needsRange && <label>{s('halfRange')}
-            <select style={scenarioInput} aria-invalid={params.withinHalfRange === undefined} aria-describedby={missingContext ? `${id}-context-help` : undefined} value={params.withinHalfRange === undefined ? '' : String(params.withinHalfRange)} onChange={event => set('withinHalfRange', event.target.value === '' ? undefined : event.target.value === 'true')}>
-              <option value="">{s('select')}</option><option value="true">{s('yes')}</option><option value="false">{s('outsideHalfRange')}</option></select></label>}
-          {needsHeavy && <>
-            <label>{s('phase')}<select style={scenarioInput} aria-invalid={!params.phase} aria-describedby={missingContext ? `${id}-context-help` : undefined} value={params.phase ?? ''} onChange={event => set('phase', event.target.value as 'shooting' | 'fight')}>
-              <option value="">{s('select')}</option><option value="shooting">{s('shooting')}</option><option value="fight">{s('fight')}</option></select></label>
-            {(['engaged', 'setUpThisTurn', 'movedOverThree'] as const).map((key, index) => <label key={key}>{s((['engaged', 'arrived', 'moved'] as const)[index])}
-              <select style={scenarioInput} aria-invalid={params[key] === undefined} aria-describedby={missingContext ? `${id}-context-help` : undefined} value={params[key] === undefined ? '' : String(params[key])} onChange={event => set(key, event.target.value === '' ? undefined : event.target.value === 'true')}>
-                <option value="">{s('select')}</option><option value="true">{s('yes')}</option><option value="false">{s('no')}</option></select></label>)}
-          </>}
-          {hasLethal && <label>{s('lethalChoice')}<select style={scenarioInput} value={params.lethalChoice ?? 'autoWound'} onChange={event => set('lethalChoice', event.target.value as 'autoWound' | 'rollToWound')}>
-            <option value="autoWound">{s('autoWound')}</option><option value="rollToWound">{s('rollWound')}</option></select></label>}
+          <WeaponContext profile={params} profiles={contextualWeapons} contextId={attackOnly ? attackContextId() : undefined} onChange={onChange} />
         </fieldset>}
       {activeAdjustments && <p className="scope-notice">{s('activeAdjustments')}</p>}
       <details style={scenarioPanel}><summary>{s('advanced')}</summary>

@@ -1,4 +1,10 @@
 const strings = {
+  contextHalfRangePrompt: ['indica si el objetivo está dentro o fuera de la mitad del alcance.', 'say whether the target is within or outside half range.'],
+  contextPhasePrompt: ['elige la fase en la que se realiza el ataque.', 'choose the phase in which the attack takes place.'],
+  contextEngagedPrompt: ['indica si la unidad atacante está trabada.', 'say whether the attacking unit is engaged.'],
+  contextArrivalPrompt: ['indica si la unidad atacante se ha desplegado este turno.', 'say whether the attacking unit was set up this turn.'],
+  contextMovementPrompt: ['indica si alguna miniatura atacante ha movido más de 3 pulgadas.', 'say whether any attacking model moved more than 3 inches.'],
+  contextNeededFor: ['Respuesta necesaria para', 'Answer required for'],
   reportConfirmed: ['Escenario confirmado', 'Confirmed scenario'],
   reportCombatTitle: ['Informe de combate', 'Combat report'],
   reportRequiredTitle: ['Informe de ataques necesarios', 'Required attacks report'],

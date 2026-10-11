@@ -9,6 +9,7 @@ import { s, type ScenarioKey } from '../../i18n/scenario';
 import { scenarioInput, scenarioPanel } from './scenarioStyles';
 import { useCombatScenario } from './CombatScenarioContext';
 import { NumberDraftScope, useResetNumberDraft } from '../../components/NumberDrafts';
+import { describeAttackContext } from './attackContext';
 
 type Profile = CombatScenarioInput;
 interface Props { params: Profile; onChange: (next: Profile) => void; side?: 'attacker' | 'defender' }
@@ -86,17 +87,25 @@ function ProfileEditor({ profile, base, side, onChange, showContext = true }: { 
   </details>}</div>;
 }
 
-export function WeaponContext({ profile, onChange }: { profile: Profile; onChange: (next: Profile) => void }) {
-  const ranged = profile.attackType !== 'melee';
-  const choices = (key: 'withinHalfRange' | 'engaged' | 'setUpThisTurn' | 'movedOverThree', label: ScenarioKey) =>
-    <label>{s(label)}<select style={scenarioInput} value={profile[key] === undefined ? '' : String(profile[key])}
-      onChange={event => onChange({ ...profile, [key]: event.target.value === '' ? undefined : event.target.value === 'true' })}>
-      <option value="">{s('select')}</option><option value="true">{s('yes')}</option><option value="false">{s('no')}</option></select></label>;
-  return <div>{ranged && ((profile.rapidFire ?? 0) > 0 || (profile.melta ?? 0) > 0) && choices('withinHalfRange', 'halfRange')}
-    {ranged && profile.heavy && <><label>{s('phase')}<select style={scenarioInput} value={profile.phase ?? ''} onChange={event => onChange({ ...profile, phase: event.target.value as 'shooting' | 'fight' })}>
-      <option value="">{s('select')}</option><option value="shooting">{s('shooting')}</option><option value="fight">{s('fight')}</option></select></label>
-      {choices('engaged', 'engaged')}{choices('setUpThisTurn', 'arrived')}{choices('movedOverThree', 'moved')}</>}
-    {profile.lethalHits && <label>{s('lethalChoice')}<select style={scenarioInput} value={profile.lethalChoice ?? 'autoWound'} onChange={event => onChange({ ...profile, lethalChoice: event.target.value as 'autoWound' | 'rollToWound' })}>
+export function WeaponContext({ profile, profiles = [profile], onChange, contextId }: {
+  profile: Profile; profiles?: Profile[]; onChange: (next: Profile) => void; contextId?: string;
+}) {
+  const id = useId(), { catalog } = useCatalog();
+  const fields = describeAttackContext(profiles, catalog, contextId ?? id);
+  return <div className="attack-context-fields">{fields.map(field => <div key={field.key} className="attack-context-field">
+    <label htmlFor={field.target}>{s(field.label)}</label>
+    <select id={field.target} style={scenarioInput} aria-invalid={field.missing} aria-describedby={`${field.target}-help`}
+      value={profile[field.key] === undefined ? '' : String(profile[field.key])} onChange={event => {
+        const value = event.target.value;
+        onChange({ ...profile, [field.key]: value === '' ? undefined : field.key === 'phase' ? value : value === 'true' });
+      }}>
+      <option value="">{s('select')}</option>
+      {field.key === 'phase' ? <><option value="shooting">{s('shooting')}</option><option value="fight">{s('fight')}</option></> :
+        <><option value="true">{s('yes')}</option><option value="false">{s(field.key === 'withinHalfRange' ? 'outsideHalfRange' : 'no')}</option></>}
+    </select>
+    <p id={`${field.target}-help`} className="scenario-caption">{field.help}</p>
+  </div>)}
+    {profiles.some(p => p.lethalHits) && <label>{s('lethalChoice')}<select style={scenarioInput} value={profile.lethalChoice ?? 'autoWound'} onChange={event => onChange({ ...profile, lethalChoice: event.target.value as 'autoWound' | 'rollToWound' })}>
       <option value="autoWound">{s('autoWound')}</option><option value="rollToWound">{s('rollWound')}</option></select></label>}
   </div>;
 }
