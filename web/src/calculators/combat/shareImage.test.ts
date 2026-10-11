@@ -5,6 +5,7 @@ import { buildCombatShareSvg, isCombatShareImageSupported } from './shareImage';
 
 const BASE_VM: CombatViewModel = {
   expectedDamage: 2.345,
+  expectedWoundsLost: 1.75,
   medianDamage: 2,
   mostLikelyDamage: 1,
   centralRange: { low: 1, high: 4 },
@@ -70,6 +71,8 @@ describe('buildCombatShareSvg', () => {
     expect(svg).toContain('LUDOMATHS');
     expect(svg).toContain('Bolter Pesado');
     expect(svg).toContain('P(eliminar objetivo de 3W)');
+    expect(svg).toContain('Heridas perdidas esperadas');
+    expect(svg).toContain('1.75');
     expect(svg).toContain('Daño más probable');
     expect(svg).toContain('Rango central (Q1-Q3)');
     expect(svg).toContain('Distribución completa de daño total entero');

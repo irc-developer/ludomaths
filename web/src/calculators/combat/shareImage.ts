@@ -133,6 +133,10 @@ function buildMetrics(params: CombatParams, vm: CombatViewModel): ShareMetric[] 
   ];
   return [
     {
+      label: 'Heridas perdidas esperadas',
+      value: fmt(vm.expectedWoundsLost ?? vm.distribution.reduce((sum, e) => sum + Math.min(params.targetWounds, e.value) * e.probability, 0)),
+    },
+    {
       label: `P(eliminar objetivo de ${params.targetWounds}W)`,
       value: pct(vm.pEliminate),
       highlight: true,
