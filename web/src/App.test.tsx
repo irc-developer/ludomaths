@@ -9,6 +9,15 @@ function finishWizard() {
   fireEvent.click(screen.getByRole('button', { name: 'Generar informe' }));
 }
 describe('shared WH40K workspace', () => {
+  it('opens the updated charge calculator through its tab', async () => {
+    await act(async () => { render(<App />); });
+    fireEvent.click(screen.getByRole('button', { name: 'Carga WH40K' }));
+    expect(screen.getByRole('heading', { name: /Distancia de carga.*11.ª edición/ })).toBeTruthy();
+    expect(screen.queryByRole('region', { name: 'Resultado de distancia de carga' })).toBeNull();
+    fireEvent.click(screen.getByRole('checkbox', { name: /He comprobado/ }));
+    const chargeResult = within(screen.getByRole('region', { name: 'Resultado de distancia de carga' }));
+    expect(chargeResult.getByText('27,78 %')).toBeTruthy();
+  });
   it('starts with profile selection and keeps a manual scenario across calculators', async () => {
     await act(async () => { render(<App />); });
     fireEvent.click(screen.getByRole('button', { name: 'WH40K' }));

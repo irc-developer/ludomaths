@@ -1,12 +1,7 @@
 import { useMemo } from 'react';
-import { CalculateChargeProbabilityUseCase } from '@application/dice/CalculateChargeProbabilityUseCase';
+import { CalculateChargeProbabilityUseCase, type ChargeInput } from '@application/dice/CalculateChargeProbabilityUseCase';
 
-export interface ChargeParams {
-  distance: number;
-  reroll: 'none' | 'failures';
-  /** When true, one die is already showing a 6. The effective roll is D6+6 instead of 2D6. */
-  lockedSix?: boolean;
-}
+export type ChargeParams = ChargeInput;
 
 export interface ChargeTableEntry {
   distance: number;
@@ -14,40 +9,31 @@ export interface ChargeTableEntry {
 }
 
 export interface ChargeViewModel {
-  currentProbability: number;
-  /** Tabla completa de referencia para distancias 2"–13". */
+  status: 'ready' | 'outsideRange' | 'checkEngagement' | 'invalid';
+  currentProbability: number | null;
+  /** Conditional reference probabilities for standard targets at 3″–12″. */
   referenceTable: ChargeTableEntry[];
   error?: string;
 }
 
-// Singleton: el use case es stateless, no hace falta recrearlo por render.
 const chargeUseCase = new CalculateChargeProbabilityUseCase();
 
-/**
- * Adaptador de CalculateChargeProbabilityUseCase para la presentación.
- *
- * Devuelve la probabilidad de la distancia actual y la tabla completa 2"–13"
- * para que el componente pueda mostrar comparaciones sin calcular nada.
- */
-export function useCharge({ distance, reroll, lockedSix }: ChargeParams): ChargeViewModel {
+/** The hook adapts distance probabilities; it does not infer movement legality. */
+export function useCharge({ distance, reroll = 'none', observedSix = false, chargeRollModifier = 0 }: ChargeParams): ChargeViewModel {
   return useMemo(() => {
-    // La tabla sólo depende del reroll y del lockedSix, no de la distancia concreta.
-    const referenceTable: ChargeTableEntry[] = Array.from({ length: 12 }, (_, i) => i + 2).map(d => ({
-      distance: d,
-      probability: chargeUseCase.execute({ distance: d, reroll, lockedSix }).probability,
-    }));
-
     try {
+      const result = chargeUseCase.execute({ distance, reroll, observedSix, chargeRollModifier });
+      // Invalid inputs must not leave a table from an earlier valid calculation.
+      const referenceTable = Array.from({ length: 10 }, (_, i) => i + 3).map(d => {
+        const row = chargeUseCase.execute({ distance: d, reroll, observedSix, chargeRollModifier });
+        return { distance: d, probability: row.status === 'ready' ? row.probability : 0 };
+      });
+      return { status: result.status, currentProbability: result.probability, referenceTable };
+    } catch (error) {
       return {
-        currentProbability: chargeUseCase.execute({ distance, reroll, lockedSix }).probability,
-        referenceTable,
-      };
-    } catch (e) {
-      return {
-        currentProbability: 0,
-        referenceTable,
-        error: e instanceof Error ? e.message : 'Error desconocido',
+        status: 'invalid', currentProbability: null, referenceTable: [],
+        error: error instanceof Error ? error.message : 'Entrada inválida.',
       };
     }
-  }, [distance, reroll, lockedSix]);
+  }, [distance, reroll, observedSix, chargeRollModifier]);
 }

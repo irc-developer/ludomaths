@@ -1,135 +1,134 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { SectionCard } from '../../components/SectionCard';
-import { InputField } from '../../components/InputField';
 import { ResultBox } from '../../components/ResultBox';
 import { useCharge } from './useCharge';
-import { colors, sp } from '../../styles/tokens';
+import './charge.css';
 
-function pct(v: number, d = 1): string { return (v * 100).toFixed(d) + '%'; }
+function pct(value: number): string {
+  return new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value * 100) + ' %';
+}
 
-/**
- * Calculadora de probabilidad de carga de WH40K.
- *
- * Muestra la probabilidad de la distancia actual y una tabla de referencia
- * de todas las distancias 2"–13" para facilitar la comparación.
- */
+/** Preserve incomplete drafts and support both decimal separators without rounding. */
+function parseDraft(text: string): number {
+  const trimmed = text.trim();
+  return /^[+-]?(?:\d+(?:[.,]\d+)?|[.,]\d+)$/.test(trimmed) ? Number(trimmed.replace(',', '.')) : NaN;
+}
+
 export function ChargeCalculator() {
-  const [distance, setDistance] = useState(9);
+  const id = useId();
+  const [distanceText, setDistanceText] = useState('9');
+  const [modifierText, setModifierText] = useState('0');
   const [reroll, setReroll] = useState<'none' | 'failures'>('none');
-  const [lockedSix, setLockedSix] = useState(false);
-
-  const vm = useCharge({ distance, reroll, lockedSix });
+  const [observedSix, setObservedSix] = useState(false);
+  const [contextConfirmed, setContextConfirmed] = useState(false);
+  const distance = parseDraft(distanceText);
+  const chargeRollModifier = parseDraft(modifierText);
+  const distanceInvalid = !Number.isFinite(distance) || distance <= 0;
+  const modifierInvalid = !Number.isSafeInteger(chargeRollModifier);
+  const vm = useCharge({ distance, reroll, observedSix, chargeRollModifier });
+  const showResult = contextConfirmed && vm.status === 'ready' && vm.currentProbability !== null;
 
   return (
     <SectionCard
-      title="Probabilidad de carga — Warhammer 40K"
+      title="Distancia de carga — Warhammer 40K · 11.ª edición"
+      compact
+      scopeLabel="Un objetivo · 2D6 · distancia suficiente, condicionada a una carga legal y un movimiento viable."
       formula={
-        'P(éxito) = P(2D6 ≥ d) = 1 − F_2D6(d − 1)\n' +
-        '\n' +
-        'La distribución de 2D6 es triangular: el 7 es el valor más probable (1/6).\n' +
-        'Cada pulgada extra de distancia reduce la probabilidad de forma no lineal.'
+        'P(distancia suficiente) = P(min(12, max(1, 2D6 + modificador)) ≥ distancia medida).\n' +
+        'Repetición completa de tiradas insuficientes: p + (1 − p) × p.\n' +
+        'Con un 6 observado: p6 + (1 − p6) × p2; la repetición vuelve a 2D6.'
       }
       explanation={
-        'En WH40K, una carga tiene éxito si el resultado de 2D6 es ≥ la distancia al objetivo. ' +
-        'Una carga de 7" tiene un 58% de éxito, pero con 9" baja al 28% — un riesgo real. ' +
-        'Si la unidad puede repetir dados de fallos (p. ej. por un Señor de la Guerra), ' +
-        'la probabilidad sube considerablemente, sobre todo a distancias largas. ' +
-        'Con un dado fijo en 6, la tirada efectiva es D6+6: distancias ≤7" son garantizadas, pero 8"–12" aún dependen del otro dado.'
+        'El objetivo se selecciona después de tirar: debe estar dentro de 12″ y de la distancia máxima obtenida. ' +
+        'No se descuenta el alcance de enfrentamiento de la distancia medida. Sin modificadores, un doble 1 no permite completar una carga. ' +
+        'El alcance de enfrentamiento es 2″ horizontal y 5″ vertical. Una distancia suficiente no certifica superar terreno, ' +
+        'cumplir coherencia ni acabar trabado con todos los objetivos y con ningún enemigo adicional. ' +
+        'Esta herramienta cubre una carga estándar; no resuelve alturas, cargas múltiples ni efectos que cambian la distancia máxima del movimiento.'
       }
     >
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '0.75rem',
-          marginBottom: '1.25rem',
-        }}
-      >
-        <InputField
-          label='Distancia al objetivo (")'
-          value={distance}
-          onChange={v => setDistance(Math.round(Math.max(2, Math.min(13, v))))}
-          min={2}
-          max={13}
-        />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          <label style={{ fontSize: '0.75rem', color: colors.muted }}>Repetir dados</label>
-          <select
-            value={reroll}
-            onChange={e => setReroll(e.target.value as 'none' | 'failures')}
-            style={{
-              background: colors.surfaceAlt,
-              border: `1px solid ${colors.border}`,
-              borderRadius: 6,
-              color: colors.text,
-              padding: '0.5rem 0.75rem',
-              fontSize: '1rem',
-            }}
-          >
-            <option value="none">Sin repetir</option>
-            <option value="failures">Repetir fallos</option>
+      <div className="charge-fields">
+        <div className="charge-field">
+          <label htmlFor={id + '-distance'}>Distancia medida al objetivo (″)</label>
+          <input
+            id={id + '-distance'}
+            type="text"
+            inputMode="decimal"
+            value={distanceText}
+            onChange={event => setDistanceText(event.target.value)}
+            aria-invalid={distanceInvalid || undefined}
+            aria-describedby={id + '-distance-help' + (distanceInvalid ? ' ' + id + '-error' : '')}
+          />
+          <small id={id + '-distance-help'}>Introduce la medida completa, con decimales si hace falta: 9,1″ exige un 10.</small>
+        </div>
+        <div className="charge-field">
+          <label htmlFor={id + '-modifier'}>Modificador de la tirada</label>
+          <input
+            id={id + '-modifier'}
+            type="text"
+            inputMode="text"
+            value={modifierText}
+            onChange={event => setModifierText(event.target.value)}
+            aria-invalid={modifierInvalid || undefined}
+            aria-describedby={id + '-modifier-help' + (modifierInvalid ? ' ' + id + '-error' : '')}
+          />
+          <small id={id + '-modifier-help'}>Suma o resta un entero solo si una regla lo permite. La tirada final queda entre 1 y 12. No incluye efectos sobre la distancia del movimiento, como alzar el vuelo.</small>
+        </div>
+        <div className="charge-field">
+          <label htmlFor={id + '-mode'}>Modo de cálculo</label>
+          <select id={id + '-mode'} value={observedSix ? 'observedSix' : 'standard'} onChange={event => setObservedSix(event.target.value === 'observedSix')}>
+            <option value="standard">Tirada estándar: 2D6</option>
+            <option value="observedSix">Un 6 observado; otro dado desconocido</option>
           </select>
         </div>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-        <input
-          type="checkbox"
-          id="lockedSix"
-          checked={lockedSix}
-          onChange={e => setLockedSix(e.target.checked)}
-        />
-        <label htmlFor="lockedSix" style={{ fontSize: '0.75rem', color: colors.muted }}>
-          Ya tengo un 6 en uno de los dados (tirada efectiva: D6+6)
-        </label>
+        <div className="charge-field">
+          <label htmlFor={id + '-reroll'}>Repetición de carga</label>
+          <select id={id + '-reroll'} value={reroll} onChange={event => setReroll(event.target.value as 'none' | 'failures')} aria-describedby={id + '-reroll-help'}>
+            <option value="none">Sin repetir</option>
+            <option value="failures">Repetir la tirada completa si no alcanza (con permiso)</option>
+          </select>
+          <small id={id + '-reroll-help'}>Una sola repetición de ambos dados, antes de modificadores. Requiere permiso de una regla, como la repetición de mando; comprueba su disponibilidad.</small>
+        </div>
       </div>
 
-      {vm.error ? (
-        <div style={{ color: colors.error, fontSize: '0.8rem', marginBottom: sp.md }}>{vm.error}</div>
-      ) : (
-        <div style={{ marginBottom: '1.25rem' }}>
+      {observedSix && <p className="charge-note">
+        Cálculo condicionado a haber observado un 6: no concede permiso para fijarlo o conservarlo.
+        Si repites la carga, vuelves a tirar ambos dados.
+      </p>}
+
+      <label className="charge-confirmation">
+        <input type="checkbox" checked={contextConfirmed} onChange={event => setContextConfirmed(event.target.checked)} />
+        <span>He comprobado que la unidad está sin trabar, puede declarar la carga y tiene un movimiento viable.</span>
+      </label>
+      <p className="charge-note">
+        Avanzar o retirarse normalmente impide cargar, salvo una excepción aplicable. Comprueba el recorrido y las condiciones de cada miniatura.
+      </p>
+
+      <div aria-live="polite" aria-atomic="true" className="charge-result">
+        {vm.error && <p id={id + '-error'} role="alert" className="charge-error">{vm.error}</p>}
+        {vm.status === 'outsideRange' && <p role="status">Objetivo fuera del alcance para seleccionarlo: está a más de 12″. Un bonus a la tirada no amplía ese límite.</p>}
+        {vm.status === 'checkEngagement' && <p role="status">Comprueba enfrentamiento y alturas: a 2″ o menos y al mismo nivel ya estarías trabado. Este escenario queda fuera de la carga estándar calculada aquí.</p>}
+        {vm.status === 'ready' && !contextConfirmed && <p role="status">Confirma la elegibilidad de la unidad y el movimiento viable para ver la probabilidad.</p>}
+        {showResult && <div role="region" aria-label="Resultado de distancia de carga">
           <ResultBox
-            label={`P(carga exitosa desde ${distance}")`}
-            value={pct(vm.currentProbability, 2)}
+            label={'Probabilidad de obtener distancia suficiente para ' + distanceText.trim() + '″'}
+            value={pct(vm.currentProbability!)}
             highlight
           />
-        </div>
-      )}
+          <p className="charge-note">Condicionada al contexto comprobado. Obtener distancia suficiente no garantiza completar el movimiento.</p>
+        </div>}
+      </div>
 
-      <div style={{ fontSize: '0.75rem', color: colors.muted, marginBottom: '0.5rem' }}>
-        Tabla de referencia — todas las distancias
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 4 }}>
-        {vm.referenceTable.map(({ distance: d, probability }) => {
-          const isActive = d === distance;
-          return (
-            <button
-              key={d}
-              onClick={() => setDistance(d)}
-              style={{
-                background: isActive ? colors.primary : colors.surfaceAlt,
-                borderRadius: 6,
-                padding: '0.4rem 0.2rem',
-                textAlign: 'center',
-                border: `1px solid ${isActive ? colors.primary : colors.border}`,
-                cursor: 'pointer',
-              }}
-            >
-              <div style={{ fontSize: '0.65rem', color: isActive ? colors.bg : colors.muted }}>
-                {d}"
-              </div>
-              <div
-                style={{
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  color: isActive ? colors.bg : colors.primaryLight,
-                }}
-              >
-                {pct(probability, 0)}
-              </div>
+      {showResult && <div role="region" aria-label="Tabla de distancia de carga">
+        <p className="charge-note">Referencia 3″–12″ · mismo modificador, modo y repetición · condicionada a una carga legal y un movimiento viable.</p>
+        <div className="charge-reference">
+          {vm.referenceTable.map(({ distance: d, probability }) => (
+            <button key={d} type="button" aria-label={'Elegir distancia de ' + d + ' pulgadas'}
+              aria-pressed={d === distance} onClick={() => setDistanceText(String(d))}>
+              <span>{d}″</span><strong>{pct(probability)}</strong>
             </button>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      </div>}
     </SectionCard>
   );
 }

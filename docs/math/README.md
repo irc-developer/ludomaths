@@ -12,6 +12,7 @@ Esta carpeta contiene la explicación de los módulos probabilísticos del proye
 | [binomial.md](binomial.md) | Distribución binomial: probabilidad de k éxitos en n tiradas |
 | [hypergeometric.md](hypergeometric.md) | Distribución hipergeométrica: robar cartas de un mazo |
 | [convolution.md](convolution.md) | Convolución discreta: distribución de la suma de varios dados |
+| [wh40k-charge.md](wh40k-charge.md) | Distancia de carga: 2D6, decimales, modificadores y repetición completa |
 | [pipeline.md](pipeline.md) | `applyStage` y `applyDamage`: las dos operaciones del combate WH40K |
 | [weapon-abilities.md](weapon-abilities.md) | Sustained Hits, Lethal Hits, Devastating Wounds, Mortal Wounds |
 
