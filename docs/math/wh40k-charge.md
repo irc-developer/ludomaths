@@ -80,5 +80,6 @@ A 9″ sin modificadores, p6 = 4/6 y p2 = 10/36. El resultado es 41/54 = 75,93%.
 - `rollDist` conserva la distribución natural inicial. `modifiedRollDist` contiene esa distribución tras el modificador y los límites. Ninguna representa la distribución final de una política de repetición.
 - `useCharge` construye la referencia 3″–12″ según el modo, modificador y repetición elegidos. Una entrada inválida borra el resultado y la tabla.
 - La interfaz conserva los borradores vacíos o incompletos, incluidos al salir del campo, y oculta los porcentajes hasta corregirlos.
+- La pantalla muestra el resultado directamente bajo el supuesto de una carga legal y un recorrido viable, sin una casilla de confirmación. Distancia y repetición quedan a la vista; modificador y dado observado se agrupan en «Opciones». Su resumen indica las opciones activas incluso al cerrarlo. Las explicaciones están en «Reglas y cálculo» y la tabla muestra porcentajes redondeados.
 
 La evidencia original del MCP queda en el registro privado local. El motor y la web funcionan sin consultar el MCP.

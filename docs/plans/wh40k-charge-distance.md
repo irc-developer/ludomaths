@@ -126,4 +126,8 @@ Validación completada el 14 de octubre de 2026:
 
 El contrato usa `observedSix` en lugar de `lockedSix` para expresar la observación sin atribuir permiso para fijar dados. No quedan consumidores de `lockedSix` en el código revisado. Las distribuciones devueltas describen la primera tirada, natural y modificada; la probabilidad incorpora la política de repetición.
 
-La evidencia original permanece excluida de Git. No se ha publicado ni desplegado: la comprobación visual se realizó con una vista previa local del build.
+La evidencia original permanece excluida de Git. La primera implementación se publicó en el commit `a07b263`, con despliegue de GitHub Pages y comprobación de decimales y repetición en producción.
+
+### Revisión de usabilidad solicitada por Iván
+
+Se simplifica la pantalla para priorizar el uso: resultado inmediato, entrada de distancia y casilla «Repetir carga». Se retira la confirmación previa de contexto y se conserva una única nota que explicita el supuesto de carga legal y recorrido viable. Modificador y dado observado pasan a «Opciones», con indicador de ajustes activos al cerrar el desplegable. Las reglas y fórmulas se agrupan al final; la tabla de otras distancias conserva sus accesos directos y redondea los porcentajes para facilitar la lectura. El motor y sus restricciones no cambian.

@@ -12,9 +12,7 @@ describe('shared WH40K workspace', () => {
   it('opens the updated charge calculator through its tab', async () => {
     await act(async () => { render(<App />); });
     fireEvent.click(screen.getByRole('button', { name: 'Carga WH40K' }));
-    expect(screen.getByRole('heading', { name: /Distancia de carga.*11.ª edición/ })).toBeTruthy();
-    expect(screen.queryByRole('region', { name: 'Resultado de distancia de carga' })).toBeNull();
-    fireEvent.click(screen.getByRole('checkbox', { name: /He comprobado/ }));
+    expect(screen.getByRole('heading', { name: 'Carga WH40K' })).toBeTruthy();
     const chargeResult = within(screen.getByRole('region', { name: 'Resultado de distancia de carga' }));
     expect(chargeResult.getByText('27,78 %')).toBeTruthy();
   });

@@ -1,29 +1,44 @@
-.charge-fields {
+.charge-calculator {
+  background: #1e293b;
+  border-radius: 12px;
+  padding: clamp(0.75rem, 3vw, 1.5rem);
+  margin-bottom: 1.5rem;
+}
+.charge-calculator h2 { font-size: 1.1rem; color: #c7d2fe; margin: 0; }
+.charge-calculator h3 { font-size: 0.85rem; font-weight: 500; color: #94a3b8; margin: 0 0 0.5rem; }
+.charge-edition { margin: 0.25rem 0 1rem; }
+.charge-main, .charge-option-fields {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
   gap: 1rem;
-  margin: 1rem 0;
 }
 .charge-field { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
-.charge-field label, .charge-confirmation { font-size: 0.85rem; }
-.charge-field input, .charge-field select {
+.charge-field label, .charge-toggle { font-size: 0.85rem; }
+.charge-field input {
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
   min-height: 44px;
   padding: 0.55rem;
   color: #e2e8f0;
-  background: #1e293b;
+  background: #0f172a;
   border: 1px solid #64748b;
   border-radius: 6px;
   font: inherit;
 }
 .charge-field input[aria-invalid="true"] { border-color: #f87171; }
-.charge-field small, .charge-note { color: #94a3b8; font-size: 0.8rem; line-height: 1.6; }
-.charge-confirmation { display: flex; align-items: flex-start; gap: 0.6rem; line-height: 1.6; }
-.charge-confirmation input { flex-shrink: 0; margin-top: 0.3rem; width: 20px; height: 20px; }
+.charge-note { color: #94a3b8; font-size: 0.8rem; line-height: 1.5; }
+.charge-toggle { display: flex; align-items: center; gap: 0.5rem; min-height: 44px; cursor: pointer; }
+.charge-toggle input { flex-shrink: 0; width: 20px; height: 20px; margin: 0; }
+.charge-options { margin-top: 0.75rem; }
+.charge-options summary, .charge-help summary { font-size: 0.8rem; color: #94a3b8; cursor: pointer; padding: 0.5rem 0; }
+.charge-option-fields { margin-top: 0.5rem; }
+.charge-help { margin-top: 1rem; }
+.charge-help p { font-size: 0.8rem; color: #94a3b8; line-height: 1.6; }
 .charge-error { color: #f87171; }
-.charge-result { margin: 1.25rem 0; }
+.charge-result { margin: 1rem 0; }
+.charge-result .charge-note { margin: 0.5rem 0 0; }
 .charge-reference {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -38,17 +53,16 @@
   padding: 0.5rem 0.15rem;
   border-radius: 6px;
   border: 1px solid #64748b;
-  background: #1e293b;
+  background: #0f172a;
   color: #e2e8f0;
   cursor: pointer;
 }
 .charge-reference button[aria-pressed="true"] { background: #6366f1; border-color: #a5b4fc; color: white; }
-.charge-field input:focus-visible, .charge-field select:focus-visible,
-.charge-confirmation input:focus-visible, .charge-reference button:focus-visible {
-  outline: 2px solid #a5b4fc;
-  outline-offset: 3px;
-}
+.charge-field input:focus-visible, .charge-toggle input:focus-visible,
+.charge-options summary:focus-visible, .charge-help summary:focus-visible,
+.charge-reference button:focus-visible { outline: 2px solid #a5b4fc; outline-offset: 3px; }
 @media (max-width: 560px) {
-  .charge-fields { grid-template-columns: minmax(0, 1fr); }
-  .charge-reference { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .charge-main, .charge-option-fields { gap: 0.75rem; }
+  .charge-reference { gap: 0.3rem; }
+  .charge-reference button { font-size: 0.75rem; }
 }
